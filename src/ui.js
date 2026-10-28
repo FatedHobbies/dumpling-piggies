@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 10;
+const VERSION = 11;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -178,8 +178,8 @@ function render(force = false) {
   $('#coins').textContent = state.coins;
   $('#pigname').textContent = p.name;
   const av = $('#avatar');
-  const asig = p.id + JSON.stringify(p.coat) + (state.upgrades.hat ? 'h' : '');
-  if (av.dataset.sig !== asig) { av.dataset.sig = asig; av.innerHTML = Art.piggySide({ coat: p.coat, hat: !!state.upgrades.hat }); }
+  const asig = p.id + JSON.stringify(p.coat) + (p.hat || '');
+  if (av.dataset.sig !== asig) { av.dataset.sig = asig; av.innerHTML = Art.piggySide({ coat: p.coat, hat: p.hat }); }
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   const view = $('#view');
   if (force || view.dataset.tab !== tab) {
@@ -228,8 +228,8 @@ function updateSteamer() {
     }
     have.delete(pig.id);
     const m = G.mood(state, pig);
-    const face = m + JSON.stringify(pig.coat) + (state.upgrades.hat ? '+hat' : '');
-    if (d.dataset.face !== face) { d.dataset.face = face; $('.pig-art', d).innerHTML = Art.piggySide({ coat: pig.coat, hat: !!state.upgrades.hat, mood: m }); }
+    const face = m + JSON.stringify(pig.coat) + (pig.hat || '');
+    if (d.dataset.face !== face) { d.dataset.face = face; $('.pig-art', d).innerHTML = Art.piggySide({ coat: pig.coat, hat: pig.hat, mood: m }); }
     $('.tag', d).textContent = pig.name;
     $('.need-bubble', d).textContent = pig.hunger < 25 ? '🍽️' : pig.fun < 25 ? '🎉' : '';
     const w = wander.get(pig.id);
@@ -529,7 +529,7 @@ function mazeView() {
   for (let x = -6; x <= w + 6; x += 48) fence += `<rect x="${x - 4}" y="-12" width="8" height="14" rx="3" fill="#C9935A" stroke="#8A5634" stroke-width="2"/><rect x="${x - 4}" y="${h - 2}" width="8" height="14" rx="3" fill="#C9935A" stroke="#8A5634" stroke-width="2"/>`;
   $('#mfence', v).innerHTML = fence;
   $('#mfinish', v).innerHTML = `<g transform="translate(-20 -20) scale(.62)">${Art.dumpling('cabbage+carrot', 64)}</g>`;
-  $('#mrot', v).innerHTML = Art.piggyTop({ hat: !!state.upgrades.hat, coat: current().coat });
+  $('#mrot', v).innerHTML = Art.piggyTop({ hat: current().hat, coat: current().coat });
   $('#mpig', v).addEventListener('click', onCheer);
   mazeAngle = 0;
   return v;
@@ -669,6 +669,8 @@ function shopView() {
     <div class="scene-top">${Art.shopScene()}</div>
     <div class="ribbon"><span>Adopt a piggy</span></div>
     <div class="adopt panel" id="adopt"></div>
+    <div class="ribbon"><span>Hats</span></div>
+    <div class="hats panel" id="hats"></div>
     <div class="ribbon"><span>Upgrades</span></div>
     <div id="items"></div>
     <div class="row center"><button class="btn btn-grey" id="replay">Replay tutorial</button></div>
@@ -702,6 +704,33 @@ function updateShop() {
         });
         box.appendChild(b);
       });
+    }
+  }
+  const hats = $('#hats');
+  const p = current();
+  const hsig = JSON.stringify([state.hats, state.coins, p.id, p.hat]);
+  if (hats.dataset.sig !== hsig) {
+    hats.dataset.sig = hsig;
+    hats.innerHTML = `<p class="hint">Buy a hat once and any piggy can wear it. Tap a hat to put it on <b>${esc(p.name)}</b>.</p><div class="hat-grid"></div>`;
+    const grid = $('.hat-grid', hats);
+    for (const [id, h] of Object.entries(G.HATS)) {
+      const owned = !!state.hats[id];
+      const wearing = p.hat === id;
+      const b = el(`<button class="hat tile ${owned ? 'owned' : ''} ${wearing ? 'wearing' : ''}">${Art.hatIcon(id)}<span>${h.name}</span>
+        <span class="price">${wearing ? 'Wearing' : owned ? 'Wear' : `${h.cost} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></button>`);
+      b.addEventListener('click', () => {
+        if (!state.hats[id]) {
+          const r = G.buyHat(state, id);
+          if (!r.ok) { sfx.nope(); toast(`Need ${h.cost - state.coins} more coins`); return; }
+          sfx.fanfare(); G.wearHat(state, p.id, id);
+          popup('New hat!', `<div class="pig-card big">${Art.piggySide({ coat: p.coat, hat: id })}</div><p><b>${esc(p.name)}</b> is wearing the ${h.name}!</p>`, 'Cute!');
+        } else {
+          sfx.pop(); G.wearHat(state, p.id, wearing ? null : id);
+          toast(wearing ? `${esc(p.name)} took off the ${h.name}` : `${esc(p.name)} put on the ${h.name}`);
+        }
+        render();
+      });
+      grid.appendChild(b);
     }
   }
   const items = $('#items');
@@ -739,7 +768,7 @@ function renameDialog() {
   const p = current();
   const box = el(`<div class="modal"><div class="card panel">
     <div class="ribbon"><span>Rename</span></div>
-    <div class="pig-card">${Art.piggySide({ coat: p.coat, hat: !!state.upgrades.hat })}</div>
+    <div class="pig-card">${Art.piggySide({ coat: p.coat, hat: p.hat })}</div>
     <p>Costs ${G.RENAME_COST} coins. You have ${state.coins}.</p>
     <input id="newname" maxlength="16" placeholder="${esc(p.name)}" autocomplete="off">
     <div class="row"><button class="btn btn-grey" id="cancel">Cancel</button><button class="btn" id="ok">Rename</button></div>

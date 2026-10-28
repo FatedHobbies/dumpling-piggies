@@ -29,10 +29,39 @@ export const UPGRADES = {
   sunlamp:  { name: 'Sun lamp',           desc: 'Veggies grow twice as fast.',                    cost: 90,  icon: 'sun' },
   autoscoop:{ name: 'Robo-scooper',       desc: 'A tiny robot scoops poop while you are away.',   cost: 150, icon: 'robot' },
   bigbowl:  { name: 'Big bowl',           desc: 'Your piggies stay full for longer.',             cost: 120, icon: 'bowl' },
-  hat:      { name: 'Strawberry hat',     desc: 'A hat for your piggies. Very fancy.',            cost: 80,  icon: 'hat' },
   pen2:     { name: 'Bigger pen',         desc: 'Room for two more piggies.',                     cost: 300, icon: 'pen' },
   pen3:     { name: 'Huge pen',           desc: 'Room for two more piggies after that.',          cost: 800, icon: 'pen', needs: 'pen2' },
 };
+
+// Hats are bought once and any piggy can wear one. Each piggy has `hat`.
+export const HATS = {
+  bow:        { name: 'Pink bow',        cost: 40 },
+  strawberry: { name: 'Strawberry hat',  cost: 60 },
+  flower:     { name: 'Daisy',           cost: 60 },
+  party:      { name: 'Party hat',       cost: 70 },
+  beanie:     { name: 'Cozy beanie',     cost: 90 },
+  sunhat:     { name: 'Sun hat',         cost: 90 },
+  chef:       { name: 'Chef hat',        cost: 100 },
+  dumpling:   { name: 'Dumpling hat',    cost: 120 },
+  crown:      { name: 'Royal crown',     cost: 180 },
+  wizard:     { name: 'Wizard hat',      cost: 220 },
+};
+
+export function buyHat(state, id) {
+  const h = HATS[id];
+  if (!h || state.hats[id]) return { ok: false };
+  if (state.coins < h.cost) return { ok: false, reason: 'coins' };
+  state.coins -= h.cost;
+  state.hats[id] = true;
+  return { ok: true };
+}
+
+export function wearHat(state, piggyId, id) {
+  const p = piggy(state, piggyId);
+  if (!p || (id && !state.hats[id])) return { ok: false };
+  p.hat = id || null;
+  return { ok: true };
+}
 
 export const RENAME_COST = 30;
 export const ADOPT_COST = [0, 80, 200, 400, 700, 1000];
@@ -87,7 +116,7 @@ export function newPiggy(state, coat, name, rng = Math.random) {
     id: state.nextId++,
     name: name || randomName(rng, state.piggies.map(p => p.name)),
     coat: coat || randomCoat(rng),
-    hunger: 70, fun: 70, effect: null, effectUntil: 0,
+    hunger: 70, fun: 70, effect: null, effectUntil: 0, hat: null,
     x: 0.3 + rng() * 0.4, y: 0.5,
   };
 }
@@ -105,6 +134,7 @@ export function newState(now = Date.now()) {
     tutorial: { step: 1 },          // first-play tutorial progress; { done: true } when finished
     discovered: [],                 // recipe keys found so far
     upgrades: {},                   // upgradeId -> true
+    hats: {},                       // hatId -> true (owned)
     stats: { fed: 0, scooped: 0, cooked: 0, petted: 0 },
     offer: null,                    // the three piggies up for adoption
     lastSeen: now,
@@ -118,6 +148,14 @@ export function newState(now = Date.now()) {
 // Older saves had one `piggy`; lift it into the `piggies` list.
 export function migrate(state) {
   if (!state.tutorial) state.tutorial = { done: true };   // saves from before the tutorial existed
+  if (!state.hats) {                                        // the old single strawberry-hat upgrade
+    state.hats = {};
+    if (state.upgrades && state.upgrades.hat) {
+      state.hats.strawberry = true;
+      for (const p of (state.piggies || [])) p.hat = 'strawberry';
+      delete state.upgrades.hat;
+    }
+  }
   if (state.version >= 2) return state;
   const old = state.piggy || {};
   state.piggies = [{

@@ -47,7 +47,7 @@ export function piggySide(opts = {}) {
       <path d="M176 92 q6 -14 16 -8 q-4 10 -16 8z" fill="${col(coat.main)}"/>`;
   }
 
-  const hatSvg = hat ? `<g class="hat"><path d="M112 70 Q136 30 164 60 Q148 58 132 66 Q122 72 112 70Z" fill="#FF5C7A"/><circle cx="118" cy="62" r="3" fill="#FFF3B0"/><circle cx="134" cy="54" r="3" fill="#FFF3B0"/><circle cx="150" cy="56" r="3" fill="#FFF3B0"/><path d="M110 72 Q140 62 170 68" fill="none" stroke="#4CAF50" stroke-width="5" stroke-linecap="round"/></g>` : '';
+  const hatSvg = hat ? `<g class="hat">${hatSide(hat === true ? 'strawberry' : hat)}</g>` : '';
   const legs = `<g class="legA"><ellipse cx="62" cy="160" rx="11" ry="7" fill="#F3B9A0"/><ellipse cx="146" cy="160" rx="10" ry="7" fill="#F3B9A0"/></g>
       <g class="legB"><ellipse cx="82" cy="160" rx="11" ry="7" fill="#F3B9A0"/><ellipse cx="128" cy="160" rx="10" ry="7" fill="#F3B9A0"/></g>`;
 
@@ -71,6 +71,42 @@ export function piggySide(opts = {}) {
   </svg>`;
 }
 
+// Hats drawn in side-view piggy coordinates. The head is around (148, 112),
+// its top at about y 76, the ear at (136, 80).
+const HAT_SIDE = {
+  strawberry: `<path d="M112 70 Q136 30 164 60 Q148 58 132 66 Q122 72 112 70Z" fill="#FF5C7A"/><circle cx="118" cy="62" r="3" fill="#FFF3B0"/><circle cx="134" cy="54" r="3" fill="#FFF3B0"/><circle cx="150" cy="56" r="3" fill="#FFF3B0"/><path d="M110 72 Q140 62 170 68" fill="none" stroke="#4CAF50" stroke-width="5" stroke-linecap="round"/>`,
+  bow: `<path d="M150 66 Q128 46 126 62 Q126 76 150 66Z M150 66 Q172 46 174 62 Q174 76 150 66Z" fill="#FF5C7A" stroke="#C93A5B" stroke-width="2.5" stroke-linejoin="round"/><circle cx="150" cy="66" r="6" fill="#FF8FA8" stroke="#C93A5B" stroke-width="2.5"/>`,
+  flower: `<g fill="#fff" stroke="#E6DCC8" stroke-width="2">${[0, 60, 120, 180, 240, 300].map(a => `<ellipse cx="150" cy="50" rx="7" ry="13" transform="rotate(${a} 150 62)"/>`).join('')}</g><circle cx="150" cy="62" r="7" fill="#FFD34D" stroke="#E0941C" stroke-width="2"/>`,
+  party: `<path d="M150 14 L124 76 L176 76Z" fill="#7B6CF6" stroke="#4F42B5" stroke-width="3" stroke-linejoin="round"/><path d="M138 44 L162 44 M131 60 L169 60" stroke="#FFD34D" stroke-width="5"/><circle cx="150" cy="14" r="7" fill="#FF8FA8" stroke="#C93A5B" stroke-width="2"/>`,
+  beanie: `<path d="M114 78 Q118 34 150 32 Q182 34 186 78Z" fill="#4FA8F5" stroke="#2369B8" stroke-width="3"/><path d="M128 50 Q150 42 172 50 M124 62 Q150 54 176 62" stroke="#2369B8" stroke-width="2.5" fill="none" opacity=".6"/><path d="M112 78 Q150 66 188 78 L188 88 Q150 78 112 88Z" fill="#2369B8"/><circle cx="150" cy="30" r="8" fill="#FFF3B0" stroke="#E0941C" stroke-width="2"/>`,
+  sunhat: `<ellipse cx="148" cy="74" rx="52" ry="12" fill="#F2CE7E" stroke="#C98F4B" stroke-width="3"/><path d="M118 74 Q124 38 148 38 Q172 38 178 74Z" fill="#F2CE7E" stroke="#C98F4B" stroke-width="3"/><path d="M120 66 Q148 54 176 66" stroke="#FF5C7A" stroke-width="6" fill="none"/>`,
+  chef: `<path d="M118 74 Q112 50 134 46 Q142 30 160 40 Q178 36 180 56 Q188 70 174 76Z" fill="#fff" stroke="#D5CDBA" stroke-width="3"/><rect x="120" y="68" width="56" height="12" rx="4" fill="#fff" stroke="#D5CDBA" stroke-width="3"/>`,
+  dumpling: `<circle cx="150" cy="56" r="20" fill="#FFE6C8" stroke="#D9A86E" stroke-width="3"/><path d="M150 36 Q140 44 138 54 M150 36 Q150 46 148 54 M150 36 Q160 44 162 54" stroke="#D9A86E" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="144" cy="60" r="2" fill="#2A1A14"/><circle cx="156" cy="60" r="2" fill="#2A1A14"/><path d="M147 64 Q150 67 153 64" stroke="#2A1A14" stroke-width="1.6" fill="none"/>`,
+  crown: `<path d="M120 76 L116 42 L134 58 L150 34 L166 58 L184 42 L180 76Z" fill="#FFD34D" stroke="#E0941C" stroke-width="3" stroke-linejoin="round"/><circle cx="150" cy="66" r="5" fill="#FF5C7A"/><circle cx="132" cy="68" r="3.5" fill="#4FA8F5"/><circle cx="168" cy="68" r="3.5" fill="#6FCF4F"/>`,
+  wizard: `<path d="M150 4 L126 74 L178 74Z" fill="#7B6CF6" stroke="#4F42B5" stroke-width="3" stroke-linejoin="round"/><ellipse cx="150" cy="74" rx="38" ry="9" fill="#7B6CF6" stroke="#4F42B5" stroke-width="3"/><path d="M146 30 l2 5 5 1 -4 3 1 5 -4 -3 -4 3 1 -5 -4 -3 5 -1z M156 52 l1.5 3.5 3.5 .5 -2.5 2.5 .5 3.5 -3 -2 -3 2 .5 -3.5 -2.5 -2.5 3.5 -.5z" fill="#FFD34D"/>`,
+};
+export function hatSide(id) { return HAT_SIDE[id] || ''; }
+
+// Simplified hats for the top-down maze piggy (nose points up, head centre at (0,-44)).
+const HAT_TOP = {
+  strawberry: `<path d="M-30 -56 Q0 -96 30 -60 Q14 -62 0 -58 Q-16 -54 -30 -56Z" fill="#FF5C7A"/><circle cx="-14" cy="-66" r="4" fill="#FFF3B0"/><circle cx="4" cy="-76" r="4" fill="#FFF3B0"/><circle cx="18" cy="-66" r="4" fill="#FFF3B0"/>`,
+  bow: `<path d="M0 -40 Q-26 -58 -24 -40 Q-24 -24 0 -40Z M0 -40 Q26 -58 24 -40 Q24 -24 0 -40Z" fill="#FF5C7A" stroke="#C93A5B" stroke-width="2.5"/><circle cx="0" cy="-40" r="6" fill="#FF8FA8" stroke="#C93A5B" stroke-width="2.5"/>`,
+  flower: `<g fill="#fff" stroke="#E6DCC8" stroke-width="2">${[0, 60, 120, 180, 240, 300].map(a => `<ellipse cx="0" cy="-56" rx="7" ry="13" transform="rotate(${a} 0 -44)"/>`).join('')}</g><circle cx="0" cy="-44" r="7" fill="#FFD34D" stroke="#E0941C" stroke-width="2"/>`,
+  party: `<circle cx="0" cy="-44" r="24" fill="#7B6CF6" stroke="#4F42B5" stroke-width="3"/><circle cx="0" cy="-44" r="14" fill="#FFD34D"/><circle cx="0" cy="-44" r="6" fill="#FF8FA8"/>`,
+  beanie: `<circle cx="0" cy="-44" r="30" fill="#4FA8F5" stroke="#2369B8" stroke-width="3"/><circle cx="0" cy="-44" r="30" fill="none" stroke="#2369B8" stroke-width="8" opacity=".5"/><circle cx="0" cy="-44" r="8" fill="#FFF3B0" stroke="#E0941C" stroke-width="2"/>`,
+  sunhat: `<circle cx="0" cy="-44" r="46" fill="#F2CE7E" stroke="#C98F4B" stroke-width="3"/><circle cx="0" cy="-44" r="26" fill="none" stroke="#FF5C7A" stroke-width="6"/><circle cx="0" cy="-44" r="22" fill="#F2CE7E" stroke="#C98F4B" stroke-width="3"/>`,
+  chef: `<circle cx="0" cy="-44" r="30" fill="#fff" stroke="#D5CDBA" stroke-width="3"/><circle cx="-14" cy="-54" r="12" fill="#fff" stroke="#D5CDBA" stroke-width="3"/><circle cx="14" cy="-54" r="12" fill="#fff" stroke="#D5CDBA" stroke-width="3"/>`,
+  dumpling: `<circle cx="0" cy="-44" r="22" fill="#FFE6C8" stroke="#D9A86E" stroke-width="3"/><path d="M0 -44 L-14 -58 M0 -44 L0 -64 M0 -44 L14 -58 M0 -44 L-18 -40 M0 -44 L18 -40" stroke="#D9A86E" stroke-width="2.5" stroke-linecap="round"/>`,
+  crown: `<path d="M-28 -24 L-32 -60 L-16 -46 L0 -72 L16 -46 L32 -60 L28 -24Z" fill="#FFD34D" stroke="#E0941C" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="-36" r="5" fill="#FF5C7A"/>`,
+  wizard: `<circle cx="0" cy="-44" r="38" fill="#7B6CF6" stroke="#4F42B5" stroke-width="3"/><circle cx="0" cy="-44" r="18" fill="#6A5BE0" stroke="#4F42B5" stroke-width="3"/><path d="M-4 -48 l2 5 5 1 -4 3 1 5 -4 -3 -4 3 1 -5 -4 -3 5 -1z" fill="#FFD34D"/>`,
+};
+export function hatTop(id) { return HAT_TOP[id] || ''; }
+
+// A hat by itself, for the shop.
+export function hatIcon(id) {
+  return `<svg viewBox="104 0 92 92" aria-hidden="true"><g transform="translate(0 8)">${hatSide(id)}</g></svg>`;
+}
+
 // Top-down piggy for the maze, drawn around (0,0) with the nose pointing up.
 export function piggyTop(opts = {}) {
   const coat = opts.coat || DEFAULT_COAT;
@@ -78,7 +114,7 @@ export function piggyTop(opts = {}) {
   const main = skinny ? '#F2B8A0' : col(coat.main);
   const patch = skinny ? '#F7CDBB' : col(coat.patch);
   const dark = darken(main);
-  const hat = opts.hat ? `<path d="M-30 -56 Q0 -96 30 -60 Q14 -62 0 -58 Q-16 -54 -30 -56Z" fill="#FF5C7A"/><circle cx="-14" cy="-66" r="4" fill="#FFF3B0"/><circle cx="4" cy="-76" r="4" fill="#FFF3B0"/><circle cx="18" cy="-66" r="4" fill="#FFF3B0"/>` : '';
+  const hat = opts.hat ? hatTop(opts.hat === true ? 'strawberry' : opts.hat) : '';
   let hair = '';
   if (coat.breed === 'abyssinian') hair = [[-24, 10], [22, 20], [0, 44], [-20, -10], [24, -12]].map(([x, y]) => `<path d="M${x - 8} ${y} a8 8 0 1 1 8 8" fill="none" stroke="${dark}" stroke-width="3" stroke-linecap="round" opacity=".7"/>`).join('');
   if (coat.breed === 'peruvian') hair = `<path d="M-46 30 Q-50 70 -40 84 Q-30 70 -20 86 Q-10 70 0 88 Q10 70 20 86 Q30 70 40 84 Q50 70 46 30Z" fill="${main}" stroke="${dark}" stroke-width="2"/>`;

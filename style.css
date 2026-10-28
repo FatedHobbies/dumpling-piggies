@@ -298,6 +298,14 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .offer .price { font-size: .85rem; margin-top: 4px; }
 .pig-card { width: 100%; max-width: 110px; } .pig-card svg { width: 100%; height: auto; }
 .pig-card.big { max-width: 160px; margin: 0 auto; }
+.hats { padding: 10px; }
+.hat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.hat > svg { width: 56px; height: 56px; }
+.hat > span:first-of-type { font-size: .72rem; font-weight: 700; color: var(--soft); }
+.hat .price { font-size: .8rem; }
+.hat.owned .price { color: var(--blue-dark); }
+.hat.wearing { border-color: var(--blue); box-shadow: 0 3px 0 var(--blue-dark); background: #EAF4FF; }
+.hat.wearing .price { color: var(--green-dark); }
 #items { display: flex; flex-direction: column; gap: 10px; }
 .item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; text-align: left; }
 .item:active { transform: translateY(2px); }
