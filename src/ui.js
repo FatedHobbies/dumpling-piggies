@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 8;
+const VERSION = 9;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -639,6 +639,7 @@ function shopView() {
     <div class="adopt panel" id="adopt"></div>
     <div class="ribbon"><span>Upgrades</span></div>
     <div id="items"></div>
+    <div class="row center"><button class="btn btn-grey" id="replay">Replay tutorial</button></div>
     <button class="reset" id="reset">Start over</button>
     <p class="version">version ${VERSION}</p></section>`);
 }
@@ -690,6 +691,12 @@ function updateShop() {
     });
     items.appendChild(b);
   }
+  $('#replay').onclick = () => {
+    state.tutorial = { step: 1 };
+    if (!(state.dumplings['carrot+carrot'] > 0)) state.dumplings['carrot+carrot'] = 1;
+    if (state.compost < 1) state.compost = 1;
+    tab = 'steamer'; sfx.ding(); render(true);
+  };
   $('#reset').onclick = () => {
     confirmBox('Start over with a brand new piggy? Everything will be gone.', () => { wiped = true; wipe(); location.reload(); });
   };

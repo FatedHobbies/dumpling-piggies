@@ -298,6 +298,7 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .item .txt b { font-family: var(--display); font-weight: 600; }
 .item .txt small { color: var(--soft); font-size: .8rem; }
 .item.owned { opacity: .6; } .item.owned .price { color: var(--green-dark); }
+.shop .row.center { margin-top: 14px; }
 .version { text-align: center; color: var(--soft); font-size: .7rem; margin-top: 6px; opacity: .7; }
 .reset { margin: 24px auto 0; color: var(--soft); font-size: .8rem; text-decoration: underline; }
 
