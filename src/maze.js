@@ -143,7 +143,7 @@ export function reward(state, m, run) {
   m.finished[h] = true;
   const coins = 8 + (first ? 12 : 0);
   state.coins += coins;
-  state.piggy.fun = Math.min(100, state.piggy.fun + 30);
+  for (const p of state.piggies) p.fun = Math.min(100, p.fun + 30);
   state.stats.mazes = (state.stats.mazes || 0) + 1;
   return { coins, first };
 }

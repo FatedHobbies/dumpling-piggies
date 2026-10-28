@@ -25,31 +25,78 @@ export const RECIPES = {
 };
 
 export const UPGRADES = {
-  plot4:    { name: 'Fourth garden plot', desc: 'One more plot to grow veggies in.',       cost: 60,  icon: 'plot' },
-  sunlamp:  { name: 'Sun lamp',           desc: 'Veggies grow twice as fast.',              cost: 90,  icon: 'sun' },
-  autoscoop:{ name: 'Robo-scooper',       desc: 'A tiny robot scoops poop while you are away.', cost: 150, icon: 'robot' },
-  bigbowl:  { name: 'Big bowl',           desc: 'Your piggy stays full for longer.',        cost: 120, icon: 'bowl' },
-  hat:      { name: 'Strawberry hat',     desc: 'A hat for your piggy. Very fancy.',        cost: 80,  icon: 'hat' },
+  plot4:    { name: 'Fourth garden plot', desc: 'One more plot to grow veggies in.',             cost: 60,  icon: 'plot' },
+  sunlamp:  { name: 'Sun lamp',           desc: 'Veggies grow twice as fast.',                    cost: 90,  icon: 'sun' },
+  autoscoop:{ name: 'Robo-scooper',       desc: 'A tiny robot scoops poop while you are away.',   cost: 150, icon: 'robot' },
+  bigbowl:  { name: 'Big bowl',           desc: 'Your piggies stay full for longer.',             cost: 120, icon: 'bowl' },
+  hat:      { name: 'Strawberry hat',     desc: 'A hat for your piggies. Very fancy.',            cost: 80,  icon: 'hat' },
+  pen2:     { name: 'Bigger pen',         desc: 'Room for two more piggies.',                     cost: 300, icon: 'pen' },
+  pen3:     { name: 'Huge pen',           desc: 'Room for two more piggies after that.',          cost: 800, icon: 'pen', needs: 'pen2' },
 };
 
 export const RENAME_COST = 30;
+export const ADOPT_COST = [0, 80, 200, 400, 700, 1000];
+export const MAX_PIGGIES = 6;
+
+// Real guinea pig breeds, which decide hair length and texture. Colors are
+// picked separately so two piggies of one breed still look different.
+export const BREEDS = {
+  american:   { name: 'American',    blurb: 'Short, smooth and shiny.' },
+  abyssinian: { name: 'Abyssinian',  blurb: 'Swirly rosettes all over.' },
+  peruvian:   { name: 'Peruvian',    blurb: 'Long flowing hair, a bit messy.' },
+  texel:      { name: 'Texel',       blurb: 'Curly like a little sheep.' },
+  skinny:     { name: 'Skinny pig',  blurb: 'Almost no hair at all!' },
+};
+
+export const COLORS = {
+  ginger:    '#E9A15B',
+  chocolate: '#7A4A2B',
+  cream:     '#F3DDB0',
+  black:     '#3B2A24',
+  white:     '#FFF7EC',
+  grey:      '#A8A09A',
+  lilac:     '#C9B8D6',
+};
 
 const NAMES = ['Bao Bao', 'Sir Wheeksalot', 'Little Potsticker', 'Mochi', 'Noodle', 'Peanut',
-  'Dumpling Doug', 'Princess Squeak', 'Gyoza', 'Biscuit', 'Captain Fluff', 'Wonton', 'Pudding', 'Tofu'];
+  'Dumpling Doug', 'Princess Squeak', 'Gyoza', 'Biscuit', 'Captain Fluff', 'Wonton', 'Pudding', 'Tofu',
+  'Nugget', 'Pickles', 'Waffles', 'Sprout', 'Marshmallow', 'Buttons'];
 
 export const GROW_TIME = 90;        // seconds for a plant to be ready
 export const MAX_AWAY = 8 * 3600;   // away-time progress is capped at 8 hours
-export const MAX_POOPS = 6;
+export const MAX_POOPS = 8;
 
-export function randomName(rng = Math.random) {
-  return NAMES[Math.floor(rng() * NAMES.length)];
+export function randomName(rng = Math.random, taken = []) {
+  const free = NAMES.filter(n => !taken.includes(n));
+  const pool = free.length ? free : NAMES;
+  return pool[Math.floor(rng() * pool.length)];
+}
+
+export function randomCoat(rng = Math.random, breed = null) {
+  const breeds = Object.keys(BREEDS);
+  breed = breed || breeds[Math.floor(rng() * breeds.length)];
+  const colors = Object.keys(COLORS);
+  const main = colors[Math.floor(rng() * colors.length)];
+  let patch = colors[Math.floor(rng() * colors.length)];
+  if (patch === main) patch = main === 'white' ? 'ginger' : 'white';
+  return { breed, main, patch };
+}
+
+export function newPiggy(state, coat, name, rng = Math.random) {
+  return {
+    id: state.nextId++,
+    name: name || randomName(rng, state.piggies.map(p => p.name)),
+    coat: coat || randomCoat(rng),
+    hunger: 70, fun: 70, effect: null, effectUntil: 0,
+    x: 0.3 + rng() * 0.4, y: 0.5,
+  };
 }
 
 export function newState(now = Date.now()) {
-  return {
-    version: 1,
+  const s = {
+    version: 2,
     coins: 0,
-    piggy: { name: randomName(), hunger: 70, fun: 70, effect: null, effectUntil: 0 },
+    piggies: [],
     poops: [],                      // { id, x, y }
     garden: [null, null, null],     // null or { filling, plantedAt }
     compost: 2,                     // scooped poop, needed to plant
@@ -58,10 +105,27 @@ export function newState(now = Date.now()) {
     discovered: [],                 // recipe keys found so far
     upgrades: {},                   // upgradeId -> true
     stats: { fed: 0, scooped: 0, cooked: 0, petted: 0 },
+    offer: null,                    // the three piggies up for adoption
     lastSeen: now,
     createdAt: now,
     nextId: 1,
   };
+  s.piggies.push(newPiggy(s, randomCoat(Math.random, 'american')));
+  return s;
+}
+
+// Older saves had one `piggy`; lift it into the `piggies` list.
+export function migrate(state) {
+  if (state.version >= 2) return state;
+  const old = state.piggy || {};
+  state.piggies = [{
+    id: state.nextId++, name: old.name || 'Bao Bao', coat: { breed: 'american', main: 'ginger', patch: 'white' },
+    hunger: old.hunger ?? 70, fun: old.fun ?? 70, effect: old.effect || null, effectUntil: old.effectUntil || 0, x: 0.5, y: 0.5,
+  }];
+  delete state.piggy;
+  state.offer = null;
+  state.version = 2;
+  return state;
 }
 
 export function recipeKey(a, b) {
@@ -76,41 +140,56 @@ export function growTime(state) {
   return state.upgrades.sunlamp ? GROW_TIME / 2 : GROW_TIME;
 }
 
-export function isHappy(state) {
-  const p = state.piggy;
-  return p.hunger > 40 && p.fun > 40 && state.poops.length < 3;
+export function capacity(state) {
+  return state.upgrades.pen3 ? 6 : state.upgrades.pen2 ? 4 : 2;
+}
+
+export function adoptCost(state) {
+  return ADOPT_COST[Math.min(state.piggies.length, ADOPT_COST.length - 1)];
+}
+
+export function isHappy(state, p) {
+  return p.hunger > 40 && p.fun > 40 && state.poops.length < 4;
 }
 
 // Mood drives the piggy's face and the coin trickle.
-export function mood(state) {
-  const p = state.piggy;
+export function mood(state, p) {
   if (p.hunger < 25) return 'hungry';
-  if (state.poops.length >= 4) return 'stinky';
+  if (state.poops.length >= 5) return 'stinky';
   if (p.fun < 25) return 'bored';
   if (p.hunger > 60 && p.fun > 60) return 'happy';
   return 'okay';
+}
+
+export function hungriest(state) {
+  return state.piggies.reduce((a, b) => (b.hunger < a.hunger ? b : a), state.piggies[0]);
+}
+
+export function piggy(state, id) {
+  return state.piggies.find(p => p.id === id) || null;
 }
 
 // Advance the simulation by `dt` seconds. Returns a list of events the UI
 // may want to show (coins earned, effect ended, plant ready...).
 export function tick(state, dt, now = Date.now()) {
   const events = [];
-  const p = state.piggy;
   const hungerRate = state.upgrades.bigbowl ? 100 / 1800 : 100 / 1200; // full to empty in 30 or 20 min
   const funRate = 100 / 900;                                             // 15 min
-  const sleepy = p.effect === 'sleepy' && now < p.effectUntil;
-  p.hunger = clamp(p.hunger - hungerRate * dt * (sleepy ? 0.25 : 1), 0, 100);
-  p.fun = clamp(p.fun - funRate * dt * (sleepy ? 0.25 : 1), 0, 100);
-
-  if (p.effect && now >= p.effectUntil) {
-    p.effect = null;
-    events.push({ type: 'effectEnd' });
+  let happy = 0;
+  for (const p of state.piggies) {
+    const sleepy = p.effect === 'sleepy' && now < p.effectUntil;
+    p.hunger = clamp(p.hunger - hungerRate * dt * (sleepy ? 0.25 : 1), 0, 100);
+    p.fun = clamp(p.fun - funRate * dt * (sleepy ? 0.25 : 1), 0, 100);
+    if (p.effect && now >= p.effectUntil) {
+      p.effect = null;
+      events.push({ type: 'effectEnd', id: p.id });
+    }
+    if (isHappy(state, p)) happy += p.effect === 'sparkle' ? 2 : 1;
   }
 
-  // Happy piggies earn a trickle: 1 coin every 20 seconds, double while sparkling.
-  if (isHappy(state)) {
-    const rate = (p.effect === 'sparkle' ? 2 : 1) / 20;
-    state.trickle = (state.trickle || 0) + rate * dt;
+  // Each happy piggy earns a trickle: 1 coin every 20 seconds, double while sparkling.
+  if (happy > 0) {
+    state.trickle = (state.trickle || 0) + happy / 20 * dt;
     while (state.trickle >= 1) {
       state.trickle -= 1;
       state.coins += 1;
@@ -118,9 +197,10 @@ export function tick(state, dt, now = Date.now()) {
     }
   }
 
-  // A fed piggy poops every so often (about once per 2 minutes while fed).
-  if (p.hunger > 30 && state.poops.length < MAX_POOPS) {
-    state.poopTimer = (state.poopTimer || 0) + dt;
+  // Fed piggies poop every so often (about once per 2 minutes each while fed).
+  const fed = state.piggies.filter(p => p.hunger > 30).length;
+  if (fed > 0 && state.poops.length < MAX_POOPS) {
+    state.poopTimer = (state.poopTimer || 0) + dt * fed;
     if (state.poopTimer >= 120) {
       state.poopTimer = 0;
       addPoop(state);
@@ -132,8 +212,8 @@ export function tick(state, dt, now = Date.now()) {
   return events;
 }
 
-// Called once on load. Simulates the time away in coarse steps so the piggy
-// doesn't drain to zero while she sleeps, then summarises what happened.
+// Called once on load. Simulates the time away in coarse steps so the piggies
+// don't drain to zero while she sleeps, then summarises what happened.
 export function applyAway(state, now = Date.now()) {
   const away = Math.max(0, (now - state.lastSeen) / 1000);
   const simulated = Math.min(away, MAX_AWAY);
@@ -145,29 +225,33 @@ export function applyAway(state, now = Date.now()) {
     tick(state, step, state.lastSeen + (t + step) * 1000);
     t += step;
   }
-  // Neglect never goes below "a bit grumpy": the piggy is never in danger.
-  state.piggy.hunger = Math.max(state.piggy.hunger, 15);
-  state.piggy.fun = Math.max(state.piggy.fun, 15);
+  // Neglect never goes below "a bit grumpy": the piggies are never in danger.
+  for (const p of state.piggies) {
+    p.hunger = Math.max(p.hunger, 15);
+    p.fun = Math.max(p.fun, 15);
+  }
+  let scooped = 0;
   if (state.upgrades.autoscoop) {
-    const scooped = state.poops.length;
+    scooped = state.poops.length;
     state.compost += scooped;
     state.poops = [];
     state.stats.scooped += scooped;
   }
   state.lastSeen = now;
-  return { away, coins: state.coins - before, poops: state.poops.length - poopsBefore };
+  return { away, coins: state.coins - before, poops: state.poops.length - poopsBefore, scooped };
 }
 
 function addPoop(state) {
-  state.poops.push({ id: state.nextId++, x: 0.15 + Math.random() * 0.7, y: 0.72 + Math.random() * 0.2 });
+  state.poops.push({ id: state.nextId++, x: 0.1 + Math.random() * 0.8, y: 0.2 + Math.random() * 0.75 });
 }
 
-export function feed(state, key, now = Date.now()) {
+export function feed(state, key, piggyId = null, now = Date.now()) {
   const r = RECIPES[key];
   if (!r || !(state.dumplings[key] > 0)) return { ok: false, reason: 'none' };
-  if (state.piggy.hunger >= 98) return { ok: false, reason: 'full' };
+  const p = (piggyId != null && piggy(state, piggyId)) || hungriest(state);
+  if (!p) return { ok: false, reason: 'none' };
+  if (p.hunger >= 98) return { ok: false, reason: 'full', piggy: p };
   state.dumplings[key] -= 1;
-  const p = state.piggy;
   p.hunger = clamp(p.hunger + r.hunger, 0, 100);
   p.fun = clamp(p.fun + 5, 0, 100);
   state.coins += r.coins;
@@ -175,18 +259,18 @@ export function feed(state, key, now = Date.now()) {
   if (r.effect) { p.effect = r.effect; p.effectUntil = now + 20000; }
   // Eating makes poop more likely soon.
   state.poopTimer = (state.poopTimer || 0) + 45;
-  return { ok: true, coins: r.coins, effect: r.effect };
+  return { ok: true, coins: r.coins, effect: r.effect, piggy: p };
 }
 
-export function pet(state) {
-  const p = state.piggy;
+export function pet(state, piggyId) {
+  const p = piggy(state, piggyId) || state.piggies[0];
   const gain = p.fun < 100 ? 12 : 0;
   p.fun = clamp(p.fun + 12, 0, 100);
   state.stats.petted += 1;
   // Petting pays a little only while it is still fun for the piggy.
   const coins = gain > 0 ? 1 : 0;
   state.coins += coins;
-  return { ok: true, coins };
+  return { ok: true, coins, piggy: p };
 }
 
 export function scoop(state, id) {
@@ -241,9 +325,14 @@ export function cook(state, a, b) {
   return { ok: true, key, isNew, recipe: RECIPES[key] };
 }
 
+export function canBuy(state, id) {
+  const u = UPGRADES[id];
+  return !!u && !state.upgrades[id] && (!u.needs || state.upgrades[u.needs]);
+}
+
 export function buy(state, id) {
   const u = UPGRADES[id];
-  if (!u || state.upgrades[id]) return { ok: false };
+  if (!canBuy(state, id)) return { ok: false };
   if (state.coins < u.cost) return { ok: false, reason: 'coins' };
   state.coins -= u.cost;
   state.upgrades[id] = true;
@@ -251,13 +340,42 @@ export function buy(state, id) {
   return { ok: true };
 }
 
-export function rename(state, name) {
+export function rename(state, piggyId, name) {
+  const p = piggy(state, piggyId);
   name = String(name || '').trim().slice(0, 16);
-  if (!name) return { ok: false };
+  if (!p || !name) return { ok: false };
   if (state.coins < RENAME_COST) return { ok: false, reason: 'coins' };
   state.coins -= RENAME_COST;
-  state.piggy.name = name;
+  p.name = name;
   return { ok: true };
+}
+
+// Three piggies to choose from, always three different breeds. The offer is
+// kept in the state so closing and reopening the shop shows the same three.
+export function makeOffer(state, rng = Math.random) {
+  if (state.offer && state.offer.length === 3) return state.offer;
+  const breeds = Object.keys(BREEDS).sort(() => rng() - 0.5).slice(0, 3);
+  const taken = state.piggies.map(p => p.name);
+  state.offer = breeds.map(b => {
+    const coat = randomCoat(rng, b);
+    const name = randomName(rng, taken);
+    taken.push(name);
+    return { coat, name };
+  });
+  return state.offer;
+}
+
+export function adopt(state, index) {
+  if (state.piggies.length >= capacity(state)) return { ok: false, reason: 'room' };
+  const cost = adoptCost(state);
+  if (state.coins < cost) return { ok: false, reason: 'coins' };
+  const offer = makeOffer(state)[index];
+  if (!offer) return { ok: false };
+  state.coins -= cost;
+  const p = newPiggy(state, offer.coat, offer.name);
+  state.piggies.push(p);
+  state.offer = null;
+  return { ok: true, piggy: p };
 }
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }

@@ -7,13 +7,15 @@ import * as M from './maze.js';
 let state = null;
 let tab = 'steamer';
 let selected = [];          // fillings chosen in the kitchen
+let selectedPig = null;     // id of the piggy whose name is in the HUD
 let lastTick = Date.now();
-let lastFace = '';
-let run = null;              // the maze run in progress, or null while building
+let run = null;             // the maze run in progress, or null while building
 let runTimer = null;
+const wander = new Map();   // piggy id -> { tx, ty, pause, face }
 
 const $ = (s, el = document) => el.querySelector(s);
 const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export function start() {
   state = load();
@@ -22,18 +24,26 @@ export function start() {
     state = G.newState();
     welcome = 'new';
   } else {
+    G.migrate(state);
     welcome = G.applyAway(state);
   }
   if (!state.maze) state.maze = M.newMaze();
+  selectedPig = state.piggies[0].id;
   buildShell();
   render();
-  if (welcome === 'new') toast(`Meet ${state.piggy.name}! Tap a dumpling to feed them.`, 'big');
-  else if (welcome.away > 120) {
+  if (welcome === 'new') {
+    const p = state.piggies[0];
+    popup('A new friend!', `<div class="pig-card big">${Art.piggySide({ coat: p.coat })}</div>
+      <p>This is <b>${esc(p.name)}</b>. Feed them dumplings, pet them, and scoop their poop!</p>`, 'Hello!');
+  } else if (welcome.away > 120) {
     const mins = Math.round(welcome.away / 60);
     const when = mins >= 120 ? `${Math.round(mins / 60)} hours` : `${mins} minutes`;
-    toast(`You were away ${when}. ${state.piggy.name} earned ${welcome.coins} coins!`, 'big');
+    popup('Welcome back!', `<p class="reward-time">You were away <b>${when}</b></p>
+      <div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${welcome.coins}</span>
+      ${welcome.scooped ? `<span class="reward-item">${Art.compostIcon()} +${welcome.scooped}</span>` : ''}</div>`, 'Claim');
   }
   setInterval(loop, 1000);
+  setInterval(wanderTick, 100);
   setInterval(() => save(state), 5000);
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(state); });
   window.addEventListener('pagehide', () => save(state));
@@ -46,23 +56,26 @@ function loop() {
   const events = G.tick(state, dt, now);
   for (const e of events) {
     if (e.type === 'coin') floatCoin();
-    if (e.type === 'poop') { sfx.plop(); }
-    if (e.type === 'effectEnd') renderPiggy();
+    if (e.type === 'poop') sfx.plop();
   }
   render();
 }
 
+function current() {
+  return G.piggy(state, selectedPig) || state.piggies[0];
+}
+
 function buildShell() {
   document.body.innerHTML = `
-    <header class="top">
-      <button class="name" id="name" aria-label="Rename your piggy"></button>
-      <div class="coins"><span class="coin-ico">${Art.coinIcon()}</span><span id="coins">0</span></div>
+    <header class="hud">
+      <button class="hud-pig" id="name" aria-label="Rename your piggy"><span class="hud-avatar" id="avatar"></span><span class="hud-name" id="pigname"></span></button>
+      <div class="hud-coins"><span class="coin-ico">${Art.coinIcon()}</span><span id="coins">0</span></div>
     </header>
     <main id="view"></main>
     <nav class="tabs">
-      <button data-tab="steamer" class="tab" aria-label="Steamer"><span class="ico">🥟</span>Steamer</button>
+      <button data-tab="steamer" class="tab" aria-label="Pen"><span class="ico">🏠</span>Pen</button>
       <button data-tab="garden" class="tab" aria-label="Garden"><span class="ico">🥕</span>Garden</button>
-      <button data-tab="kitchen" class="tab" aria-label="Kitchen"><span class="ico">🍲</span>Kitchen</button>
+      <button data-tab="kitchen" class="tab" aria-label="Kitchen"><span class="ico">🥟</span>Kitchen</button>
       <button data-tab="maze" class="tab" aria-label="Maze"><span class="ico">🏃</span>Maze</button>
       <button data-tab="shop" class="tab" aria-label="Shop"><span class="ico">🛍️</span>Shop</button>
     </nav>
@@ -72,8 +85,12 @@ function buildShell() {
 }
 
 function render(force = false) {
+  const p = current();
   $('#coins').textContent = state.coins;
-  $('#name').textContent = state.piggy.name;
+  $('#pigname').textContent = p.name;
+  const av = $('#avatar');
+  const asig = p.id + JSON.stringify(p.coat) + (state.upgrades.hat ? 'h' : '');
+  if (av.dataset.sig !== asig) { av.dataset.sig = asig; av.innerHTML = Art.piggySide({ coat: p.coat, hat: !!state.upgrades.hat }); }
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   const view = $('#view');
   if (force || view.dataset.tab !== tab) {
@@ -84,45 +101,66 @@ function render(force = false) {
   ({ steamer: updateSteamer, garden: updateGarden, kitchen: updateKitchen, maze: updateMaze, shop: updateShop }[tab])();
 }
 
-// ---------- Steamer ----------
+// ---------- Pen ----------
 function steamerView() {
-  const v = el(`<section class="steamer">
-    <div class="needs">
+  const v = el(`<section class="pen">
+    <div class="needs panel-dark">
       <div class="need" data-need="hunger"><span>🍽️</span><div class="bar"><i></i></div></div>
       <div class="need" data-need="fun"><span>🎉</span><div class="bar"><i></i></div></div>
       <div class="need" data-need="clean"><span>🧹</span><div class="bar"><i></i></div></div>
     </div>
     <div class="stage" id="stage">
-      <div class="steam s1"></div><div class="steam s2"></div><div class="steam s3"></div>
-      <div class="piggy" id="piggy" role="button" aria-label="Pet your piggy" tabindex="0"></div>
-      <div class="poops" id="poops"></div>
-      <div class="basket"></div>
+      ${Art.penScene()}
+      <div class="floor" id="floor"></div>
+      <span class="pen-count" id="pencount"></span>
     </div>
-    <div class="tray" id="tray"></div>
+    <div class="tray panel" id="tray"></div>
   </section>`);
-  const piggy = $('#piggy', v);
-  piggy.addEventListener('click', onPet);
-  piggy.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') onPet(); });
   return v;
 }
 
 function updateSteamer() {
-  const p = state.piggy;
+  const p = current();
   $('[data-need="hunger"] i').style.width = p.hunger + '%';
   $('[data-need="fun"] i').style.width = p.fun + '%';
   $('[data-need="clean"] i').style.width = Math.max(0, 100 - state.poops.length / G.MAX_POOPS * 100) + '%';
-  renderPiggy();
-  // Poops
-  const poops = $('#poops');
-  const have = new Set([...poops.children].map(c => +c.dataset.id));
-  for (const poop of state.poops) {
-    if (!have.has(poop.id)) {
-      const b = el(`<button class="poop" data-id="${poop.id}" aria-label="Scoop the poop" style="left:${poop.x * 100}%;top:${poop.y * 100}%">${Art.poop()}</button>`);
-      b.addEventListener('click', () => onScoop(poop.id, b));
-      poops.appendChild(b);
+  $('#pencount').textContent = `${state.piggies.length} / ${G.capacity(state)} piggies`;
+  const floor = $('#floor');
+  // Piggies
+  const have = new Map([...floor.querySelectorAll('.piggy')].map(c => [+c.dataset.id, c]));
+  for (const pig of state.piggies) {
+    let d = have.get(pig.id);
+    if (!d) {
+      d = el(`<div class="piggy" data-id="${pig.id}" role="button" tabindex="0" aria-label="Pet ${esc(pig.name)}"><span class="need-bubble"></span><div class="pig-art"></div><span class="tag"></span></div>`);
+      d.addEventListener('click', () => onPet(pig.id));
+      d.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') onPet(pig.id); });
+      floor.appendChild(d);
     }
+    have.delete(pig.id);
+    const m = G.mood(state, pig);
+    const face = m + JSON.stringify(pig.coat) + (state.upgrades.hat ? '+hat' : '');
+    if (d.dataset.face !== face) { d.dataset.face = face; $('.pig-art', d).innerHTML = Art.piggySide({ coat: pig.coat, hat: !!state.upgrades.hat, mood: m }); }
+    $('.tag', d).textContent = pig.name;
+    $('.need-bubble', d).textContent = pig.hunger < 25 ? '🍽️' : pig.fun < 25 ? '🎉' : '';
+    const w = wander.get(pig.id);
+    d.classList.toggle('mood-' + m, true);
+    for (const c of [...d.classList]) if (c.startsWith('mood-') && c !== 'mood-' + m) d.classList.remove(c);
+    for (const c of ['sparkle', 'sleepy', 'zoom']) d.classList.toggle(c, pig.effect === c);
+    d.classList.toggle('selected', pig.id === selectedPig && state.piggies.length > 1);
+    placePig(d, pig, w);
   }
-  for (const c of [...poops.children]) if (!state.poops.find(p => p.id === +c.dataset.id)) c.remove();
+  for (const [, c] of have) c.remove();
+  // Poops
+  const poops = new Map([...floor.querySelectorAll('.poop')].map(c => [+c.dataset.id, c]));
+  for (const poop of state.poops) {
+    if (!poops.has(poop.id)) {
+      const b = el(`<button class="poop" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y}">${Art.poop()}</button>`);
+      b.addEventListener('click', () => onScoop(poop.id, b));
+      floor.appendChild(b);
+    }
+    poops.delete(poop.id);
+  }
+  for (const [, c] of poops) c.remove();
   // Dumpling tray
   const tray = $('#tray');
   const keys = Object.keys(state.dumplings).filter(k => state.dumplings[k] > 0);
@@ -131,44 +169,77 @@ function updateSteamer() {
     tray.dataset.sig = sig;
     tray.innerHTML = keys.length ? '' : `<p class="hint">No dumplings yet. Cook some in the Kitchen!</p>`;
     for (const k of keys) {
-      const b = el(`<button class="dump" aria-label="Feed ${G.RECIPES[k].name}">${Art.dumpling(k, 56)}<b>${state.dumplings[k]}</b></button>`);
-      b.addEventListener('click', () => onFeed(k, b));
+      const b = el(`<button class="dump tile" aria-label="Feed ${G.RECIPES[k].name}">${Art.dumpling(k, 52)}<b class="count">${state.dumplings[k]}</b></button>`);
+      b.addEventListener('click', () => onFeed(k));
       tray.appendChild(b);
     }
   }
 }
 
-function renderPiggy() {
-  const piggy = $('#piggy');
-  if (!piggy) return;
-  const m = G.mood(state);
-  const face = m + (state.upgrades.hat ? '+hat' : '') + (state.piggy.effect || '');
-  if (face !== lastFace || !piggy.firstChild) {
-    lastFace = face;
-    piggy.innerHTML = Art.piggySide({ hat: !!state.upgrades.hat, mood: m });
-  }
-  piggy.className = 'piggy ' + (state.piggy.effect || '') + ' mood-' + m;
+function placePig(d, pig, w) {
+  d.style.setProperty('--x', pig.x.toFixed(3));
+  d.style.setProperty('--y', pig.y.toFixed(3));
+  d.style.setProperty('--s', (0.62 + pig.y * 0.38).toFixed(3));
+  d.style.setProperty('--f', w && w.face < 0 ? -1 : 1);
+  d.style.zIndex = Math.round(pig.y * 100) + 10;
 }
 
-function onPet() {
-  const r = G.pet(state);
-  const piggy = $('#piggy');
-  piggy.classList.remove('hop'); void piggy.offsetWidth; piggy.classList.add('hop');
+// Every 100ms each piggy drifts toward a random spot on the floor, pauses, and
+// picks a new one. Positions live in the state so they survive tab switches.
+function wanderTick() {
+  if (tab !== 'steamer' || document.hidden) return;
+  const now = Date.now();
+  for (const pig of state.piggies) {
+    let w = wander.get(pig.id);
+    if (!w) { w = { tx: pig.x, ty: pig.y, pause: now + Math.random() * 2000, face: pig.x < 0.5 ? 1 : -1 }; wander.set(pig.id, w); }
+    const sleepy = pig.effect === 'sleepy';
+    const zoom = pig.effect === 'zoom';
+    const d = $(`.piggy[data-id="${pig.id}"]`);
+    if (sleepy || now < w.pause) { if (d) d.classList.remove('walking'); continue; }
+    const dx = w.tx - pig.x, dy = w.ty - pig.y;
+    const dist = Math.hypot(dx, dy);
+    const speed = zoom ? 0.09 : 0.018;
+    if (dist < speed) {
+      pig.x = w.tx; pig.y = w.ty;
+      w.pause = now + 1500 + Math.random() * (zoom ? 500 : 4000);
+      w.tx = 0.08 + Math.random() * 0.84; w.ty = Math.random();
+      if (d) d.classList.remove('walking');
+      continue;
+    }
+    pig.x += dx / dist * speed; pig.y += dy / dist * speed;
+    if (Math.abs(dx) > 0.01) w.face = dx > 0 ? 1 : -1;
+    if (d) { d.classList.add('walking'); placePig(d, pig, w); }
+  }
+}
+
+function onPet(id) {
+  selectedPig = id;
+  const r = G.pet(state, id);
+  const d = $(`.piggy[data-id="${id}"]`);
+  if (d) { d.classList.remove('hop'); void d.offsetWidth; d.classList.add('hop'); bubble(d, 'wheek!'); }
   sfx.wheek();
-  bubble(piggy, 'wheek!');
   if (r.coins) floatCoin();
   render();
 }
 
-function onFeed(key, btn) {
-  const r = G.feed(state, key);
-  if (!r.ok) { sfx.nope(); toast(r.reason === 'full' ? `${state.piggy.name} is full!` : 'None left'); return; }
+function onFeed(key) {
+  const target = current();
+  const r = G.feed(state, key, target.id);
+  if (!r.ok) {
+    sfx.nope();
+    if (r.reason === 'full') {
+      // The chosen piggy is full: offer it to whoever is hungriest instead.
+      const h = G.hungriest(state);
+      if (h.id !== target.id && h.hunger < 98) { selectedPig = h.id; return onFeed(key); }
+      toast(`${esc(target.name)} is full!`);
+    } else toast('None left');
+    return;
+  }
   sfx.munch();
-  const piggy = $('#piggy');
-  bubble(piggy, 'nom!');
-  piggy.classList.remove('munch'); void piggy.offsetWidth; piggy.classList.add('munch');
+  const d = $(`.piggy[data-id="${r.piggy.id}"]`);
+  if (d) { bubble(d, 'nom!'); d.classList.remove('munch'); void d.offsetWidth; d.classList.add('munch'); }
   floatCoin(r.coins);
-  if (r.effect) { lastFace = ''; setTimeout(() => sfx.ding(), 300); }
+  if (r.effect) setTimeout(() => sfx.ding(), 300);
   render();
 }
 
@@ -184,13 +255,13 @@ function onScoop(id, btn) {
 
 // ---------- Garden ----------
 function gardenView() {
-  const v = el(`<section class="garden">
-    <div class="compost"><span class="ico">${Art.compostIcon()}</span><span>Compost: <b id="compost">0</b></span><small>Scoop poop to get more</small></div>
+  return el(`<section class="garden">
+    <div class="scene-top">${Art.gardenScene()}</div>
+    <div class="compost panel"><span class="ico">${Art.compostIcon()}</span><span>Compost: <b id="compost">0</b></span><small>Scoop poop to get more</small></div>
     <div class="plots" id="plots"></div>
-    <h2>Pantry</h2>
+    <div class="ribbon"><span>Pantry</span></div>
     <div class="pantry" id="pantry"></div>
   </section>`);
-  return v;
 }
 
 function updateGarden() {
@@ -209,7 +280,8 @@ function updateGarden() {
     const b = plots.children[i];
     const g = state.garden[i];
     const prog = G.plantProgress(state, i);
-    $('.plant', b).innerHTML = g ? Art.sprout(prog, g.filling) : '';
+    const psig = g ? `${g.filling}:${Math.round(prog * 20)}` : '';
+    if (b.dataset.sig !== psig) { b.dataset.sig = psig; $('.plant', b).innerHTML = g ? Art.sprout(prog, g.filling) : ''; }
     $('.ring i', b).style.width = (prog * 100) + '%';
     $('.ring', b).style.visibility = g && prog < 1 ? 'visible' : 'hidden';
     $('.lbl', b).textContent = !g ? 'Plant' : prog >= 1 ? 'Harvest!' : G.FILLINGS[g.filling].name;
@@ -222,7 +294,7 @@ function updateGarden() {
   pantry.dataset.sig = psig;
   pantry.innerHTML = '';
   for (const f of Object.keys(G.FILLINGS)) {
-    pantry.appendChild(el(`<div class="pitem">${Art.veggie(f, 44)}<b>${state.pantry[f] || 0}</b><span>${G.FILLINGS[f].name}</span></div>`));
+    pantry.appendChild(el(`<div class="pitem tile">${Art.veggie(f, 44)}<b class="count">${state.pantry[f] || 0}</b><span>${G.FILLINGS[f].name}</span></div>`));
   }
 }
 
@@ -244,16 +316,17 @@ function onPlot(i) {
 // ---------- Kitchen ----------
 function kitchenView() {
   const v = el(`<section class="kitchen">
-    <div class="pot">
+    <div class="scene-top">${Art.kitchenScene()}</div>
+    <div class="pot panel">
       <div class="slots"><div class="slot" data-slot="0"></div><span class="plus">+</span><div class="slot" data-slot="1"></div></div>
-      <button class="steam-btn" id="cook">Steam it!</button>
+      <button class="btn btn-red big" id="cook">Steam it!</button>
     </div>
     <div class="fillings" id="fillings"></div>
-    <h2>Recipe book <small id="rcount"></small></h2>
-    <div class="book" id="book"></div>
+    <div class="ribbon"><span>Recipe book <small id="rcount"></small></span></div>
+    <div class="book panel" id="book"></div>
   </section>`);
   $('#cook', v).addEventListener('click', onCook);
-  document.querySelectorAll('.slot', v).forEach(s => s.addEventListener('click', () => { selected.splice(+s.dataset.slot, 1); render(); }));
+  v.querySelectorAll('.slot').forEach(s => s.addEventListener('click', () => { selected.splice(+s.dataset.slot, 1); render(); }));
   return v;
 }
 
@@ -263,15 +336,15 @@ function updateKitchen() {
   $('#cook').disabled = selected.length < 2;
   const fl = $('#fillings');
   const fsig = JSON.stringify([state.pantry, selected]);
-  if (fl.dataset.sig === fsig) { /* unchanged */ } else {
-  fl.dataset.sig = fsig;
-  fl.innerHTML = '';
-  for (const f of Object.keys(G.FILLINGS)) {
-    const have = (state.pantry[f] || 0) - selected.filter(x => x === f).length;
-    const b = el(`<button class="fill" ${have < 1 ? 'disabled' : ''}>${Art.veggie(f, 44)}<b>${Math.max(0, have)}</b></button>`);
-    b.addEventListener('click', () => { if (selected.length < 2) { selected.push(f); sfx.pop(); render(); } });
-    fl.appendChild(b);
-  }
+  if (fl.dataset.sig !== fsig) {
+    fl.dataset.sig = fsig;
+    fl.innerHTML = '';
+    for (const f of Object.keys(G.FILLINGS)) {
+      const have = (state.pantry[f] || 0) - selected.filter(x => x === f).length;
+      const b = el(`<button class="fill tile" ${have < 1 ? 'disabled' : ''}>${Art.veggie(f, 44)}<b class="count">${Math.max(0, have)}</b></button>`);
+      b.addEventListener('click', () => { if (selected.length < 2) { selected.push(f); sfx.pop(); render(); } });
+      fl.appendChild(b);
+    }
   }
   const keys = Object.keys(G.RECIPES);
   $('#rcount').textContent = `${state.discovered.length} / ${keys.length}`;
@@ -293,7 +366,7 @@ function onCook() {
   const pot = $('.pot');
   pot.classList.remove('cooking'); void pot.offsetWidth; pot.classList.add('cooking');
   setTimeout(() => {
-    if (r.isNew) { sfx.fanfare(); toast(`New recipe: ${r.recipe.name}! +10 coins`, 'big'); floatCoin(10); }
+    if (r.isNew) { sfx.fanfare(); popup('New recipe!', `<div class="pig-card">${Art.dumpling(r.key, 96)}</div><p><b>${r.recipe.name}</b><br>+10 coins for finding it</p>`, 'Yum!'); floatCoin(10); }
     else { sfx.ding(); toast(`Made a ${r.recipe.name}`); }
     render();
   }, 900);
@@ -304,14 +377,15 @@ const CELL = 48;
 function mazeView() {
   const w = M.COLS * CELL, h = M.ROWS * CELL;
   const v = el(`<section class="maze">
-    <div class="maze-bar">
+    <div class="maze-bar panel">
       <p class="maze-hint" id="mhint"></p>
       <div class="maze-btns" id="mbtns"></div>
     </div>
     <div class="maze-wrap">
-      <svg id="mgrid" viewBox="-6 -6 ${w + 12} ${h + 12}" class="maze-svg">
-        <rect x="-6" y="-6" width="${w + 12}" height="${h + 12}" rx="18" fill="#C8E6A0"/>
+      <svg id="mgrid" viewBox="-10 -10 ${w + 20} ${h + 20}" class="maze-svg">
+        <rect x="-10" y="-10" width="${w + 20}" height="${h + 20}" rx="18" fill="#A7DB8C"/>
         <g id="mcells"></g>
+        <g id="mfence"></g>
         <g id="mlure"></g>
         <g id="mfinish" transform="translate(${M.FINISH.x * CELL + CELL / 2} ${M.FINISH.y * CELL + CELL / 2})"></g>
         <g id="mpig" class="mpig"></g>
@@ -322,13 +396,22 @@ function mazeView() {
   const cells = $('#mcells', v);
   let html = '';
   for (let y = 0; y < M.ROWS; y++) for (let x = 0; x < M.COLS; x++) {
-    html += `<rect class="mcell" data-x="${x}" data-y="${y}" x="${x * CELL + 2}" y="${y * CELL + 2}" width="${CELL - 4}" height="${CELL - 4}" rx="10"/>`;
+    const px = x * CELL, py = y * CELL;
+    html += `<g class="mcell" data-x="${x}" data-y="${y}">
+      <rect class="floor" x="${px + 2}" y="${py + 2}" width="${CELL - 4}" height="${CELL - 4}" rx="8"/>
+      <g class="bale"><rect x="${px + 3}" y="${py + 6}" width="${CELL - 6}" height="${CELL - 10}" rx="9" fill="#E6B566" stroke="#9C6A3A" stroke-width="3"/>
+        <path d="M${px + 10} ${py + 14} h${CELL - 20} M${px + 10} ${py + 24} h${CELL - 20} M${px + 10} ${py + 34} h${CELL - 20}" stroke="#C98F4B" stroke-width="3" stroke-linecap="round"/>
+        <path d="M${px + 16} ${py + 8} v${CELL - 14} M${px + CELL - 16} ${py + 8} v${CELL - 14}" stroke="#9C6A3A" stroke-width="2.5" opacity=".6"/></g>
+    </g>`;
   }
   cells.innerHTML = html;
   cells.querySelectorAll('.mcell').forEach(r => r.addEventListener('click', () => onCell(+r.dataset.x, +r.dataset.y)));
+  let fence = '';
+  for (let x = -6; x <= w + 6; x += 48) fence += `<rect x="${x - 4}" y="-12" width="8" height="14" rx="3" fill="#C9935A" stroke="#8A5634" stroke-width="2"/><rect x="${x - 4}" y="${h - 2}" width="8" height="14" rx="3" fill="#C9935A" stroke="#8A5634" stroke-width="2"/>`;
+  $('#mfence', v).innerHTML = fence;
   $('#mfinish', v).innerHTML = `<g transform="translate(-20 -20) scale(.62)">${Art.dumpling('cabbage+carrot', 64)}</g>`;
   const pig = $('#mpig', v);
-  pig.innerHTML = Art.piggyTop({ hat: !!state.upgrades.hat });
+  pig.innerHTML = Art.piggyTop({ hat: !!state.upgrades.hat, coat: current().coat });
   pig.addEventListener('click', onCheer);
   return v;
 }
@@ -339,8 +422,7 @@ function updateMaze() {
   grid.classList.toggle('running', !!run);
   for (const r of document.querySelectorAll('.mcell')) {
     const x = +r.dataset.x, y = +r.dataset.y;
-    const wall = M.isWall(m, x, y);
-    r.classList.toggle('wall', wall);
+    r.classList.toggle('wall', M.isWall(m, x, y));
     r.classList.toggle('start', x === M.START.x && y === M.START.y);
     r.classList.toggle('seen', !!(run && run.visited[M.idx(x, y)]));
   }
@@ -350,31 +432,34 @@ function updateMaze() {
     lure.dataset.sig = lsig;
     lure.innerHTML = run && run.lure ? `<g transform="translate(${run.lure.x * CELL + 6} ${run.lure.y * CELL + 6}) scale(.56)">${Art.veggie('carrot', 64)}</g>` : '';
   }
-  placePig(run ? run.pos : M.START, run ? run.lastDir : null);
+  placeMazePig(run ? run.pos : M.START, run ? run.lastDir : null);
   const ok = M.solvable(m);
   const hint = $('#mhint'), btns = $('#mbtns');
+  const name = esc(current().name);
+  const bsig = run ? 'run' : ok ? 'ok' : 'blocked';
+  if (run) hint.textContent = run.done ? 'Yay!' : `Tap a square to drop a carrot (${run.lures} left). Tap ${current().name} to cheer!`;
+  else hint.textContent = ok ? 'Tap squares to build hay walls, then press Go!' : `${current().name} can't reach the dumpling. Open a path!`;
+  if (btns.dataset.sig === bsig) return;
+  btns.dataset.sig = bsig;
+  btns.innerHTML = '';
   if (run) {
-    hint.textContent = run.done ? 'Yay!' : `Tap a square to drop a carrot (${run.lures} left). Tap ${state.piggy.name} to cheer!`;
-    btns.innerHTML = '';
-    btns.appendChild(btn('Stop', () => { stopRun(); render(); }, 'ghost'));
+    btns.appendChild(btn('Stop', () => { stopRun(); render(); }, 'btn-grey'));
   } else {
-    hint.textContent = ok ? 'Tap squares to build walls, then press Go!' : `${state.piggy.name} can't reach the dumpling. Open a path!`;
-    btns.innerHTML = '';
-    btns.appendChild(btn('Surprise me', () => { M.randomize(m); sfx.pop(); render(); }, 'ghost'));
-    btns.appendChild(btn('Clear', () => { M.clear(m); sfx.pop(); render(); }, 'ghost'));
-    const go = btn('Go!', startRun, 'go');
+    btns.appendChild(btn('Surprise me', () => { M.randomize(m); sfx.pop(); render(); }, 'btn-grey'));
+    btns.appendChild(btn('Clear', () => { M.clear(m); sfx.pop(); render(); }, 'btn-grey'));
+    const go = btn('Go!', startRun, 'btn-green go');
     go.disabled = !ok;
     btns.appendChild(go);
   }
 }
 
 function btn(label, onClick, cls = '') {
-  const b = el(`<button class="mbtn ${cls}">${label}</button>`);
+  const b = el(`<button class="btn ${cls}">${label}</button>`);
   b.addEventListener('click', onClick);
   return b;
 }
 
-function placePig(pos, dir) {
+function placeMazePig(pos, dir) {
   const pig = $('#mpig');
   if (!pig) return;
   const a = dir ? Math.atan2(dir.y, dir.x) * 180 / Math.PI + 90 : 0;
@@ -418,7 +503,7 @@ function scheduleStep() {
     render();
     const pig = $('#mpig');
     if (ev === 'deadend') { sfx.wheek(); svgBubble('wheek?'); }
-    if (ev === 'ate') { sfx.munch(); svgBubble('nom!'); state.piggy.fun = Math.min(100, state.piggy.fun + 5); }
+    if (ev === 'ate') { sfx.munch(); svgBubble('nom!'); const p = current(); p.fun = Math.min(100, p.fun + 5); }
     if (ev === 'finish') {
       const r = M.reward(state, state.maze, run);
       sfx.fanfare();
@@ -451,11 +536,43 @@ function svgBubble(text) {
 
 // ---------- Shop ----------
 function shopView() {
-  return el(`<section class="shop"><div id="items"></div>
+  return el(`<section class="shop">
+    <div class="scene-top">${Art.shopScene()}</div>
+    <div class="ribbon"><span>Adopt a piggy</span></div>
+    <div class="adopt panel" id="adopt"></div>
+    <div class="ribbon"><span>Upgrades</span></div>
+    <div id="items"></div>
     <button class="reset" id="reset">Start over</button></section>`);
 }
 
 function updateShop() {
+  const adopt = $('#adopt');
+  const room = state.piggies.length < G.capacity(state);
+  const cost = G.adoptCost(state);
+  const offer = room ? G.makeOffer(state) : null;
+  const asig = JSON.stringify([offer, cost, state.coins, room, state.piggies.length]);
+  if (adopt.dataset.sig !== asig) {
+    adopt.dataset.sig = asig;
+    adopt.innerHTML = '';
+    if (!room) {
+      adopt.innerHTML = `<p class="hint">Your pen is full (${state.piggies.length} piggies). ${state.upgrades.pen3 ? 'That is all the piggies a home can hold!' : 'Buy a bigger pen below for more room.'}</p>`;
+    } else {
+      adopt.innerHTML = `<p class="hint">Pick one to join the family. Colors and names are a surprise!</p><div class="offers"></div>`;
+      const box = $('.offers', adopt);
+      offer.forEach((o, i) => {
+        const b = el(`<button class="offer"><div class="pig-card">${Art.piggySide({ coat: o.coat })}</div><b>${esc(o.name)}</b><small>${G.BREEDS[o.coat.breed].name}</small><em>${G.BREEDS[o.coat.breed].blurb}</em>
+          <span class="price">${cost === 0 ? 'Free!' : `${cost} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></button>`);
+        b.addEventListener('click', () => {
+          const r = G.adopt(state, i);
+          if (!r.ok) { sfx.nope(); toast(r.reason === 'coins' ? `Need ${cost - state.coins} more coins` : 'No room in the pen'); return; }
+          sfx.fanfare(); selectedPig = r.piggy.id;
+          popup('Welcome home!', `<div class="pig-card big">${Art.piggySide({ coat: r.piggy.coat })}</div><p><b>${esc(r.piggy.name)}</b> the ${G.BREEDS[r.piggy.coat.breed].name} moved into the pen.</p>`, 'Yay!', () => { tab = 'steamer'; render(true); });
+          render(true);
+        });
+        box.appendChild(b);
+      });
+    }
+  }
   const items = $('#items');
   const ssig = JSON.stringify([state.upgrades, state.coins]);
   if (items.dataset.sig === ssig) return;
@@ -463,14 +580,15 @@ function updateShop() {
   items.innerHTML = '';
   for (const [id, u] of Object.entries(G.UPGRADES)) {
     const owned = !!state.upgrades[id];
-    const b = el(`<button class="item ${owned ? 'owned' : ''}" ${owned ? 'disabled' : ''}>
-      <span class="ico">${Art.upgradeIcon(u.icon)}</span>
+    if (!owned && !G.canBuy(state, id)) continue;
+    const b = el(`<button class="item panel ${owned ? 'owned' : ''}" ${owned ? 'disabled' : ''}>
+      <span class="tile-purple">${Art.upgradeIcon(u.icon)}</span>
       <span class="txt"><b>${u.name}</b><small>${u.desc}</small></span>
       <span class="price">${owned ? 'Got it!' : `${u.cost} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></button>`);
     b.addEventListener('click', () => {
       const r = G.buy(state, id);
       if (!r.ok) { sfx.nope(); toast(`Need ${u.cost - state.coins} more coins`); return; }
-      sfx.fanfare(); lastFace = ''; toast(`Bought ${u.name}!`, 'big'); render(true);
+      sfx.fanfare(); toast(`Bought ${u.name}!`, 'big'); render(true);
     });
     items.appendChild(b);
   }
@@ -481,37 +599,47 @@ function updateShop() {
 
 // ---------- Dialogs & effects ----------
 function renameDialog() {
-  const box = el(`<div class="modal"><div class="card">
-    <h3>Rename your piggy</h3>
+  const p = current();
+  const box = el(`<div class="modal"><div class="card panel">
+    <div class="ribbon"><span>Rename</span></div>
+    <div class="pig-card">${Art.piggySide({ coat: p.coat, hat: !!state.upgrades.hat })}</div>
     <p>Costs ${G.RENAME_COST} coins. You have ${state.coins}.</p>
-    <input id="newname" maxlength="16" placeholder="${state.piggy.name}" autocomplete="off">
-    <div class="row"><button class="ghost" id="cancel">Cancel</button><button id="ok">Rename</button></div>
+    <input id="newname" maxlength="16" placeholder="${esc(p.name)}" autocomplete="off">
+    <div class="row"><button class="btn btn-grey" id="cancel">Cancel</button><button class="btn" id="ok">Rename</button></div>
   </div></div>`);
   document.body.appendChild(box);
   $('#cancel', box).onclick = () => box.remove();
   $('#ok', box).onclick = () => {
-    const r = G.rename(state, $('#newname', box).value);
+    const r = G.rename(state, p.id, $('#newname', box).value);
     if (!r.ok) { sfx.nope(); toast(r.reason === 'coins' ? 'Not enough coins yet' : 'Type a name first'); return; }
-    sfx.fanfare(); box.remove(); render(); toast(`Hello, ${state.piggy.name}!`, 'big');
+    sfx.fanfare(); box.remove(); render(); toast(`Hello, ${esc(p.name)}!`, 'big');
   };
   setTimeout(() => $('#newname', box).focus(), 50);
 }
 
+function popup(title, html, button = 'OK', onClose = null) {
+  const box = el(`<div class="modal"><div class="card panel">
+    <div class="ribbon"><span>${title}</span></div>${html}
+    <div class="row center"><button class="btn big">${button}</button></div></div></div>`);
+  $('.btn', box).onclick = () => { box.remove(); sfx.pop(); if (onClose) onClose(); };
+  document.body.appendChild(box);
+}
+
 function picker(title, options, onPick) {
-  const box = el(`<div class="modal"><div class="card"><h3>${title}</h3><div class="opts"></div><button class="ghost">Cancel</button></div></div>`);
+  const box = el(`<div class="modal"><div class="card panel"><div class="ribbon"><span>${title}</span></div><div class="opts"></div><div class="row center"><button class="btn btn-grey">Cancel</button></div></div></div>`);
   for (const o of options) {
-    const b = el(`<button class="opt">${o.html}<span>${o.label}</span></button>`);
+    const b = el(`<button class="opt tile">${o.html}<span>${o.label}</span></button>`);
     b.onclick = () => { box.remove(); onPick(o.id); };
     $('.opts', box).appendChild(b);
   }
-  $('.ghost', box).onclick = () => box.remove();
+  $('.btn-grey', box).onclick = () => box.remove();
   document.body.appendChild(box);
 }
 
 function confirmBox(text, onYes) {
-  const box = el(`<div class="modal"><div class="card"><p>${text}</p><div class="row"><button class="ghost">No</button><button class="danger">Yes</button></div></div></div>`);
-  $('.ghost', box).onclick = () => box.remove();
-  $('.danger', box).onclick = () => { box.remove(); onYes(); };
+  const box = el(`<div class="modal"><div class="card panel"><p>${text}</p><div class="row center"><button class="btn btn-grey">No</button><button class="btn btn-red">Yes</button></div></div></div>`);
+  $('.btn-grey', box).onclick = () => box.remove();
+  $('.btn-red', box).onclick = () => { box.remove(); onYes(); };
   document.body.appendChild(box);
 }
 
