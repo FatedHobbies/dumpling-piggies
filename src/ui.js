@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 9;
+const VERSION = 10;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -33,7 +33,7 @@ export function start() {
   if (!state.maze) state.maze = M.newMaze();
   selectedPig = state.piggies[0].id;
   buildShell();
-  render();
+  // Welcome popups go up before the first render so the tutorial's own popup waits its turn.
   if (welcome === 'new') {
     const p = state.piggies[0];
     popup('A new friend!', `<div class="pig-card big">${Art.piggySide({ coat: p.coat })}</div>
@@ -45,8 +45,10 @@ export function start() {
       <div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${welcome.coins}</span>
       ${welcome.scooped ? `<span class="reward-item">${Art.compostIcon()} +${welcome.scooped}</span>` : ''}</div>`, 'Claim');
   }
+  render();
   setInterval(loop, 1000);
   setInterval(wanderTick, 100);
+  setInterval(positionArrow, 100);
   setInterval(persist, 5000);
   document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); });
   window.addEventListener('pagehide', persist);
@@ -98,8 +100,8 @@ const TUTORIAL = [
   { tab: 'steamer', on: 'feed',   text: n => `${n} is hungry! Tap the dumpling to feed them.`, target: '.dump' },
   { tab: 'steamer', on: 'scoop',  text: n => `Uh oh, a poop! Tap it to scoop it up.`, target: '.poop', enter: () => { if (!state.poops.length) G.addPoop(state); } },
   { tab: 'garden',  on: 'plant',  text: n => `Poop makes compost! Tap a plot to plant a veggie.`, target: '.plot.empty' },
-  { tab: 'kitchen', on: 'cook',   text: n => `Pick two veggies, then tap Steam it!`, target: '.fill:not(:disabled), #cook' },
-  { tab: 'maze',    on: 'maze',   text: n => `Tap Go! and watch ${n} run. Tap ${n} to cheer!`, target: '.go, #mpig' },
+  { tab: 'kitchen', on: 'cook',   text: n => `Pick two veggies, then tap Steam it!`, target: () => selected.length < 2 ? '.fill:not(:disabled)' : '#cook' },
+  { tab: 'maze',    on: 'maze',   text: n => `Tap Go! and watch ${n} run. Tap ${n} to cheer!`, target: () => run ? '#mpig' : '.go' },
   { tab: null,      on: 'rename', text: n => `You earned ${G.RENAME_COST} coins! Tap ${n}'s name up top to rename them.`, target: '#name' },
 ];
 const TAB_NAMES = { steamer: 'Pen', garden: 'Garden', kitchen: 'Kitchen', maze: 'Maze', shop: 'Shop' };
@@ -125,20 +127,50 @@ function tut(action) {
   save(state);
 }
 
+let tutShown = '';   // which instruction popup has been shown, so it shows once per step
+let arrowTarget = ''; // selector the bouncing arrow points at
+
 function updateCoach() {
   const coach = $('#coach');
   const i = tutStep();
   document.querySelectorAll('.hi').forEach(e => e.classList.remove('hi'));
-  if (!i) { coach.hidden = true; return; }
+  if (!i) { coach.hidden = true; arrowTarget = ''; positionArrow(); return; }
   const step = TUTORIAL[i];
   const n = esc(current().name);
   coach.hidden = false;
   if ($('#coachpig').dataset.id !== String(current().id)) { $('#coachpig').dataset.id = String(current().id); $('#coachpig').innerHTML = Art.piggySide({ coat: current().coat }); }
-  let text, targets;
-  if (step.tab && tab !== step.tab) { text = `Go to the ${TAB_NAMES[step.tab]}!`; targets = `.tab[data-tab="${step.tab}"]`; }
-  else { text = step.text(n); targets = step.target; }
+  let text, targets, key;
+  if (step.tab && tab !== step.tab) { text = `Go to the ${TAB_NAMES[step.tab]}!`; targets = `.tab[data-tab="${step.tab}"]`; key = i + ':go'; }
+  else { text = step.text(n); targets = typeof step.target === 'function' ? step.target() : step.target; key = i + ':do'; }
   if ($('#coachtext').textContent !== text) $('#coachtext').textContent = text;
   document.querySelectorAll(targets).forEach(e => e.classList.add('hi'));
+  arrowTarget = targets;
+  positionArrow();
+  // The instruction pops up in the middle of the screen once per step, after
+  // any other popup has been closed.
+  if (tutShown !== key && !$('.modal')) {
+    tutShown = key;
+    popup(`Step ${i} of ${TUTORIAL.length - 1}`, `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div><p class="tut-text">${text}</p>`, 'OK!');
+  }
+}
+
+// A big bouncing arrow over whatever she should tap next. Targets move
+// (the piggy wanders), so this runs on a timer too.
+function positionArrow() {
+  let arrow = $('#arrow');
+  if (!arrow) {
+    arrow = el(`<div id="arrow" class="tut-arrow" hidden><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 60 L8 30 H22 V6 H42 V30 H56Z" fill="#FFD34D" stroke="#B2342C" stroke-width="4" stroke-linejoin="round"/></svg></div>`);
+    document.body.appendChild(arrow);
+  }
+  const t = arrowTarget && !$('.modal') ? $(arrowTarget) : null;
+  if (!t) { arrow.hidden = true; return; }
+  const r = t.getBoundingClientRect();
+  if (!r.width) { arrow.hidden = true; return; }
+  const up = r.top < 90;   // things near the top get an arrow pointing up from below
+  arrow.hidden = false;
+  arrow.classList.toggle('up', up);
+  const x = r.left + r.width / 2, y = up ? r.bottom + 6 : r.top - 10;
+  if (arrow.dataset.pos !== `${Math.round(x)},${Math.round(y)}`) { arrow.dataset.pos = `${Math.round(x)},${Math.round(y)}`; arrow.style.left = x + 'px'; arrow.style.top = y + 'px'; }
 }
 
 function render(force = false) {
@@ -726,7 +758,7 @@ function popup(title, html, button = 'OK', onClose = null) {
   const box = el(`<div class="modal"><div class="card panel">
     <div class="ribbon"><span>${title}</span></div>${html}
     <div class="row center"><button class="btn big">${button}</button></div></div></div>`);
-  $('.btn', box).onclick = () => { box.remove(); sfx.pop(); if (onClose) onClose(); };
+  $('.btn', box).onclick = () => { box.remove(); sfx.pop(); if (onClose) onClose(); updateCoach(); };
   document.body.appendChild(box);
 }
 
