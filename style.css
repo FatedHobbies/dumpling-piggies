@@ -103,7 +103,8 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
   background: linear-gradient(#E6B566, #C98F4B); border-top: 4px solid var(--wood-dark);
 }
 .tab { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 4px 0 2px; font-family: var(--display); font-weight: 600; font-size: .72rem; color: #5A3A1E; border-radius: 12px; }
-.tab .ico { font-size: 1.7rem; line-height: 1.2; filter: drop-shadow(0 2px 0 rgba(0,0,0,.2)); }
+.tab .ico { font-size: 1.7rem; line-height: 1.2; filter: drop-shadow(0 2px 0 rgba(0,0,0,.2)); display: grid; place-items: center; height: 2.05rem; }
+.tab .ico svg { width: 30px; height: 30px; }
 .tab.active { background: rgba(255,255,255,.35); box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); color: var(--red-dark); }
 .tab.active .ico { transform: translateY(-3px) scale(1.1); }
 
@@ -180,15 +181,19 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 /* ---- Garden ---- */
 .scene-top { border-radius: 18px; overflow: hidden; border: 3px solid var(--wood-dark); box-shadow: 0 4px 0 #6A4524; margin-bottom: 12px; }
 .scene-top .scene { position: static; width: 100%; height: auto; }
-.compost { display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-family: var(--display); }
-.compost .ico svg { width: 36px; height: 36px; }
+.compost { display: flex; align-items: center; gap: 10px; padding: 4px 12px; font-family: var(--display); }
+.compost .ico svg { width: 30px; height: 30px; }
 .compost small { margin-left: auto; color: var(--soft); font-size: .72rem; text-align: right; font-family: var(--body); }
-.plots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
-.plot { position: relative; height: 140px; border-radius: 18px; background: #A7DB8C; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; border: 3px solid #5FAE4E; box-shadow: 0 4px 0 #3E8E2A; }
+.plots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+.garden .scene-top .scene { height: 92px; }
+.garden .ribbon { margin: 8px 0 6px; }
+.garden .scene-top { margin-bottom: 8px; }
+.garden .pantry { gap: 8px; }
+.plot { position: relative; height: 90px; border-radius: 18px; background: #A7DB8C; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; border: 3px solid #5FAE4E; box-shadow: 0 4px 0 #3E8E2A; }
 .plot:active { transform: translateY(2px); box-shadow: 0 2px 0 #3E8E2A; }
 .plot .scene { height: 100%; }
-.plant { position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 0 rgba(0,0,0,.2)); }
-.gardener { position: absolute; bottom: 14px; left: 50%; width: 76px; transform: translateX(-260%); opacity: 0; pointer-events: none; z-index: 2; }
+.plant { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 0 rgba(0,0,0,.2)); }
+.gardener { position: absolute; bottom: 10px; left: 50%; width: 62px; transform: translateX(-260%); opacity: 0; pointer-events: none; z-index: 2; }
 .gardener svg { width: 100%; height: auto; overflow: visible; }
 .gardener .legA, .gardener .legB { opacity: 1; animation: legA .3s steps(2) infinite; }
 .gardener .legB { animation-name: legB; }
@@ -197,9 +202,9 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 @keyframes gardener { 0% { transform: translateX(-260%); opacity: 1; } 28% { transform: translateX(-50%); opacity: 1; } 72% { transform: translateX(-50%); opacity: 1; } 100% { transform: translateX(200%); opacity: 1; } }
 @keyframes dig { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(14deg) translate(4px, 3px); } }
 .plot.busy .lbl { opacity: 0; }
-.ring { position: absolute; top: 8px; left: 12px; right: 12px; height: 10px; background: rgba(255,255,255,.6); border-radius: 5px; overflow: hidden; border: 2px solid #fff; }
+.ring { position: absolute; top: 6px; left: 12px; right: 12px; height: 8px; background: rgba(255,255,255,.6); border-radius: 5px; overflow: hidden; border: 2px solid #fff; }
 .ring i { display: block; height: 100%; background: var(--mint); }
-.lbl { position: relative; z-index: 1; font-family: var(--display); font-weight: 600; font-size: .95rem; padding: 4px 0; color: #fff; text-shadow: 0 2px 0 #3E8E2A, 0 0 6px rgba(0,0,0,.35); }
+.lbl { position: relative; z-index: 1; font-family: var(--display); font-weight: 600; font-size: .85rem; padding: 2px 0; color: #fff; text-shadow: 0 2px 0 #3E8E2A, 0 0 6px rgba(0,0,0,.35); }
 .plot.ready { animation: wobble 1s infinite; }
 @keyframes wobble { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-2deg); } 75% { transform: rotate(2deg); } }
 .pantry { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }

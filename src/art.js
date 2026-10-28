@@ -162,9 +162,9 @@ export function veggie(filling, size = 48) {
 }
 
 export function sprout(progress, filling) {
-  if (progress >= 1) return veggie(filling, 56);
+  if (progress >= 1) return veggie(filling, 44);
   const h = 10 + progress * 26;
-  return `<svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
+  return `<svg viewBox="0 0 64 64" width="44" height="44" aria-hidden="true">
     <path d="M32 58 V${58 - h}" stroke="#5FAE4E" stroke-width="4" stroke-linecap="round"/>
     <ellipse cx="${32 - 8}" cy="${58 - h + 4}" rx="8" ry="4" transform="rotate(-30 ${32 - 8} ${58 - h + 4})" fill="#8FD07A"/>
     <ellipse cx="${32 + 8}" cy="${58 - h + 4}" rx="8" ry="4" transform="rotate(30 ${32 + 8} ${58 - h + 4})" fill="#8FD07A"/>
@@ -194,6 +194,16 @@ export function poop(p = {}) {
 
 export function compostIcon() {
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 22 H50 L46 56 H18Z" fill="#B9824A"/><rect x="10" y="16" width="44" height="8" rx="3" fill="#8A5634"/><path d="M24 36 Q32 28 40 36" stroke="#5FAE4E" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
+}
+
+// Tab icon: a tiny maze with a dumpling at the goal.
+export function mazeIcon() {
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">
+    <rect x="4" y="4" width="56" height="56" rx="10" fill="#A7DB8C" stroke="#5FAE4E" stroke-width="4"/>
+    <g stroke="#9C6A3A" stroke-width="5" stroke-linecap="round" fill="none"><path d="M18 4 V22 M18 36 V60 M32 18 H46 V34 M32 46 H46"/><path d="M4 32 H18" opacity=".0"/></g>
+    <circle cx="48" cy="14" r="6" fill="#FFD9A8" stroke="#C98F4B" stroke-width="2"/>
+    <ellipse cx="15" cy="49" rx="6" ry="4" fill="#E9A15B"/><circle cx="19" cy="48" r="1.2" fill="#2A1A14"/>
+  </svg>`;
 }
 
 export function coinIcon() {

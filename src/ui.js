@@ -76,7 +76,7 @@ function buildShell() {
       <button data-tab="steamer" class="tab" aria-label="Pen"><span class="ico">🏠</span>Pen</button>
       <button data-tab="garden" class="tab" aria-label="Garden"><span class="ico">🥕</span>Garden</button>
       <button data-tab="kitchen" class="tab" aria-label="Kitchen"><span class="ico">🥟</span>Kitchen</button>
-      <button data-tab="maze" class="tab" aria-label="Maze"><span class="ico">🏃</span>Maze</button>
+      <button data-tab="maze" class="tab" aria-label="Maze"><span class="ico">${Art.mazeIcon()}</span>Maze</button>
       <button data-tab="shop" class="tab" aria-label="Shop"><span class="ico">🛍️</span>Shop</button>
     </nav>
     <div id="toasts"></div>`;
