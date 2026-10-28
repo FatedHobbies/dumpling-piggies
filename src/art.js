@@ -108,3 +108,23 @@ function shade(rgb) {
   const m = rgb.match(/\d+/g).map(Number).map(v => Math.round(v * 0.78));
   return `rgb(${m[0]},${m[1]},${m[2]})`;
 }
+
+// Top-down piggy for the maze, drawn around (0,0) with the nose pointing up.
+export function piggyTop(opts = {}) {
+  const hat = opts.hat ? `<path d="M-30 -56 Q0 -96 30 -60 Q14 -62 0 -58 Q-16 -54 -30 -56Z" fill="#FF5C7A"/><circle cx="-14" cy="-66" r="4" fill="#FFF3B0"/><circle cx="4" cy="-76" r="4" fill="#FFF3B0"/><circle cx="18" cy="-66" r="4" fill="#FFF3B0"/>` : '';
+  return `<svg viewBox="-70 -90 140 170" x="-70" y="-90" width="140" height="170" class="piggy-top" aria-hidden="true">
+    <g class="pawA"><ellipse cx="-46" cy="-30" rx="11" ry="8" fill="#F3B9A0"/><ellipse cx="44" cy="40" rx="11" ry="8" fill="#F3B9A0"/></g>
+    <g class="pawB"><ellipse cx="46" cy="-30" rx="11" ry="8" fill="#F3B9A0"/><ellipse cx="-44" cy="40" rx="11" ry="8" fill="#F3B9A0"/></g>
+    <g class="tdbody">
+      <ellipse cx="0" cy="8" rx="48" ry="64" fill="#E9A15B"/>
+      <ellipse cx="0" cy="-44" rx="38" ry="32" fill="#E9A15B"/>
+      <ellipse cx="0" cy="26" rx="34" ry="30" fill="#8A5634"/>
+      <path d="M0 -70 C-14 -54 -12 -30 -8 0 Q0 6 8 0 C12 -30 14 -54 0 -70Z" fill="#FFF7EC"/>
+      <ellipse cx="-34" cy="-40" rx="12" ry="9" transform="rotate(-30 -34 -40)" fill="#C9773E"/><ellipse cx="-34" cy="-40" rx="7" ry="5" transform="rotate(-30 -34 -40)" fill="#FFB3C1"/>
+      <ellipse cx="34" cy="-40" rx="12" ry="9" transform="rotate(30 34 -40)" fill="#C9773E"/><ellipse cx="34" cy="-40" rx="7" ry="5" transform="rotate(30 34 -40)" fill="#FFB3C1"/>
+      ${hat}
+      <circle cx="-24" cy="-52" r="5" fill="#2A1A14"/><circle cx="24" cy="-52" r="5" fill="#2A1A14"/>
+      <circle cx="0" cy="-72" r="5" fill="#E86A86"/>
+    </g>
+  </svg>`;
+}

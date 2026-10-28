@@ -2,12 +2,15 @@ import * as G from './game.js';
 import * as Art from './art.js';
 import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
+import * as M from './maze.js';
 
 let state = null;
 let tab = 'steamer';
 let selected = [];          // fillings chosen in the kitchen
 let lastTick = Date.now();
 let lastFace = '';
+let run = null;              // the maze run in progress, or null while building
+let runTimer = null;
 
 const $ = (s, el = document) => el.querySelector(s);
 const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
@@ -21,6 +24,7 @@ export function start() {
   } else {
     welcome = G.applyAway(state);
   }
+  if (!state.maze) state.maze = M.newMaze();
   buildShell();
   render();
   if (welcome === 'new') toast(`Meet ${state.piggy.name}! Tap a dumpling to feed them.`, 'big');
@@ -59,10 +63,11 @@ function buildShell() {
       <button data-tab="steamer" class="tab" aria-label="Steamer"><span class="ico">🥟</span>Steamer</button>
       <button data-tab="garden" class="tab" aria-label="Garden"><span class="ico">🥕</span>Garden</button>
       <button data-tab="kitchen" class="tab" aria-label="Kitchen"><span class="ico">🍲</span>Kitchen</button>
+      <button data-tab="maze" class="tab" aria-label="Maze"><span class="ico">🏃</span>Maze</button>
       <button data-tab="shop" class="tab" aria-label="Shop"><span class="ico">🛍️</span>Shop</button>
     </nav>
     <div id="toasts"></div>`;
-  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; sfx.pop(); render(true); }));
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); tab = b.dataset.tab; sfx.pop(); render(true); }));
   $('#name').addEventListener('click', renameDialog);
 }
 
@@ -74,9 +79,9 @@ function render(force = false) {
   if (force || view.dataset.tab !== tab) {
     view.dataset.tab = tab;
     view.innerHTML = '';
-    view.appendChild({ steamer: steamerView, garden: gardenView, kitchen: kitchenView, shop: shopView }[tab]());
+    view.appendChild({ steamer: steamerView, garden: gardenView, kitchen: kitchenView, maze: mazeView, shop: shopView }[tab]());
   }
-  ({ steamer: updateSteamer, garden: updateGarden, kitchen: updateKitchen, shop: updateShop }[tab])();
+  ({ steamer: updateSteamer, garden: updateGarden, kitchen: updateKitchen, maze: updateMaze, shop: updateShop }[tab])();
 }
 
 // ---------- Steamer ----------
@@ -292,6 +297,156 @@ function onCook() {
     else { sfx.ding(); toast(`Made a ${r.recipe.name}`); }
     render();
   }, 900);
+}
+
+// ---------- Maze ----------
+const CELL = 48;
+function mazeView() {
+  const w = M.COLS * CELL, h = M.ROWS * CELL;
+  const v = el(`<section class="maze">
+    <div class="maze-bar">
+      <p class="maze-hint" id="mhint"></p>
+      <div class="maze-btns" id="mbtns"></div>
+    </div>
+    <div class="maze-wrap">
+      <svg id="mgrid" viewBox="-6 -6 ${w + 12} ${h + 12}" class="maze-svg">
+        <rect x="-6" y="-6" width="${w + 12}" height="${h + 12}" rx="18" fill="#C8E6A0"/>
+        <g id="mcells"></g>
+        <g id="mlure"></g>
+        <g id="mfinish" transform="translate(${M.FINISH.x * CELL + CELL / 2} ${M.FINISH.y * CELL + CELL / 2})"></g>
+        <g id="mpig" class="mpig"></g>
+      </svg>
+    </div>
+  </section>`);
+  // SVG children must be created in the SVG namespace, so build them as markup.
+  const cells = $('#mcells', v);
+  let html = '';
+  for (let y = 0; y < M.ROWS; y++) for (let x = 0; x < M.COLS; x++) {
+    html += `<rect class="mcell" data-x="${x}" data-y="${y}" x="${x * CELL + 2}" y="${y * CELL + 2}" width="${CELL - 4}" height="${CELL - 4}" rx="10"/>`;
+  }
+  cells.innerHTML = html;
+  cells.querySelectorAll('.mcell').forEach(r => r.addEventListener('click', () => onCell(+r.dataset.x, +r.dataset.y)));
+  $('#mfinish', v).innerHTML = `<g transform="translate(-20 -20) scale(.62)">${Art.dumpling('cabbage+carrot', 64)}</g>`;
+  const pig = $('#mpig', v);
+  pig.innerHTML = Art.piggyTop({ hat: !!state.upgrades.hat });
+  pig.addEventListener('click', onCheer);
+  return v;
+}
+
+function updateMaze() {
+  const m = state.maze;
+  const grid = $('#mgrid');
+  grid.classList.toggle('running', !!run);
+  for (const r of document.querySelectorAll('.mcell')) {
+    const x = +r.dataset.x, y = +r.dataset.y;
+    const wall = M.isWall(m, x, y);
+    r.classList.toggle('wall', wall);
+    r.classList.toggle('start', x === M.START.x && y === M.START.y);
+    r.classList.toggle('seen', !!(run && run.visited[M.idx(x, y)]));
+  }
+  const lure = $('#mlure');
+  const lsig = run && run.lure ? `${run.lure.x},${run.lure.y}` : '';
+  if (lure.dataset.sig !== lsig) {
+    lure.dataset.sig = lsig;
+    lure.innerHTML = run && run.lure ? `<g transform="translate(${run.lure.x * CELL + 6} ${run.lure.y * CELL + 6}) scale(.56)">${Art.veggie('carrot', 64)}</g>` : '';
+  }
+  placePig(run ? run.pos : M.START, run ? run.lastDir : null);
+  const ok = M.solvable(m);
+  const hint = $('#mhint'), btns = $('#mbtns');
+  if (run) {
+    hint.textContent = run.done ? 'Yay!' : `Tap a square to drop a carrot (${run.lures} left). Tap ${state.piggy.name} to cheer!`;
+    btns.innerHTML = '';
+    btns.appendChild(btn('Stop', () => { stopRun(); render(); }, 'ghost'));
+  } else {
+    hint.textContent = ok ? 'Tap squares to build walls, then press Go!' : `${state.piggy.name} can't reach the dumpling. Open a path!`;
+    btns.innerHTML = '';
+    btns.appendChild(btn('Surprise me', () => { M.randomize(m); sfx.pop(); render(); }, 'ghost'));
+    btns.appendChild(btn('Clear', () => { M.clear(m); sfx.pop(); render(); }, 'ghost'));
+    const go = btn('Go!', startRun, 'go');
+    go.disabled = !ok;
+    btns.appendChild(go);
+  }
+}
+
+function btn(label, onClick, cls = '') {
+  const b = el(`<button class="mbtn ${cls}">${label}</button>`);
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function placePig(pos, dir) {
+  const pig = $('#mpig');
+  if (!pig) return;
+  const a = dir ? Math.atan2(dir.y, dir.x) * 180 / Math.PI + 90 : 0;
+  pig.setAttribute('transform', `translate(${pos.x * CELL + CELL / 2} ${pos.y * CELL + CELL / 2}) rotate(${a}) scale(.3)`);
+}
+
+function onCell(x, y) {
+  if (run) {
+    if (run.done) return;
+    if (M.dropLure(state.maze, run, x, y)) { sfx.pop(); render(); }
+    else sfx.nope();
+    return;
+  }
+  if (M.toggleWall(state.maze, x, y)) { sfx.pop(); render(); }
+}
+
+function onCheer() {
+  if (!run || run.done) { if (!run) startRun(); return; }
+  M.cheer(run);
+  sfx.wheek();
+  const pig = $('#mpig');
+  pig.classList.remove('cheer'); void pig.offsetWidth; pig.classList.add('cheer');
+  render();
+}
+
+function startRun() {
+  if (!M.solvable(state.maze)) return;
+  run = M.newRun();
+  sfx.ding();
+  render();
+  scheduleStep();
+}
+
+function scheduleStep() {
+  clearTimeout(runTimer);
+  if (!run || run.done) return;
+  const zoom = Date.now() < run.zoomUntil;
+  runTimer = setTimeout(() => {
+    if (!run) return;
+    const ev = M.step(state.maze, run);
+    render();
+    const pig = $('#mpig');
+    if (ev === 'deadend') { sfx.wheek(); svgBubble('wheek?'); }
+    if (ev === 'ate') { sfx.munch(); svgBubble('nom!'); state.piggy.fun = Math.min(100, state.piggy.fun + 5); }
+    if (ev === 'finish') {
+      const r = M.reward(state, state.maze, run);
+      sfx.fanfare();
+      pig.classList.add('popcorn');
+      floatCoin(r.coins);
+      toast(r.first ? `New maze finished! +${r.coins} coins` : `Dumpling! +${r.coins} coins`, 'big');
+      setTimeout(() => { stopRun(); render(); }, 2200);
+      return;
+    }
+    scheduleStep();
+  }, zoom ? 170 : 520);
+}
+
+function stopRun() {
+  clearTimeout(runTimer);
+  run = null;
+  const pig = $('#mpig');
+  if (pig) pig.classList.remove('popcorn');
+}
+
+function svgBubble(text) {
+  const pig = $('#mpig');
+  if (!pig) return;
+  const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  t.setAttribute('class', 'mbubble'); t.setAttribute('x', '0'); t.setAttribute('y', '-110'); t.setAttribute('text-anchor', 'middle');
+  t.textContent = text;
+  pig.appendChild(t);
+  setTimeout(() => t.remove(), 800);
 }
 
 // ---------- Shop ----------
