@@ -154,7 +154,7 @@ function updateSteamer() {
   const poops = new Map([...floor.querySelectorAll('.poop')].map(c => [+c.dataset.id, c]));
   for (const poop of state.poops) {
     if (!poops.has(poop.id)) {
-      const b = el(`<button class="poop" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y}">${Art.poop()}</button>`);
+      const b = el(`<button class="poop ${poop.color || 'brown'}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y}">${Art.poop(poop)}</button>`);
       b.addEventListener('click', () => onScoop(poop.id, b));
       floor.appendChild(b);
     }
@@ -250,13 +250,18 @@ function onScoop(id, btn) {
   btn.classList.add('gone');
   setTimeout(() => btn.remove(), 250);
   floatCoin(r.coins);
+  const c = r.poop.color;
+  if (c === 'rainbow' || c === 'gold') {
+    sfx.fanfare();
+    popup(c === 'gold' ? 'A golden poop!' : 'A rainbow poop!', `<div class="pig-card poop-card">${Art.poop(r.poop)}</div><p>Wow! That's worth <b>${r.coins} coins</b> and <b>${r.compost} compost</b>.</p>`, 'Wow!');
+  } else if (c !== 'brown') toast(`${G.POOP_COLORS[c]} poop! +${r.coins} coins`);
   render();
 }
 
 // ---------- Garden ----------
 function gardenView() {
   return el(`<section class="garden">
-    <div class="scene-top">${Art.gardenScene()}</div>
+    <div class="scene-top">${Art.gardenScene({ coat: current().coat })}</div>
     <div class="compost panel"><span class="ico">${Art.compostIcon()}</span><span>Compost: <b id="compost">0</b></span><small>Scoop poop to get more</small></div>
     <div class="plots" id="plots"></div>
     <div class="ribbon"><span>Pantry</span></div>
@@ -271,7 +276,7 @@ function updateGarden() {
   if (plots.children.length !== n) {
     plots.innerHTML = '';
     for (let i = 0; i < n; i++) {
-      const b = el(`<button class="plot" data-plot="${i}"><div class="soil"></div><div class="plant"></div><div class="ring"><i></i></div><span class="lbl"></span></button>`);
+      const b = el(`<button class="plot" data-plot="${i}">${Art.plotArt()}<div class="plant"></div><div class="gardener">${Art.piggySide({ coat: current().coat })}</div><div class="ring"><i></i></div><span class="lbl"></span></button>`);
       b.addEventListener('click', () => onPlot(i));
       plots.appendChild(b);
     }
@@ -299,27 +304,45 @@ function updateGarden() {
 }
 
 function onPlot(i) {
+  const plot = $(`.plot[data-plot="${i}"]`);
+  if (plot && plot.classList.contains('busy')) return;
   const g = state.garden[i];
   if (g) {
-    const r = G.harvest(state, i);
-    if (r.ok) { sfx.coin(); toast(`+2 ${G.FILLINGS[r.filling].name}`); floatCoin(1); render(); }
-    else { sfx.pop(); toast('Still growing...'); }
+    if (G.plantProgress(state, i) < 1) { sfx.pop(); toast('Still growing...'); return; }
+    gardenerRun(i, () => {
+      const r = G.harvest(state, i);
+      if (r.ok) { sfx.coin(); toast(`+2 ${G.FILLINGS[r.filling].name}`); floatCoin(1); render(); }
+    }, () => { const pl = $(`.plot[data-plot="${i}"] .plant`); if (pl) pl.classList.add('pulled'); });
     return;
   }
   if (state.compost < 1) { sfx.nope(); toast('You need compost. Scoop some poop first!'); return; }
   picker('What should we plant?', Object.keys(G.FILLINGS).map(f => ({ id: f, html: Art.veggie(f, 48), label: G.FILLINGS[f].name })), (f) => {
-    const r = G.plant(state, i, f);
-    if (r.ok) { sfx.pop(); render(); }
+    gardenerRun(i, () => {
+      const r = G.plant(state, i, f);
+      if (r.ok) { sfx.pop(); render(); }
+    });
   });
+}
+
+// The piggy gardener trots into the plot, digs, and trots out. `onDig` fires
+// mid-way (when the veggie gets pulled), `onDone` when the piggy has left.
+function gardenerRun(i, onDone, onDig = null) {
+  const plot = $(`.plot[data-plot="${i}"]`);
+  if (!plot) return onDone();
+  const g = $('.gardener', plot);
+  plot.classList.add('busy');
+  g.classList.remove('go'); void g.offsetWidth; g.classList.add('go');
+  sfx.pop();
+  setTimeout(() => { sfx.wheek(); if (onDig) onDig(); }, 900);
+  setTimeout(() => { g.classList.remove('go'); plot.classList.remove('busy'); onDone(); }, 2000);
 }
 
 // ---------- Kitchen ----------
 function kitchenView() {
   const v = el(`<section class="kitchen">
-    <div class="scene-top">${Art.kitchenScene()}</div>
-    <div class="pot panel">
+    <div class="kitchen-stage" id="kstage">${Art.kitchenScene({ coat: current().coat })}
       <div class="slots"><div class="slot" data-slot="0"></div><span class="plus">+</span><div class="slot" data-slot="1"></div></div>
-      <button class="btn btn-red big" id="cook">Steam it!</button>
+      <button class="btn btn-red" id="cook">Steam it!</button>
     </div>
     <div class="fillings" id="fillings"></div>
     <div class="ribbon"><span>Recipe book <small id="rcount"></small></span></div>
@@ -363,13 +386,15 @@ function onCook() {
   const r = G.cook(state, selected[0], selected[1]);
   selected = [];
   if (!r.ok) { sfx.nope(); toast('Not enough fillings'); render(); return; }
-  const pot = $('.pot');
-  pot.classList.remove('cooking'); void pot.offsetWidth; pot.classList.add('cooking');
+  const stage = $('#kstage');
+  stage.classList.remove('cooking'); void stage.offsetWidth; stage.classList.add('cooking');
+  sfx.pop();
   setTimeout(() => {
+    stage.classList.remove('cooking');
     if (r.isNew) { sfx.fanfare(); popup('New recipe!', `<div class="pig-card">${Art.dumpling(r.key, 96)}</div><p><b>${r.recipe.name}</b><br>+10 coins for finding it</p>`, 'Yum!'); floatCoin(10); }
     else { sfx.ding(); toast(`Made a ${r.recipe.name}`); }
     render();
-  }, 900);
+  }, 1500);
 }
 
 // ---------- Maze ----------
@@ -388,7 +413,7 @@ function mazeView() {
         <g id="mfence"></g>
         <g id="mlure"></g>
         <g id="mfinish" transform="translate(${M.FINISH.x * CELL + CELL / 2} ${M.FINISH.y * CELL + CELL / 2})"></g>
-        <g id="mpig" class="mpig"></g>
+        <g id="mpig" class="mpig"><g id="mrot" class="mpig-rot"></g></g>
       </svg>
     </div>
   </section>`);
@@ -410,9 +435,9 @@ function mazeView() {
   for (let x = -6; x <= w + 6; x += 48) fence += `<rect x="${x - 4}" y="-12" width="8" height="14" rx="3" fill="#C9935A" stroke="#8A5634" stroke-width="2"/><rect x="${x - 4}" y="${h - 2}" width="8" height="14" rx="3" fill="#C9935A" stroke="#8A5634" stroke-width="2"/>`;
   $('#mfence', v).innerHTML = fence;
   $('#mfinish', v).innerHTML = `<g transform="translate(-20 -20) scale(.62)">${Art.dumpling('cabbage+carrot', 64)}</g>`;
-  const pig = $('#mpig', v);
-  pig.innerHTML = Art.piggyTop({ hat: !!state.upgrades.hat, coat: current().coat });
-  pig.addEventListener('click', onCheer);
+  $('#mrot', v).innerHTML = Art.piggyTop({ hat: !!state.upgrades.hat, coat: current().coat });
+  $('#mpig', v).addEventListener('click', onCheer);
+  mazeAngle = 0;
   return v;
 }
 
@@ -459,11 +484,21 @@ function btn(label, onClick, cls = '') {
   return b;
 }
 
+let mazeAngle = 0;
+// CSS transforms (not the SVG transform attribute) so the move between
+// squares is animated. The turn always takes the short way round.
 function placeMazePig(pos, dir) {
   const pig = $('#mpig');
   if (!pig) return;
-  const a = dir ? Math.atan2(dir.y, dir.x) * 180 / Math.PI + 90 : 0;
-  pig.setAttribute('transform', `translate(${pos.x * CELL + CELL / 2} ${pos.y * CELL + CELL / 2}) rotate(${a}) scale(.3)`);
+  if (dir) {
+    const target = Math.atan2(dir.y, dir.x) * 180 / Math.PI + 90;
+    let d = ((target - mazeAngle) % 360 + 540) % 360 - 180;
+    mazeAngle += d;
+  } else if (!run) mazeAngle = 0;
+  const zoom = run && Date.now() < run.zoomUntil;
+  pig.style.transitionDuration = run ? (zoom ? '.17s' : '.52s') : '0s';
+  pig.style.transform = `translate(${pos.x * CELL + CELL / 2}px, ${pos.y * CELL + CELL / 2}px)`;
+  $('#mrot').style.transform = `rotate(${mazeAngle}deg) scale(.3)`;
 }
 
 function onCell(x, y) {

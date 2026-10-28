@@ -101,23 +101,55 @@ export function piggyTop(opts = {}) {
   </svg>`;
 }
 
-export function dumpling(key, size = 64) {
+// A squishy-toy dumpling: a round glossy bun with pleats swirling to the top,
+// a kawaii face and blush, sitting in a little bamboo steamer basket.
+export function dumpling(key, size = 64, opts = {}) {
   const [a, b] = key.split('+');
-  const fill = tint(a, b);
-  const special = {
-    'strawberry+strawberry': `<circle cx="48" cy="18" r="3" fill="#FFD166"/><circle cx="14" cy="22" r="2" fill="#FF8FA8"/>`,
-    'carrot+strawberry': `<path d="M30 14 Q36 6 42 12" stroke="#FF5C7A" stroke-width="3" fill="none" stroke-linecap="round"/>`,
-    'pea+strawberry': `<circle cx="20" cy="40" r="2.5" fill="#FF5C7A"/><circle cx="44" cy="36" r="2.5" fill="#5BC8A8"/><circle cx="32" cy="44" r="2.5" fill="#FFD166"/>`,
-    'cabbage+pea': `<text x="46" y="20" font-size="12" fill="#7AA6FF" font-family="sans-serif">z</text>`,
-  }[key] || '';
+  const r = RECIPE_LOOK[key] || {};
+  const fill = r.color || tint(a, b);
+  const dark = shade(fill);
+  const basket = opts.basket === false ? '' : `
+    <path d="M9 44 Q9 60 32 60 Q55 60 55 44Z" fill="#E6B566" stroke="#9C6A3A" stroke-width="2.5"/>
+    <path d="M14 50 H50 M16 55 H48" stroke="#C98F4B" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+    <ellipse cx="32" cy="44" rx="23" ry="5" fill="#F2CE7E" stroke="#9C6A3A" stroke-width="2.5"/>`;
+  const sparkle = r.glitter ? `<g fill="#fff" opacity=".9"><circle cx="20" cy="22" r="1.4"/><circle cx="42" cy="18" r="1.2"/><circle cx="46" cy="30" r="1.5"/><circle cx="18" cy="33" r="1.1"/><circle cx="36" cy="12" r="1"/><circle cx="26" cy="38" r="1.2"/></g>
+    <path d="M50 8 l1.5 3 3 1.5 -3 1.5 -1.5 3 -1.5 -3 -3 -1.5 3 -1.5z" fill="#fff"/><path d="M12 14 l1 2 2 1 -2 1 -1 2 -1 -2 -2 -1 2 -1z" fill="#fff"/>` : '';
+  const eyes = r.sleepy
+    ? `<path d="M22 32 Q25 35 28 32 M36 32 Q39 35 42 32" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/><text x="46" y="24" font-size="9" font-weight="700" fill="#4C7FD9" font-family="sans-serif">z</text>`
+    : r.wink
+      ? `<path d="M22 31 Q25 28 28 31 M36 31 Q39 28 42 31" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+      : `<circle cx="25" cy="32" r="2.4" fill="${INK}"/><circle cx="39" cy="32" r="2.4" fill="${INK}"/><circle cx="26" cy="31" r=".8" fill="#fff"/><circle cx="40" cy="31" r=".8" fill="#fff"/>`;
+  const mouth = r.sleepy
+    ? `<ellipse cx="32" cy="37" rx="1.6" ry="1.2" fill="${INK}"/>`
+    : `<path d="M28 36 Q32 41 36 36Z" fill="${INK}"/><path d="M30 38.5 Q32 40 34 38.5" fill="#FF8FA8"/>`;
+  const hat = r.hat ? `<path d="M22 12 Q32 -2 44 10 Q36 8 30 12 Q26 14 22 12Z" fill="#FF5C7A"/><circle cx="27" cy="9" r="1.4" fill="#FFF3B0"/><circle cx="35" cy="5" r="1.4" fill="#FFF3B0"/>` : '';
+  const stripes = r.stripes ? `<path d="M13 24 Q32 17 51 24" stroke="${r.stripes}" stroke-width="3" fill="none" opacity=".6"/>` : '';
   return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">
-    <path d="M8 48 Q8 22 32 20 Q56 22 56 48Z" fill="${fill}" stroke="${shade(fill)}" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M20 26 L26 34 M32 21 L32 31 M44 26 L38 34" stroke="${shade(fill)}" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
-    <circle cx="26" cy="40" r="2" fill="${INK}"/><circle cx="38" cy="40" r="2" fill="${INK}"/>
-    <path d="M29 44 Q32 47 35 44" fill="none" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>
-    ${special}
+    ${basket}
+    <circle cx="32" cy="27" r="21" fill="${fill}" stroke="${dark}" stroke-width="2.5"/>
+    ${stripes}
+    <path d="M32 7 Q22 14 20 24 M32 7 Q30 16 27 24 M32 7 Q34 16 37 24 M32 7 Q42 14 44 24 M32 7 Q18 10 13 22 M32 7 Q46 10 51 22" stroke="${dark}" stroke-width="2" fill="none" stroke-linecap="round" opacity=".55"/>
+    <circle cx="32" cy="7.5" r="3" fill="${dark}" opacity=".6"/>
+    <ellipse cx="22" cy="15" rx="6" ry="3.5" transform="rotate(-30 22 15)" fill="#fff" opacity=".55"/>
+    ${sparkle}
+    <ellipse cx="20" cy="36" rx="4" ry="2.3" fill="#FF8FA8" opacity=".75"/><ellipse cx="44" cy="36" rx="4" ry="2.3" fill="#FF8FA8" opacity=".75"/>
+    ${eyes}${mouth}${hat}
   </svg>`;
 }
+
+// Small looks that make each recipe its own collectable.
+const RECIPE_LOOK = {
+  'carrot+carrot':         { color: 'rgb(255,196,120)' },
+  'cabbage+cabbage':       { color: 'rgb(205,240,180)' },
+  'pea+pea':               { color: 'rgb(170,230,170)' },
+  'strawberry+strawberry': { color: 'rgb(255,180,205)', glitter: true, wink: true },
+  'cabbage+carrot':        { color: 'rgb(221,237,138)', wink: true },
+  'carrot+pea':            { color: 'rgb(255,226,122)', hat: true },
+  'cabbage+pea':           { color: 'rgb(191,224,255)', sleepy: true },
+  'carrot+strawberry':     { color: 'rgb(255,176,138)', stripes: '#FF5C7A', wink: true },
+  'cabbage+strawberry':    { color: 'rgb(255,214,232)', glitter: true },
+  'pea+strawberry':        { color: 'rgb(217,196,245)', glitter: true, stripes: '#5BC8A8' },
+};
 
 export function veggie(filling, size = 48) {
   const v = {
@@ -139,13 +171,25 @@ export function sprout(progress, filling) {
   </svg>`;
 }
 
-export function poop() {
-  return `<svg viewBox="0 0 64 64" aria-hidden="true">
-    <ellipse cx="22" cy="44" rx="7" ry="11" transform="rotate(-20 22 44)" fill="#7A4A2B"/>
-    <ellipse cx="36" cy="46" rx="7" ry="11" transform="rotate(15 36 46)" fill="#8A5634"/>
-    <ellipse cx="46" cy="40" rx="6" ry="10" transform="rotate(35 46 40)" fill="#7A4A2B"/>
-    <circle cx="20" cy="40" r="1.6" fill="#fff"/><circle cx="25" cy="41" r="1.6" fill="#fff"/>
-  </svg>`;
+const POOP_FILL = {
+  brown: ['#8A5634', '#7A4A2B'], green: ['#6FCF4F', '#4FA33A'], orange: ['#FF9A3C', '#E07A1F'], pink: ['#FF8FA8', '#E86A86'],
+  gold: ['#FFD34D', '#E0941C'], rainbow: ['url(#rainbowPoop)', '#C96AD6'],
+};
+// A poop. `poop` is { shape: 'beans'|'swirl', color } or nothing for a plain one.
+export function poop(p = {}) {
+  const [fill, dark] = POOP_FILL[p.color] || POOP_FILL.brown;
+  const defs = p.color === 'rainbow' ? `<defs><linearGradient id="rainbowPoop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6B6B"/><stop offset=".3" stop-color="#FFD166"/><stop offset=".55" stop-color="#6FCF4F"/><stop offset=".8" stop-color="#4FA8F5"/><stop offset="1" stop-color="#C96AD6"/></linearGradient></defs>` : '';
+  const shine = p.color === 'gold' ? `<path d="M30 14 l3 6 6 1 -4 4 1 6 -6 -3 -6 3 1 -6 -4 -4 6 -1z" fill="#fff" opacity=".9"/><circle cx="50" cy="22" r="2.5" fill="#fff"/>` : '';
+  const body = p.shape === 'swirl'
+    ? `<path d="M10 54 Q6 36 24 36 Q28 24 40 28 Q44 16 36 14 Q28 12 32 20 Q46 22 46 34 Q58 36 54 48 Q56 56 48 58 H16 Q8 58 10 54Z" fill="${fill}" stroke="${dark}" stroke-width="3" stroke-linejoin="round"/>
+       <path d="M18 50 Q30 44 44 50 M26 38 Q34 34 42 38" stroke="${dark}" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/>
+       <circle cx="24" cy="46" r="3" fill="${INK}"/><circle cx="38" cy="46" r="3" fill="${INK}"/><circle cx="25" cy="45" r="1" fill="#fff"/><circle cx="39" cy="45" r="1" fill="#fff"/>
+       <path d="M27 52 Q31 55 35 52" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/>`
+    : `<ellipse cx="22" cy="44" rx="7" ry="11" transform="rotate(-20 22 44)" fill="${fill}" stroke="${dark}" stroke-width="2"/>
+       <ellipse cx="36" cy="46" rx="7" ry="11" transform="rotate(15 36 46)" fill="${fill}" stroke="${dark}" stroke-width="2"/>
+       <ellipse cx="46" cy="40" rx="6" ry="10" transform="rotate(35 46 40)" fill="${fill}" stroke="${dark}" stroke-width="2"/>
+       <circle cx="20" cy="40" r="1.6" fill="#fff"/><circle cx="25" cy="41" r="1.6" fill="#fff"/>`;
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${defs}${body}${shine}</svg>`;
 }
 
 export function compostIcon() {
@@ -171,6 +215,31 @@ export function upgradeIcon(kind) {
 
 // ---- Scenes ----
 
+// Place a side-view piggy inside another SVG at (x, y) with the given size.
+export function piggyAt(x, y, size, opts = {}) {
+  const svg = piggySide(opts).replace('<svg viewBox="0 0 200 200"', `<svg viewBox="0 0 200 200" width="200" height="200"`);
+  return `<g transform="translate(${x} ${y}) scale(${size / 200})">${svg}</g>`;
+}
+
+function tuft(x, y, s = 1, c = '#5FAE4E') {
+  return `<path d="M${x} ${y} q-2 -10 -8 -14 M${x} ${y} q0 -12 2 -18 M${x} ${y} q3 -10 9 -13" transform="translate(${x} ${y}) scale(${s}) translate(${-x} ${-y})" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+}
+
+// Soil bed for one garden plot: grass border with tufts, furrowed dirt with clods.
+export function plotArt() {
+  const clods = [[40, 70], [120, 64], [200, 72], [280, 66], [330, 78], [80, 96], [170, 100], [250, 94]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="7" ry="4" fill="#6A4524" opacity=".5"/>`).join('');
+  return `<svg viewBox="0 0 360 130" class="scene" preserveAspectRatio="none" aria-hidden="true">
+    <defs><pattern id="dirt" width="18" height="12" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="1.6" fill="#6A4524" opacity=".35"/><circle cx="13" cy="9" r="1.2" fill="#B9824A" opacity=".5"/></pattern></defs>
+    <rect width="360" height="130" fill="#A7DB8C"/>
+    <rect x="0" y="0" width="360" height="130" fill="url(#dirt)" opacity=".25"/>
+    <rect x="16" y="34" width="328" height="86" rx="18" fill="#8E5E3A" stroke="#6A4524" stroke-width="4"/>
+    <rect x="16" y="34" width="328" height="86" rx="18" fill="url(#dirt)"/>
+    <path d="M36 60 H324 M36 82 H324 M36 104 H324" stroke="#6A4524" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+    ${clods}
+    ${tuft(12, 36, 1.1)}${tuft(60, 30, .8)}${tuft(300, 30, .9)}${tuft(350, 40, 1.1)}${tuft(30, 128, 1)}${tuft(340, 126, .9)}${tuft(190, 28, .7, '#7DC768')}
+  </svg>`;
+}
+
 // The playpen: a big bamboo-steamer-style pen seen from the front, with hay,
 // a hidey house, a water bottle and a food bowl.
 export function penScene() {
@@ -183,31 +252,34 @@ export function penScene() {
     <rect width="400" height="300" fill="url(#penSky)"/>
     <circle cx="340" cy="46" r="26" fill="#FFE27A"/>
     <g fill="#fff" opacity=".9"><ellipse cx="80" cy="50" rx="34" ry="14"/><ellipse cx="104" cy="42" rx="22" ry="12"/><ellipse cx="250" cy="70" rx="28" ry="11"/></g>
+    <g stroke="#B9824A" stroke-width="5">${[20, 60, 100, 140, 180, 220, 260, 300, 340, 380].map(x => `<path d="M${x} 30 V98"/>`).join('')}</g>
+    <path d="M0 30 H400" stroke="#B9824A" stroke-width="7"/>
+    <path d="M0 62 H400" stroke="#B9824A" stroke-width="5"/>
+    <rect x="0" y="96" width="400" height="10" fill="#B9824A"/>
     <rect x="0" y="104" width="400" height="196" fill="url(#penFloor)"/>
     <rect x="0" y="104" width="400" height="196" fill="url(#hay)"/>
     <ellipse cx="310" cy="150" rx="40" ry="14" fill="#F2CE7E"/><path d="M276 150 Q300 128 332 146 M286 146 Q312 130 342 150" stroke="#D9A84E" stroke-width="3" fill="none" stroke-linecap="round"/>
     <g>
-      <path d="M26 150 L26 104 Q66 70 106 104 L106 150Z" fill="#C9935A" stroke="#8A5634" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M44 150 V124 Q66 102 88 124 V150Z" fill="#5A3A26"/>
-      <path d="M26 104 Q66 70 106 104" fill="none" stroke="#E6B566" stroke-width="6"/>
+      <path d="M26 156 L26 110 Q66 76 106 110 L106 156Z" fill="#C9935A" stroke="#8A5634" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M44 156 V130 Q66 108 88 130 V156Z" fill="#5A3A26"/>
+      <path d="M26 110 Q66 76 106 110" fill="none" stroke="#E6B566" stroke-width="6"/>
     </g>
     <g>
-      <rect x="366" y="52" width="18" height="60" rx="8" fill="#BFE6F7" stroke="#6FB7D9" stroke-width="3"/>
-      <rect x="370" y="66" width="10" height="40" rx="4" fill="#8FD3F2"/>
-      <path d="M372 112 L372 128" stroke="#9AA" stroke-width="5" stroke-linecap="round"/>
+      <path d="M372 96 V110" stroke="#9AA" stroke-width="4" stroke-linecap="round"/>
+      <rect x="362" y="104" width="20" height="62" rx="8" fill="#BFE6F7" stroke="#6FB7D9" stroke-width="3"/>
+      <rect x="367" y="118" width="10" height="42" rx="4" fill="#8FD3F2"/>
+      <path d="M372 166 L372 184" stroke="#9AA" stroke-width="5" stroke-linecap="round"/>
     </g>
     <g>
       <ellipse cx="200" cy="286" rx="34" ry="12" fill="#7AA6FF" stroke="#4C7FD9" stroke-width="3"/>
       <ellipse cx="200" cy="282" rx="24" ry="6" fill="#B8D0FF"/>
     </g>
-    <rect x="0" y="96" width="400" height="10" fill="#B9824A"/>
-    <g stroke="#B9824A" stroke-width="5">${[20, 60, 100, 140, 180, 220, 260, 300, 340, 380].map(x => `<path d="M${x} 30 V98"/>`).join('')}</g>
-    <path d="M0 30 H400" stroke="#B9824A" stroke-width="7"/>
-    <path d="M0 62 H400" stroke="#B9824A" stroke-width="5"/>
   </svg>`;
 }
 
-export function gardenScene() {
+export function gardenScene(opts = {}) {
+  const sunhat = `<g class="hat"><ellipse cx="140" cy="72" rx="52" ry="12" fill="#F2CE7E" stroke="#C98F4B" stroke-width="3"/><path d="M110 72 Q116 36 140 36 Q164 36 170 72Z" fill="#F2CE7E" stroke="#C98F4B" stroke-width="3"/><path d="M112 64 Q140 52 168 64" stroke="#FF5C7A" stroke-width="6" fill="none"/></g>`;
+  const pig = piggySide({ coat: opts.coat }).replace('<svg viewBox="0 0 200 200"', '<svg viewBox="0 0 200 200" width="200" height="200"').replace('</g>\n  </svg>', sunhat + '</g></svg>');
   return `<svg viewBox="0 0 400 160" class="scene" preserveAspectRatio="none" aria-hidden="true">
     <defs><linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FDBFF"/><stop offset="1" stop-color="#E9F8FF"/></linearGradient></defs>
     <rect width="400" height="160" fill="url(#gSky)"/>
@@ -217,18 +289,37 @@ export function gardenScene() {
     <rect x="0" y="130" width="400" height="30" fill="#A7DB8C"/>
     <g stroke="#C9935A" stroke-width="6" stroke-linecap="round">${[20, 70, 120, 170, 220, 270, 320, 370].map(x => `<path d="M${x} 100 V150"/>`).join('')}<path d="M0 112 H400 M0 136 H400"/></g>
     <g stroke="#8A5634" stroke-width="2" fill="#C9935A">${[20, 70, 120, 170, 220, 270, 320, 370].map(x => `<path d="M${x - 6} 102 L${x} 92 L${x + 6} 102Z"/>`).join('')}</g>
+    ${tuft(40, 158, 1)}${tuft(96, 156, .8)}${tuft(150, 158, 1.1)}${tuft(240, 158, .9)}${tuft(300, 156, 1)}${tuft(372, 158, .8)}
+    <g class="wheelbarrow"><path d="M300 118 L350 118 L344 140 L310 140Z" fill="#E2574C" stroke="#B0392F" stroke-width="3"/><circle cx="312" cy="146" r="8" fill="#5A3A26"/><path d="M350 118 L372 108" stroke="#8A5634" stroke-width="4" stroke-linecap="round"/><ellipse cx="326" cy="118" rx="18" ry="6" fill="#8E5E3A"/></g>
+    <g transform="translate(130 46) scale(.5)">${pig}</g>
   </svg>`;
 }
 
-export function kitchenScene() {
-  return `<svg viewBox="0 0 400 120" class="scene" preserveAspectRatio="none" aria-hidden="true">
-    <rect width="400" height="120" fill="#FFE8C2"/>
-    <g fill="#F7D9A8">${[0, 50, 100, 150, 200, 250, 300, 350].map(x => `<rect x="${x}" y="0" width="25" height="120"/>`).join('')}</g>
-    <rect x="0" y="70" width="400" height="50" fill="#C9935A"/><rect x="0" y="70" width="400" height="8" fill="#E6B566"/>
-    <rect x="30" y="16" width="120" height="10" rx="3" fill="#B9824A"/><rect x="250" y="16" width="120" height="10" rx="3" fill="#B9824A"/>
-    <g><ellipse cx="60" cy="14" rx="14" ry="6" fill="#FF9A3C"/><ellipse cx="100" cy="14" rx="14" ry="6" fill="#8FD07A"/><ellipse cx="280" cy="14" rx="14" ry="6" fill="#5BC86A"/><ellipse cx="320" cy="14" rx="14" ry="6" fill="#FF5C7A"/></g>
-    <g><rect x="170" y="40" width="60" height="30" rx="6" fill="#E6B566" stroke="#B9824A" stroke-width="3"/><path d="M166 40 H234" stroke="#B9824A" stroke-width="4" stroke-linecap="round"/><ellipse cx="200" cy="40" rx="30" ry="8" fill="#F2CE7E" stroke="#B9824A" stroke-width="3"/><path d="M200 32 V22" stroke="#B9824A" stroke-width="4" stroke-linecap="round"/></g>
-    <g fill="#fff" opacity=".8" class="steamline"><ellipse cx="190" cy="14" rx="6" ry="9"/><ellipse cx="210" cy="10" rx="6" ry="9"/></g>
+// The kitchen: tiled wall, shelves of jars, a counter with a bamboo steamer
+// on a wok, and the piggy chef behind it. The UI overlays the ingredient
+// slots on the counter.
+export function kitchenScene(opts = {}) {
+  const toque = `<g class="hat"><path d="M112 72 Q110 48 134 46 Q142 30 160 40 Q178 36 180 56 Q188 70 170 74 Z" fill="#fff" stroke="#D5CDBA" stroke-width="3"/><rect x="118" y="66" width="56" height="12" rx="4" fill="#fff" stroke="#D5CDBA" stroke-width="3"/></g>`;
+  const pig = piggySide({ coat: opts.coat }).replace('<svg viewBox="0 0 200 200"', '<svg viewBox="0 0 200 200" width="200" height="200"').replace('</g>\n  </svg>', toque + '</g></svg>');
+  return `<svg viewBox="0 0 400 230" class="scene" preserveAspectRatio="none" aria-hidden="true">
+    <defs><pattern id="tiles" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#FFF1D6"/><rect x="2" y="2" width="36" height="36" rx="6" fill="#FFE3B8"/></pattern></defs>
+    <rect width="400" height="230" fill="url(#tiles)"/>
+    <g><rect x="16" y="22" width="150" height="10" rx="3" fill="#B9824A"/><rect x="234" y="22" width="150" height="10" rx="3" fill="#B9824A"/>
+      <g stroke="#8A5634" stroke-width="2.5"><rect x="30" y="-2" width="26" height="26" rx="5" fill="#FFB77A"/><rect x="66" y="2" width="22" height="22" rx="5" fill="#A6DB8C"/><rect x="100" y="-4" width="30" height="28" rx="6" fill="#FF8FA8"/><rect x="250" y="0" width="24" height="24" rx="5" fill="#8FD3F2"/><rect x="286" y="-2" width="28" height="26" rx="6" fill="#FFD34D"/><rect x="326" y="4" width="22" height="20" rx="5" fill="#C9B8D6"/></g></g>
+    <g class="chef">${'<g transform="translate(26 54) scale(.62)">' + pig + '</g>'}
+      <g class="spoon"><path d="M128 120 L150 86" stroke="#8A5634" stroke-width="6" stroke-linecap="round"/><ellipse cx="152" cy="82" rx="9" ry="6" fill="#B9824A"/></g></g>
+    <rect x="0" y="150" width="400" height="80" fill="#C9935A"/><rect x="0" y="146" width="400" height="12" rx="4" fill="#E6B566" stroke="#9C6A3A" stroke-width="3"/>
+    <g class="pot">
+      <path d="M212 118 Q292 150 372 118 L360 150 H224Z" fill="#3A2A22"/><ellipse cx="292" cy="150" rx="68" ry="8" fill="#2A1A14"/>
+      <path d="M204 112 L220 112 M364 112 L380 112" stroke="#3A2A22" stroke-width="7" stroke-linecap="round"/>
+      <rect x="232" y="82" width="120" height="34" rx="10" fill="#E6B566" stroke="#9C6A3A" stroke-width="3"/>
+      <path d="M232 96 H352" stroke="#C98F4B" stroke-width="3"/>
+      <g stroke="#9C6A3A" stroke-width="2" opacity=".5">${[246, 262, 278, 294, 310, 326, 342].map(x => `<path d="M${x} 86 V112"/>`).join('')}</g>
+      <ellipse cx="292" cy="82" rx="62" ry="12" fill="#F2CE7E" stroke="#9C6A3A" stroke-width="3"/>
+      <ellipse cx="292" cy="80" rx="46" ry="7" fill="#E6B566"/>
+      <path d="M292 72 V58" stroke="#9C6A3A" stroke-width="5" stroke-linecap="round"/><circle cx="292" cy="56" r="6" fill="#C98F4B" stroke="#9C6A3A" stroke-width="2"/>
+    </g>
+    <g class="vapor"><ellipse class="puff p1" cx="268" cy="46" rx="9" ry="12" fill="#fff" opacity=".85"/><ellipse class="puff p2" cx="292" cy="38" rx="10" ry="14" fill="#fff" opacity=".85"/><ellipse class="puff p3" cx="316" cy="48" rx="8" ry="11" fill="#fff" opacity=".85"/></g>
   </svg>`;
 }
 
@@ -241,7 +332,7 @@ export function shopScene() {
 }
 
 function tint(a, b) {
-  const c = { carrot: [255, 200, 150], cabbage: [225, 245, 210], pea: [205, 240, 200], strawberry: [255, 200, 215] };
+  const c = { carrot: [255, 196, 120], cabbage: [205, 240, 180], pea: [170, 230, 170], strawberry: [255, 180, 205] };
   const x = c[a], y = c[b];
   const m = x.map((v, i) => Math.round((v + y[i]) / 2));
   return `rgb(${m[0]},${m[1]},${m[2]})`;

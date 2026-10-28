@@ -233,7 +233,7 @@ export function applyAway(state, now = Date.now()) {
   let scooped = 0;
   if (state.upgrades.autoscoop) {
     scooped = state.poops.length;
-    state.compost += scooped;
+    for (const poop of state.poops) state.compost += (POOP_VALUE[poop.color] || POOP_VALUE.brown).compost;
     state.poops = [];
     state.stats.scooped += scooped;
   }
@@ -241,8 +241,32 @@ export function applyAway(state, now = Date.now()) {
   return { away, coins: state.coins - before, poops: state.poops.length - poopsBefore, scooped };
 }
 
+// Poops come in kinds. The shape is random, the color comes from the last
+// dumpling the pooping piggy ate, and now and then one is rainbow or golden.
+export const POOP_COLORS = { brown: 'Plain', green: 'Green', orange: 'Orange', pink: 'Pink', rainbow: 'Rainbow', gold: 'Golden' };
+export const POOP_VALUE = { brown: { coins: 2, compost: 1 }, green: { coins: 3, compost: 1 }, orange: { coins: 3, compost: 1 }, pink: { coins: 3, compost: 1 }, rainbow: { coins: 10, compost: 3 }, gold: { coins: 25, compost: 5 } };
+
+export function poopKind(state, rng = Math.random) {
+  const fed = state.piggies.filter(p => p.hunger > 30);
+  const pooper = fed[Math.floor(rng() * fed.length)] || state.piggies[0];
+  const shape = rng() < 0.4 ? 'swirl' : 'beans';
+  let color = 'brown';
+  const food = pooper && pooper.lastFood ? pooper.lastFood : '';
+  if (food.includes('strawberry')) color = 'pink';
+  else if (food.includes('carrot')) color = 'orange';
+  else if (food.includes('cabbage') || food.includes('pea')) color = 'green';
+  const r = rng();
+  if (r < 0.01) color = 'gold';
+  else if (r < 0.04) color = 'rainbow';
+  return { shape, color };
+}
+
 function addPoop(state) {
-  state.poops.push({ id: state.nextId++, x: 0.1 + Math.random() * 0.8, y: 0.2 + Math.random() * 0.75 });
+  const kind = poopKind(state);
+  state.poops.push({ id: state.nextId++, x: 0.1 + Math.random() * 0.8, y: 0.2 + Math.random() * 0.75, ...kind });
+  state.poopBook = state.poopBook || {};
+  const key = kind.shape + '-' + kind.color;
+  state.poopBook[key] = (state.poopBook[key] || 0) + 1;
 }
 
 export function feed(state, key, piggyId = null, now = Date.now()) {
@@ -257,6 +281,7 @@ export function feed(state, key, piggyId = null, now = Date.now()) {
   state.coins += r.coins;
   state.stats.fed += 1;
   if (r.effect) { p.effect = r.effect; p.effectUntil = now + 20000; }
+  p.lastFood = key;
   // Eating makes poop more likely soon.
   state.poopTimer = (state.poopTimer || 0) + 45;
   return { ok: true, coins: r.coins, effect: r.effect, piggy: p };
@@ -276,11 +301,12 @@ export function pet(state, piggyId) {
 export function scoop(state, id) {
   const i = state.poops.findIndex(p => p.id === id);
   if (i < 0) return { ok: false };
-  state.poops.splice(i, 1);
-  state.compost += 1;
-  state.coins += 2;
+  const poop = state.poops.splice(i, 1)[0];
+  const v = POOP_VALUE[poop.color] || POOP_VALUE.brown;
+  state.compost += v.compost;
+  state.coins += v.coins;
   state.stats.scooped += 1;
-  return { ok: true, coins: 2 };
+  return { ok: true, coins: v.coins, compost: v.compost, poop };
 }
 
 export function plant(state, plot, filling, now = Date.now()) {

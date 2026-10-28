@@ -166,9 +166,13 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .bubble { position: absolute; top: -8%; right: -10%; background: var(--pink); color: #3A1420; font-family: var(--display); font-weight: 600; padding: 2px 12px; border-radius: 14px; animation: pop-in .2s; border: 2px solid #fff; }
 @keyframes pop-in { from { transform: scale(.5); opacity: 0; } }
 
-.poop { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 46px; height: 46px; transform: translate(-50%, -70%); transition: transform .25s, opacity .25s; z-index: 5; }
+.poop { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 46px; height: 46px; transform: translate(-50%, -100%); transition: transform .25s, opacity .25s; z-index: 5; }
 .poop svg { width: 100%; height: 100%; }
-.poop.gone { transform: translate(-50%, -170%) scale(.3); opacity: 0; }
+.poop.gone { transform: translate(-50%, -200%) scale(.3); opacity: 0; }
+.poop.rainbow, .poop.gold { width: 54px; height: 54px; animation: glow 1s infinite alternate; }
+@keyframes glow { from { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #FFD166); } to { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px #FFD166); } }
+.poop-card svg { width: 120px; height: 120px; }
+.plant.pulled { transition: transform .4s, opacity .4s; transform: translate(-50%, -40px) rotate(20deg); opacity: 0; }
 
 .tray { display: flex; gap: 12px; overflow-x: auto; padding: 8px 6px; min-height: 86px; align-items: center; }
 .dump { flex: 0 0 auto; }
@@ -180,26 +184,47 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .compost .ico svg { width: 36px; height: 36px; }
 .compost small { margin-left: auto; color: var(--soft); font-size: .72rem; text-align: right; font-family: var(--body); }
 .plots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
-.plot { position: relative; height: 130px; border-radius: 18px; background: linear-gradient(#B8E39A, #9CD07E); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; border: 3px solid #5FAE4E; box-shadow: 0 4px 0 #3E8E2A; }
+.plot { position: relative; height: 140px; border-radius: 18px; background: #A7DB8C; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; border: 3px solid #5FAE4E; box-shadow: 0 4px 0 #3E8E2A; }
 .plot:active { transform: translateY(2px); box-shadow: 0 2px 0 #3E8E2A; }
-.soil { position: absolute; left: 10%; right: 10%; bottom: 26px; height: 24px; background: #8E5E3A; border-radius: 50%; border: 3px solid #6A4524; }
-.plant { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); }
+.plot .scene { height: 100%; }
+.plant { position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 0 rgba(0,0,0,.2)); }
+.gardener { position: absolute; bottom: 14px; left: 50%; width: 76px; transform: translateX(-260%); opacity: 0; pointer-events: none; z-index: 2; }
+.gardener svg { width: 100%; height: auto; overflow: visible; }
+.gardener .legA, .gardener .legB { opacity: 1; animation: legA .3s steps(2) infinite; }
+.gardener .legB { animation-name: legB; }
+.gardener.go { animation: gardener 2s ease-in-out forwards; }
+.gardener.go .body { animation: dig .3s ease-in-out 4 .6s; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes gardener { 0% { transform: translateX(-260%); opacity: 1; } 28% { transform: translateX(-50%); opacity: 1; } 72% { transform: translateX(-50%); opacity: 1; } 100% { transform: translateX(200%); opacity: 1; } }
+@keyframes dig { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(14deg) translate(4px, 3px); } }
+.plot.busy .lbl { opacity: 0; }
 .ring { position: absolute; top: 8px; left: 12px; right: 12px; height: 10px; background: rgba(255,255,255,.6); border-radius: 5px; overflow: hidden; border: 2px solid #fff; }
 .ring i { display: block; height: 100%; background: var(--mint); }
-.lbl { font-family: var(--display); font-weight: 600; font-size: .95rem; padding: 4px 0; color: #fff; text-shadow: 0 2px 0 #3E8E2A; }
+.lbl { position: relative; z-index: 1; font-family: var(--display); font-weight: 600; font-size: .95rem; padding: 4px 0; color: #fff; text-shadow: 0 2px 0 #3E8E2A, 0 0 6px rgba(0,0,0,.35); }
 .plot.ready { animation: wobble 1s infinite; }
 @keyframes wobble { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-2deg); } 75% { transform: rotate(2deg); } }
 .pantry { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .pitem span { font-size: .72rem; color: var(--soft); } .pitem b.count { background: var(--mint); color: #0E2E25; }
 
 /* ---- Kitchen ---- */
-.pot { padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.slots { display: flex; align-items: center; gap: 10px; }
-.slot { width: 72px; height: 72px; border-radius: 18px; border: 3px dashed var(--panel-edge); display: grid; place-items: center; background: #fff; }
-.slot.filled { border-style: solid; background: var(--bg); }
-.plus { font-family: var(--display); font-size: 1.6rem; color: var(--soft); }
-.pot.cooking { animation: cookshake .9s; }
-@keyframes cookshake { 0%, 100% { transform: none; } 20% { transform: translateX(-4px) rotate(-1deg); } 40% { transform: translateX(4px) rotate(1deg); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+.kitchen-stage { position: relative; border-radius: 18px; overflow: hidden; border: 3px solid var(--wood-dark); box-shadow: 0 4px 0 #6A4524; }
+.kitchen-stage .scene { position: static; width: 100%; height: auto; }
+.slots { position: absolute; left: 3%; bottom: 7%; display: flex; align-items: center; gap: 6px; }
+.slot { width: 54px; height: 54px; border-radius: 14px; border: 3px dashed #fff; display: grid; place-items: center; background: rgba(255,255,255,.75); box-shadow: 0 3px 0 rgba(0,0,0,.2); }
+.slot.filled { border-style: solid; border-color: var(--panel-edge); background: #fff; }
+.slot svg { width: 42px; height: 42px; }
+.plus { font-family: var(--display); font-size: 1.5rem; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.3); }
+#cook { position: absolute; right: 3%; bottom: 9%; }
+.kitchen-stage .pot, .kitchen-stage .chef, .kitchen-stage .spoon { transform-box: fill-box; transform-origin: 50% 100%; }
+.kitchen-stage .puff { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.kitchen-stage.cooking .pot { animation: potwiggle .45s ease-in-out 3; }
+.kitchen-stage.cooking .puff { animation: puff 1.2s ease-out infinite; }
+.kitchen-stage.cooking .p2 { animation-delay: .3s; } .kitchen-stage.cooking .p3 { animation-delay: .6s; }
+.kitchen-stage.cooking .chef { animation: stir .35s ease-in-out 4; }
+.kitchen-stage.cooking .spoon { transform-origin: 20% 90%; animation: spoon .35s ease-in-out 4; }
+@keyframes potwiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-3deg) translateY(-3px); } 75% { transform: rotate(3deg) translateY(-3px); } }
+@keyframes puff { 0% { opacity: 0; transform: translateY(10px) scale(.6); } 30% { opacity: .9; } 100% { opacity: 0; transform: translateY(-50px) scale(1.5); } }
+@keyframes stir { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px) rotate(-3deg); } }
+@keyframes spoon { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-25deg); } }
 .fillings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
 .fill:disabled { opacity: .35; }
 .fill b.count { background: var(--mint); color: #0E2E25; }
@@ -223,6 +248,7 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .mcell .bale { display: none; }
 .mcell.wall .bale { display: block; }
 .mpig { transition: transform .5s linear; cursor: pointer; }
+.mpig-rot { transform-box: fill-box; transform-origin: center; transition: transform .25s ease; }
 .mpig .pawA, .mpig .pawB { transform-box: fill-box; transform-origin: center; }
 .running .mpig .pawA { animation: pawA .3s steps(2) infinite; }
 .running .mpig .pawB { animation: pawB .3s steps(2) infinite; }
