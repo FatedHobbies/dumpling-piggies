@@ -4,7 +4,10 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
+const VERSION = 8;
 let state = null;
+let wiped = false;          // after "Start over": never save the old state again
+const persist = () => { if (!wiped) save(state); };
 let tab = 'steamer';
 let selected = [];          // fillings chosen in the kitchen
 let selectedPig = null;     // id of the piggy whose name is in the HUD
@@ -44,9 +47,9 @@ export function start() {
   }
   setInterval(loop, 1000);
   setInterval(wanderTick, 100);
-  setInterval(() => save(state), 5000);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) save(state); });
-  window.addEventListener('pagehide', () => save(state));
+  setInterval(persist, 5000);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); });
+  window.addEventListener('pagehide', persist);
 }
 
 function loop() {
@@ -636,7 +639,8 @@ function shopView() {
     <div class="adopt panel" id="adopt"></div>
     <div class="ribbon"><span>Upgrades</span></div>
     <div id="items"></div>
-    <button class="reset" id="reset">Start over</button></section>`);
+    <button class="reset" id="reset">Start over</button>
+    <p class="version">version ${VERSION}</p></section>`);
 }
 
 function updateShop() {
@@ -687,7 +691,7 @@ function updateShop() {
     items.appendChild(b);
   }
   $('#reset').onclick = () => {
-    confirmBox('Start over with a brand new piggy? Everything will be gone.', () => { wipe(); location.reload(); });
+    confirmBox('Start over with a brand new piggy? Everything will be gone.', () => { wiped = true; wipe(); location.reload(); });
   };
 }
 
