@@ -101,7 +101,8 @@ export function newState(now = Date.now()) {
     garden: [null, null, null],     // null or { filling, plantedAt }
     compost: 2,                     // scooped poop, needed to plant
     pantry: { carrot: 2, cabbage: 1, pea: 1, strawberry: 0 },
-    dumplings: {},                  // recipeKey -> count
+    dumplings: { 'carrot+carrot': 1 }, // one dumpling to feed during the tutorial
+    tutorial: { step: 1 },          // first-play tutorial progress; { done: true } when finished
     discovered: [],                 // recipe keys found so far
     upgrades: {},                   // upgradeId -> true
     stats: { fed: 0, scooped: 0, cooked: 0, petted: 0 },
@@ -116,6 +117,7 @@ export function newState(now = Date.now()) {
 
 // Older saves had one `piggy`; lift it into the `piggies` list.
 export function migrate(state) {
+  if (!state.tutorial) state.tutorial = { done: true };   // saves from before the tutorial existed
   if (state.version >= 2) return state;
   const old = state.piggy || {};
   state.piggies = [{
@@ -261,7 +263,7 @@ export function poopKind(state, rng = Math.random) {
   return { shape, color };
 }
 
-function addPoop(state) {
+export function addPoop(state) {
   const kind = poopKind(state);
   state.poops.push({ id: state.nextId++, x: 0.1 + Math.random() * 0.8, y: 0.2 + Math.random() * 0.75, ...kind });
   state.poopBook = state.poopBook || {};

@@ -71,6 +71,7 @@ function buildShell() {
       <button class="hud-pig" id="name" aria-label="Rename your piggy"><span class="hud-avatar" id="avatar"></span><span class="hud-name" id="pigname"></span></button>
       <div class="hud-coins"><span class="coin-ico">${Art.coinIcon()}</span><span id="coins">0</span></div>
     </header>
+    <div id="coach" class="coach" hidden><span class="coach-pig" id="coachpig"></span><p id="coachtext"></p><button class="coach-skip" id="coachskip" aria-label="Skip tutorial">✕</button></div>
     <main id="view"></main>
     <nav class="tabs">
       <button data-tab="steamer" class="tab" aria-label="Pen"><span class="ico">🏠</span>Pen</button>
@@ -82,6 +83,59 @@ function buildShell() {
     <div id="toasts"></div>`;
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); tab = b.dataset.tab; sfx.pop(); render(true); }));
   $('#name').addEventListener('click', renameDialog);
+  $('#coachskip').addEventListener('click', () => confirmBox('Skip the tutorial?', () => { state.tutorial = { done: true }; render(); }));
+}
+
+// ---------- Tutorial ----------
+// Each step waits for one action. `tab` is where it happens; the coach bar
+// points there first if she is somewhere else.
+const TUTORIAL = [
+  null,
+  { tab: 'steamer', on: 'pet',    text: n => `Tap ${n} to pet them!`, target: '.piggy' },
+  { tab: 'steamer', on: 'feed',   text: n => `${n} is hungry! Tap the dumpling to feed them.`, target: '.dump' },
+  { tab: 'steamer', on: 'scoop',  text: n => `Uh oh, a poop! Tap it to scoop it up.`, target: '.poop', enter: () => { if (!state.poops.length) G.addPoop(state); } },
+  { tab: 'garden',  on: 'plant',  text: n => `Poop makes compost! Tap a plot to plant a veggie.`, target: '.plot.empty' },
+  { tab: 'kitchen', on: 'cook',   text: n => `Pick two veggies, then tap Steam it!`, target: '.fill:not(:disabled), #cook' },
+  { tab: 'maze',    on: 'maze',   text: n => `Tap Go! and watch ${n} run. Tap ${n} to cheer!`, target: '.go, #mpig' },
+  { tab: null,      on: 'rename', text: n => `You earned ${G.RENAME_COST} coins! Tap ${n}'s name up top to rename them.`, target: '#name' },
+];
+const TAB_NAMES = { steamer: 'Pen', garden: 'Garden', kitchen: 'Kitchen', maze: 'Maze', shop: 'Shop' };
+
+function tutStep() {
+  const t = state.tutorial;
+  return t && !t.done && TUTORIAL[t.step] ? t.step : 0;
+}
+
+// Called by the game actions. Advances when the action is the one awaited.
+function tut(action) {
+  const i = tutStep();
+  if (!i || TUTORIAL[i].on !== action) return;
+  state.tutorial.step += 1;
+  const next = TUTORIAL[state.tutorial.step];
+  if (!next) { state.tutorial = { done: true }; save(state); sfx.fanfare(); popup('Piggy pro!', `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div><p>You know everything ${esc(current().name)} needs. Have fun!</p>`, 'Yay!'); return; }
+  if (next.on === 'rename') {
+    state.coins += G.RENAME_COST;
+    sfx.fanfare();
+    popup('You did it!', `<div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${G.RENAME_COST}</span></div><p>Enough coins to give ${esc(current().name)} a new name, or save them for the shop!</p>`, 'Yay!');
+  } else sfx.ding();
+  if (next.enter) next.enter();
+  save(state);
+}
+
+function updateCoach() {
+  const coach = $('#coach');
+  const i = tutStep();
+  document.querySelectorAll('.hi').forEach(e => e.classList.remove('hi'));
+  if (!i) { coach.hidden = true; return; }
+  const step = TUTORIAL[i];
+  const n = esc(current().name);
+  coach.hidden = false;
+  if ($('#coachpig').dataset.id !== String(current().id)) { $('#coachpig').dataset.id = String(current().id); $('#coachpig').innerHTML = Art.piggySide({ coat: current().coat }); }
+  let text, targets;
+  if (step.tab && tab !== step.tab) { text = `Go to the ${TAB_NAMES[step.tab]}!`; targets = `.tab[data-tab="${step.tab}"]`; }
+  else { text = step.text(n); targets = step.target; }
+  if ($('#coachtext').textContent !== text) $('#coachtext').textContent = text;
+  document.querySelectorAll(targets).forEach(e => e.classList.add('hi'));
 }
 
 function render(force = false) {
@@ -99,6 +153,7 @@ function render(force = false) {
     view.appendChild({ steamer: steamerView, garden: gardenView, kitchen: kitchenView, maze: mazeView, shop: shopView }[tab]());
   }
   ({ steamer: updateSteamer, garden: updateGarden, kitchen: updateKitchen, maze: updateMaze, shop: updateShop }[tab])();
+  updateCoach();
 }
 
 // ---------- Pen ----------
@@ -219,6 +274,7 @@ function onPet(id) {
   if (d) { d.classList.remove('hop'); void d.offsetWidth; d.classList.add('hop'); bubble(d, 'wheek!'); }
   sfx.wheek();
   if (r.coins) floatCoin();
+  tut('pet');
   render();
 }
 
@@ -240,6 +296,7 @@ function onFeed(key) {
   if (d) { bubble(d, 'nom!'); d.classList.remove('munch'); void d.offsetWidth; d.classList.add('munch'); }
   floatCoin(r.coins);
   if (r.effect) setTimeout(() => sfx.ding(), 300);
+  tut('feed');
   render();
 }
 
@@ -255,6 +312,7 @@ function onScoop(id, btn) {
     sfx.fanfare();
     popup(c === 'gold' ? 'A golden poop!' : 'A rainbow poop!', `<div class="pig-card poop-card">${Art.poop(r.poop)}</div><p>Wow! That's worth <b>${r.coins} coins</b> and <b>${r.compost} compost</b>.</p>`, 'Wow!');
   } else if (c !== 'brown') toast(`${G.POOP_COLORS[c]} poop! +${r.coins} coins`);
+  tut('scoop');
   render();
 }
 
@@ -319,7 +377,7 @@ function onPlot(i) {
   picker('What should we plant?', Object.keys(G.FILLINGS).map(f => ({ id: f, html: Art.veggie(f, 48), label: G.FILLINGS[f].name })), (f) => {
     gardenerRun(i, () => {
       const r = G.plant(state, i, f);
-      if (r.ok) { sfx.pop(); render(); }
+      if (r.ok) { sfx.pop(); tut('plant'); render(); }
     });
   });
 }
@@ -393,6 +451,7 @@ function onCook() {
     stage.classList.remove('cooking');
     if (r.isNew) { sfx.fanfare(); popup('New recipe!', `<div class="pig-card">${Art.dumpling(r.key, 96)}</div><p><b>${r.recipe.name}</b><br>+10 coins for finding it</p>`, 'Yum!'); floatCoin(10); }
     else { sfx.ding(); toast(`Made a ${r.recipe.name}`); }
+    tut('cook');
     render();
   }, 1500);
 }
@@ -545,7 +604,7 @@ function scheduleStep() {
       pig.classList.add('popcorn');
       floatCoin(r.coins);
       toast(r.first ? `New maze finished! +${r.coins} coins` : `Dumpling! +${r.coins} coins`, 'big');
-      setTimeout(() => { stopRun(); render(); }, 2200);
+      setTimeout(() => { stopRun(); tut('maze'); render(); }, 2200);
       return;
     }
     scheduleStep();
@@ -647,7 +706,7 @@ function renameDialog() {
   $('#ok', box).onclick = () => {
     const r = G.rename(state, p.id, $('#newname', box).value);
     if (!r.ok) { sfx.nope(); toast(r.reason === 'coins' ? 'Not enough coins yet' : 'Type a name first'); return; }
-    sfx.fanfare(); box.remove(); render(); toast(`Hello, ${esc(p.name)}!`, 'big');
+    sfx.fanfare(); box.remove(); tut('rename'); render(); toast(`Hello, ${esc(p.name)}!`, 'big');
   };
   setTimeout(() => $('#newname', box).focus(), 50);
 }

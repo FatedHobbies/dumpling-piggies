@@ -95,6 +95,18 @@ h2 { font-family: var(--display); font-size: 1.2rem; margin: 18px 0 8px; }
 .hud-coins { display: flex; align-items: center; gap: 6px; background: rgba(40, 60, 80, .55); border: 2px solid rgba(255,255,255,.4); border-radius: 999px; padding: 4px 14px 4px 6px; font-family: var(--display); font-weight: 600; color: #fff; font-size: 1.15rem; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
 .coin-ico svg { width: 28px; height: 28px; }
 
+/* ---- Tutorial coach ---- */
+.coach { display: flex; align-items: center; gap: 10px; margin: 10px 14px 0; padding: 6px 10px; background: #fff; border: 3px solid var(--blue); border-radius: 16px; box-shadow: 0 4px 0 var(--blue-dark); animation: pop-in .25s; }
+.coach[hidden] { display: none; }
+.coach-pig { width: 44px; height: 44px; flex: 0 0 auto; }
+.coach-pig svg { width: 100%; height: 100%; }
+.coach p { flex: 1; font-family: var(--display); font-weight: 600; font-size: 1rem; line-height: 1.2; color: var(--ink); }
+.coach-skip { width: 28px; height: 28px; border-radius: 50%; background: var(--line); color: var(--soft); font-size: .9rem; display: grid; place-items: center; flex: 0 0 auto; }
+.hi { animation: hi .8s ease-in-out infinite alternate; }
+.hi:not(.piggy) { outline: 4px solid #FFD34D; outline-offset: 3px; border-radius: 16px; }
+.piggy.hi .pig-art { filter: drop-shadow(0 0 6px #FFD34D) drop-shadow(0 0 12px #FFD34D); }
+@keyframes hi { from { outline-color: #FFD34D; } to { outline-color: #FF5C7A; } }
+
 main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bottom)); min-height: 0; }
 
 /* ---- Tabs ---- */
