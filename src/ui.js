@@ -466,7 +466,7 @@ function updateShop() {
     const b = el(`<button class="item ${owned ? 'owned' : ''}" ${owned ? 'disabled' : ''}>
       <span class="ico">${Art.upgradeIcon(u.icon)}</span>
       <span class="txt"><b>${u.name}</b><small>${u.desc}</small></span>
-      <span class="price">${owned ? 'Got it!' : `${u.cost} 🪙`}</span></button>`);
+      <span class="price">${owned ? 'Got it!' : `${u.cost} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></button>`);
     b.addEventListener('click', () => {
       const r = G.buy(state, id);
       if (!r.ok) { sfx.nope(); toast(`Need ${u.cost - state.coins} more coins`); return; }
@@ -529,7 +529,7 @@ function bubble(target, text) {
 }
 
 function floatCoin(n = 1) {
-  const c = el(`<div class="fcoin">+${n} 🪙</div>`);
+  const c = el(`<div class="fcoin">+${n} <i class="coin-sm">${Art.coinIcon()}</i></div>`);
   c.style.left = (35 + Math.random() * 30) + '%';
   document.body.appendChild(c);
   setTimeout(() => c.remove(), 1200);

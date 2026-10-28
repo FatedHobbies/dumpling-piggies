@@ -1,6 +1,6 @@
 // Offline support: cache the app shell on install, serve from cache first,
 // and refresh the cache in the background. Bump CACHE when files change.
-const CACHE = 'dumpling-piggies-v2';
+const CACHE = 'dumpling-piggies-v3';
 const SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './src/ui.js', './src/game.js', './src/art.js', './src/save.js', './src/sound.js', './src/maze.js',
