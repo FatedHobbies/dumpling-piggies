@@ -172,6 +172,10 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .card p.book-hint { margin: -4px 0 0; font-size: .85rem; }
 .tier { background: #FBF7EE; border: 2px solid var(--line); border-radius: 16px; padding: 8px 8px 10px; }
 .tier[hidden] { display: none; }
+.book-pane[data-pane="poops"] { touch-action: pan-y; overflow: hidden; }
+.tier.slide-l { animation: slide-l .22s ease-out; } .tier.slide-r { animation: slide-r .22s ease-out; }
+@keyframes slide-l { from { transform: translateX(40%); opacity: 0; } }
+@keyframes slide-r { from { transform: translateX(-40%); opacity: 0; } }
 .pager { display: flex; align-items: center; gap: 8px; }
 .pager h4 { flex: 1; justify-content: center; gap: 8px; }
 .pager .arrow { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; border: 3px solid #2F6FB8; background: linear-gradient(#7EC0FF, #4A97E8); color: #fff; font-family: var(--display); font-size: 1.6rem; line-height: 1; padding: 0 0 4px; box-shadow: 0 3px 0 #2F6FB8; }

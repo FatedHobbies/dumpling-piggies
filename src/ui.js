@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 40;
+const VERSION = 41;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -1015,17 +1015,36 @@ function poopBook() {
 
 // Poop Book tabs (Poops / Badges) and page arrows. Delegated, since popups can be queued.
 let bookPageIdx = 0;
+let swipedAt = 0;
+// Flip the Poop Book a page forward (1) or back (-1), sliding in from that side.
+function flipBook(pane, step) {
+  const pages = [...pane.querySelectorAll('.tier')];
+  bookPageIdx = (bookPageIdx + step + pages.length) % pages.length;
+  pages.forEach((p, i) => { p.hidden = i !== bookPageIdx; p.classList.remove('slide-l', 'slide-r'); });
+  void pages[bookPageIdx].offsetWidth;   // restart the slide animation
+  pages[bookPageIdx].classList.add(step > 0 ? 'slide-l' : 'slide-r');
+  sfx.pop();
+}
+// Swipe left or right on the poop pages to flip them. Mostly-vertical drags
+// are left alone so the book still scrolls.
+let swipe = null;
+document.addEventListener('touchstart', (e) => {
+  const pane = e.target.closest('.book-pane[data-pane="poops"]');
+  swipe = pane && e.touches.length === 1 ? { pane, x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+}, { passive: true });
+document.addEventListener('touchend', (e) => {
+  if (!swipe) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) { flipBook(swipe.pane, dx < 0 ? 1 : -1); swipedAt = Date.now(); }
+  swipe = null;
+}, { passive: true });
 document.addEventListener('click', (e) => {
+  if (Date.now() - swipedAt < 400 && e.target.closest('.book-pane')) return;   // the tap that ended a swipe
   const tileBtn = e.target.closest('.pk[data-key]');
   if (tileBtn) { poopDetail(tileBtn.dataset.key); return; }
   const arrow = e.target.closest('.pager .arrow');
-  if (arrow) {
-    const pages = [...arrow.closest('.book-pane').querySelectorAll('.tier')];
-    bookPageIdx = (bookPageIdx + Number(arrow.dataset.step) + pages.length) % pages.length;
-    pages.forEach((p, i) => { p.hidden = i !== bookPageIdx; });
-    sfx.pop();
-    return;
-  }
+  if (arrow) { flipBook(arrow.closest('.book-pane'), Number(arrow.dataset.step)); return; }
   const b = e.target.closest('.book-tabs button');
   if (!b) return;
   const card = b.closest('.card');
