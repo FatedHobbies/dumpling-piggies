@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 125;
+const VERSION = 126;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -1731,7 +1731,6 @@ function shopView() {
     <div class="shop-sec" data-sec="hats"><div class="hats panel" id="hats"></div></div>
     <div class="shop-sec" data-sec="toys"><div class="toys panel" id="toys"></div></div>
     <div class="shop-sec" data-sec="mazes"><div class="toys panel" id="mthemes"></div></div>
-    <button class="reset" id="reset">Start over</button>
     <p class="version">version ${VERSION}</p></section>`);
 }
 
@@ -1885,9 +1884,6 @@ function updateShop() {
     });
     items.appendChild(b);
   }
-  $('#reset').onclick = () => {
-    confirmBox('Start over with a brand new piggy? Everything will be gone.', () => { wiped = true; wipe(); location.reload(); });
-  };
 }
 
 function poopBook() {
@@ -2182,7 +2178,7 @@ function picker(title, options, onPick, onLocked = null) {
 
 // ---------- Settings ----------
 // The gear in the top bar: sound sliders with on/off switches, and the
-// tutorial replay.
+// tutorial replay, and Start over (its Yes waits 5 seconds).
 const SOUND_ROWS = [
   { kind: 'master', name: 'All sound', icon: 'speaker' },
   { kind: 'music',  name: 'Music',     icon: 'music' },
@@ -2198,7 +2194,8 @@ function settings() {
     <div class="ribbon"><span>Settings</span></div>
     <div class="snd panel">${rows}</div>
     <div class="row center"><button class="btn btn-grey" id="replay">Replay tutorial</button></div>
-    <div class="row center"><button class="btn big" id="sclose">Done</button></div></div></div>`);
+    <div class="row center"><button class="btn big" id="sclose">Done</button></div>
+    <button class="reset" id="reset">Start over</button></div></div>`);
   const show = () => {
     const masterOn = volume.get('master').on;
     box.querySelectorAll('.snd-row').forEach(row => {
@@ -2220,15 +2217,28 @@ function settings() {
     state.tutorial = { step: 1 };
     tab = 'steamer'; sfx.ding(); render(true);
   };
+  $('#reset', box).onclick = () => {
+    box.remove();
+    confirmBox('Start over with a brand new piggy? Everything will be gone.', () => { wiped = true; wipe(); location.reload(); }, 5);
+  };
   $('#sclose', box).onclick = () => { box.remove(); sfx.pop(); updateCoach(); };
   show();
   document.body.appendChild(box);
 }
 
-function confirmBox(text, onYes) {
+// wait > 0: Yes stays greyed out and counts down that many seconds first.
+function confirmBox(text, onYes, wait = 0) {
   const box = el(`<div class="modal"><div class="card panel"><p>${text}</p><div class="row center"><button class="btn btn-grey">No</button><button class="btn btn-red">Yes</button></div></div></div>`);
-  $('.btn-grey', box).onclick = () => box.remove();
-  $('.btn-red', box).onclick = () => { box.remove(); onYes(); };
+  const yes = $('.btn-red', box);
+  let timer = 0;
+  const tick = () => {
+    yes.disabled = wait > 0;
+    yes.textContent = wait > 0 ? `Yes (${wait})` : 'Yes';
+    if (wait-- > 0) timer = setTimeout(tick, 1000);
+  };
+  tick();
+  $('.btn-grey', box).onclick = () => { clearTimeout(timer); box.remove(); };
+  yes.onclick = () => { if (yes.disabled) return; box.remove(); onYes(); };
   document.body.appendChild(box);
 }
 
