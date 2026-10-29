@@ -26,6 +26,15 @@ function locks(x0, x1, y, drop, n, phase = 0) {
 const strands = (d, c) => `<path d="${d}" stroke="${c}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".4"/>`;
 const curl = (x, y, c, r = 5) => `<path d="M${x - r} ${y} a${r} ${r} 0 1 1 ${r} ${r}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>`;
 // A soft tuft of fur pointing up from (x, y).
+// A side-view foot facing right: a soft pink paw with three toe bumps.
+const FOOT = '#F2A391', TOE = '#D9806F';
+const foot = (x, y, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="0" cy="0" rx="11" ry="6.5" fill="${FOOT}"/>` +
+  [[6, 4.2], [9.6, 2], [11.4, -1.2]].map(([tx, ty]) => `<circle cx="${tx}" cy="${ty}" r="3" fill="${FOOT}"/>`).join('') +
+  `<path d="M4.6 5.6 L5.4 2.6 M8.6 3.8 L8.6 0.8" stroke="${TOE}" stroke-width="1.3" stroke-linecap="round"/></g>`;
+// A top-view paw with the toes pointing up (toward the nose).
+const paw = (x, y) => `<ellipse cx="${x}" cy="${y}" rx="11" ry="8" fill="${FOOT}"/>` +
+  [-6, 0, 6].map(dx => `<circle cx="${x + dx}" cy="${y - 7}" r="3.6" fill="${FOOT}"/>`).join('') +
+  `<path d="M${x - 3} ${y - 6} l0 3 M${x + 3} ${y - 6} l0 3" stroke="${TOE}" stroke-width="1.4" stroke-linecap="round"/>`;
 const furTuft = (x, y, c, h = 12) => `<path d="M${x - 8} ${y + 6} Q${x - 4} ${y - h * 0.4} ${x + 1} ${y - h} Q${x + 3} ${y - h * 0.3} ${x + 8} ${y + 6}Z" fill="${c}"/>`;
 
 // Side-view piggy facing right. Coat decides colors and the breed decides
@@ -94,19 +103,23 @@ export function piggySide(opts = {}) {
   }
 
   const hatSvg = hat ? `<g class="hat">${hatSide(hat === true ? 'strawberry' : hat)}</g>` : '';
-  const legs = `<g class="legA"><ellipse cx="62" cy="160" rx="11" ry="7" fill="#F3B9A0"/><ellipse cx="146" cy="160" rx="10" ry="7" fill="#F3B9A0"/></g>
-      <g class="legB"><ellipse cx="82" cy="160" rx="11" ry="7" fill="#F3B9A0"/><ellipse cx="128" cy="160" rx="10" ry="7" fill="#F3B9A0"/></g>`;
+  // Little pink feet with three toe bumps at the front. Long hair and curls
+  // cover the body's underside, so there the feet sit lower, in front of the hair.
+  const longHair = coat.breed === 'peruvian' || coat.breed === 'silkie' || coat.breed === 'texel';
+  const fy = longHair ? (coat.breed === 'texel' ? 171 : 174) : 164;
+  const legs = `<g class="legA">${foot(64, fy)}${foot(146, fy - 2, 0.9)}</g><g class="legB">${foot(84, fy)}${foot(128, fy - 2, 0.9)}</g>`;
 
   return `<svg viewBox="0 0 200 200" class="piggy-svg ${walking ? 'walking' : ''}" aria-hidden="true">
     <ellipse cx="100" cy="176" rx="72" ry="7" fill="#000" opacity=".12"/>
     <g class="body">
-      ${legs}
+      ${longHair ? '' : legs}
       <ellipse cx="96" cy="122" rx="72" ry="44" fill="${main}"/>
       <path d="M70 80 Q96 74 116 84 Q120 120 108 162 Q84 166 64 160 Q56 120 70 80Z" fill="${patch}"/>
       <path d="M32 112 Q28 96 40 90 Q36 104 44 110 Z" fill="${dark}"/>
       <ellipse cx="148" cy="112" rx="40" ry="36" fill="${main}"/>
       <path d="M180 104 Q190 116 184 128 Q170 132 162 122 Q170 112 180 104Z" fill="${patch}"/>
       ${hair}
+      ${longHair ? legs : ''}
       <ellipse cx="136" cy="80" rx="14" ry="10" transform="rotate(-25 136 80)" fill="${dark}"/><ellipse cx="136" cy="81" rx="8" ry="5" transform="rotate(-25 136 81)" fill="#FFB3C1"/>
       ${fringe}
       ${hatSvg}
@@ -232,8 +245,8 @@ export function piggyTop(opts = {}) {
       curl(-20, 20, darken(patch)) + curl(16, 40, darken(patch)) + curl(-24, -20, dark) + curl(24, -16, dark);
   }
   return `<svg viewBox="-70 -90 140 170" x="-70" y="-90" width="140" height="170" class="piggy-top" aria-hidden="true">
-    <g class="pawA"><ellipse cx="-46" cy="-30" rx="11" ry="8" fill="#F3B9A0"/><ellipse cx="44" cy="40" rx="11" ry="8" fill="#F3B9A0"/></g>
-    <g class="pawB"><ellipse cx="46" cy="-30" rx="11" ry="8" fill="#F3B9A0"/><ellipse cx="-44" cy="40" rx="11" ry="8" fill="#F3B9A0"/></g>
+    <g class="pawA">${paw(-46, -30)}${paw(44, 40)}</g>
+    <g class="pawB">${paw(46, -30)}${paw(-44, 40)}</g>
     <g class="tdbody">
       <ellipse cx="0" cy="8" rx="48" ry="64" fill="${main}"/>
       <ellipse cx="0" cy="-44" rx="38" ry="32" fill="${main}"/>

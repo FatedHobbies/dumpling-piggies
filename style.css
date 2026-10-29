@@ -245,8 +245,6 @@ button.pk:active { transform: scale(.95); }
 @keyframes squish { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.04, .95); } }
 .blink { transform-box: fill-box; transform-origin: center; animation: blink 4s infinite; }
 @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
-.legA, .legB { opacity: 0; transition: opacity .2s; }
-.piggy.walking .legA, .piggy.walking .legB { opacity: 1; }
 .piggy.walking .legA { animation: legA .3s steps(2) infinite; } .piggy.walking .legB { animation: legB .3s steps(2) infinite; }
 .piggy.walking .body { animation: waddle .3s ease-in-out infinite; }
 @keyframes waddle { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-3px) rotate(2deg); } }
@@ -309,7 +307,7 @@ button.pk:active { transform: scale(.95); }
 .plant { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 0 rgba(0,0,0,.2)); }
 .gardener { position: absolute; bottom: 10px; left: 50%; width: 62px; transform: translateX(-260%); opacity: 0; pointer-events: none; z-index: 2; }
 .gardener svg { width: 100%; height: auto; overflow: visible; }
-.gardener .legA, .gardener .legB { opacity: 1; animation: legA .3s steps(2) infinite; }
+.gardener .legA, .gardener .legB { animation: legA .3s steps(2) infinite; }
 .gardener .legB { animation-name: legB; }
 .gardener.go { animation: gardener 2s ease-in-out forwards; }
 .gardener.go .body { animation: dig .3s ease-in-out 4 .6s; transform-box: fill-box; transform-origin: 50% 100%; }
