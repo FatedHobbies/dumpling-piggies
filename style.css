@@ -772,7 +772,6 @@ button.pk:active { transform: scale(.95); }
 .hat-pin .hat-who::after { content: ""; flex-basis: 100%; height: 0; order: 1; }
 .hat-pin .hat-pigs { grid-area: auto; }
 .hat-side { grid-area: pigs; justify-self: end; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.hat-tip { font-family: var(--display); font-weight: 600; font-size: .72rem; line-height: 1.15; text-align: center; color: #5A3A1E; background: rgba(255, 248, 236, .92); border: 2px solid #E2C48C; border-radius: 12px; padding: 3px 8px; white-space: nowrap; }
 .hat-title { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0 8px; max-width: 100%; background: #FFF8EC; border: 3px solid var(--wood-dark); border-radius: 999px; padding: 3px 18px; box-shadow: 0 3px 0 #6A4524; }
 .hat-pin .hat-title small { font-size: 1.05rem; }
 .hat-pin .hat-title b { background: none; border: 0; box-shadow: none; padding: 0; font-size: 1.5rem; min-width: 0; }
@@ -783,12 +782,10 @@ button.pk:active { transform: scale(.95); }
 .hat-pin .hat-title b { font-size: 1.2rem; }
 .hat-pin .hat-who { display: contents; }
 .hat-pin .hat-title { grid-area: who; justify-self: center; }
-.hat-pin .hat-for { grid-template-areas: "who who" "try pigs" "model pigs"; grid-template-rows: auto auto 1fr; }
-.hat-pin .hat-side { grid-row: 2 / 4; align-self: center; }
-.hat-pin .hat-who em { grid-area: try; justify-self: stretch; text-align: center; font-size: .74rem; line-height: 1.2; padding: 3px 10px; border-radius: 12px; }
-.hat-pin .hat-model { align-self: end; width: 136px; margin-top: -14px; }
-.hat-pin .hat-who em { position: relative; z-index: 1; }
-.hat-pin .hat-for.trying .hat-model { margin-top: -32px; }
+.hat-pin .hat-for { grid-template-areas: "who who" "model pigs" "try try"; grid-template-rows: auto auto auto; }
+.hat-pin .hat-side { align-self: center; }
+.hat-pin .hat-who em { grid-area: try; justify-self: center; max-width: 100%; text-align: center; font-size: .78rem; line-height: 1.2; padding: 3px 12px; border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hat-pin .hat-model { align-self: end; width: 128px; margin-top: -12px; }
 .hat.earn { border-style: dashed; border-color: #E0A81C; background: #FFFBEA; }
 .hat .price.goal { color: #B07A10; font-size: .66rem; }
 /* Sleepover House button under the adoption cards, and its lists. */
