@@ -170,6 +170,9 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
   border: 4px solid var(--wood-dark); box-shadow: inset 0 0 0 4px var(--wood), 0 4px 0 #6A4524;
 }
 .scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+.scene.pen-sky { height: 37%; }
+.pen-sky .cloud { animation: cloud-drift 7s ease-in-out infinite alternate; }
+@keyframes cloud-drift { to { transform: translateX(6px); } }
 .floor { position: absolute; left: 0; right: 0; top: 36%; bottom: 0; }
 .pk-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .pk { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 6px 2px 4px; font-size: .62rem; font-weight: 700; text-align: center; color: var(--ink); }

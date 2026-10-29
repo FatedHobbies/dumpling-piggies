@@ -724,23 +724,45 @@ export function plotArt() {
 
 // The playpen: a big bamboo-steamer-style pen seen from the front, with hay,
 // a hidey house, a water bottle and a food bowl.
+// The pen backdrop is two pictures: the hay floor stretches to fill the pen,
+// and the sky, hills and fence go on top of it without stretching, so the
+// sun and clouds stay round.
 export function penScene() {
+  const cloud = (x, y, s, face) => {
+    const puffs = [[0, 0, 13], [14, -7, 12], [28, -1, 11], [-13, 3, 9], [40, 5, 8]];
+    const c = (stroke) => puffs.map(([dx, dy, r]) => `<circle cx="${x + dx * s}" cy="${y + dy * s}" r="${r * s}"${stroke}/>`).join('');
+    return `<g class="cloud"><rect x="${x - 20 * s}" y="${y + 2 * s}" width="${66 * s}" height="${10 * s}" rx="${5 * s}" fill="#fff" stroke="#9CCBEA" stroke-width="2.5"/>
+      ${c(' fill="#fff" stroke="#9CCBEA" stroke-width="2.5"')}<g fill="#fff">${c('')}<rect x="${x - 19 * s}" y="${y + 2 * s}" width="${64 * s}" height="${8 * s}" rx="${4 * s}"/></g>
+      ${face ? `<g transform="translate(${x + 14 * s} ${y + 2 * s}) scale(${s})"><path d="M-8 -2 q2.5 2.5 5 0 M3 -2 q2.5 2.5 5 0" stroke="#5B7FA6" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="-10" cy="2.5" rx="2.6" ry="1.5" fill="#FFB8C8"/><ellipse cx="10" cy="2.5" rx="2.6" ry="1.5" fill="#FFB8C8"/><path d="M-2 2 q2 2 4 0" stroke="#5B7FA6" stroke-width="1.4" fill="none" stroke-linecap="round"/></g>` : ''}</g>`;
+  };
+  const posts = [6, 34, 62, 90, 118, 146, 174, 202, 230];
   return `<svg viewBox="0 0 400 300" class="scene" preserveAspectRatio="none" aria-hidden="true">
     <defs>
-      <linearGradient id="penSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFE9FF"/><stop offset="1" stop-color="#F3FBFF"/></linearGradient>
       <linearGradient id="penFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6DFAE"/><stop offset="1" stop-color="#E8C27A"/></linearGradient>
       <pattern id="hay" width="26" height="18" patternUnits="userSpaceOnUse"><path d="M2 14 L12 4 M14 16 L24 8 M6 17 L10 10" stroke="#D9A84E" stroke-width="2" stroke-linecap="round" opacity=".55"/></pattern>
     </defs>
-    <rect width="400" height="300" fill="url(#penSky)"/>
-    <circle cx="340" cy="46" r="26" fill="#FFE27A"/>
-    <g fill="#fff" opacity=".9"><ellipse cx="80" cy="50" rx="34" ry="14"/><ellipse cx="104" cy="42" rx="22" ry="12"/><ellipse cx="250" cy="70" rx="28" ry="11"/></g>
-    <g stroke="#B9824A" stroke-width="5">${[20, 60, 100, 140, 180, 220, 260, 300, 340, 380].map(x => `<path d="M${x} 30 V98"/>`).join('')}</g>
-    <path d="M0 30 H400" stroke="#B9824A" stroke-width="7"/>
-    <path d="M0 62 H400" stroke="#B9824A" stroke-width="5"/>
-    <rect x="0" y="96" width="400" height="10" fill="#B9824A"/>
     <rect x="0" y="104" width="400" height="196" fill="url(#penFloor)"/>
     <rect x="0" y="104" width="400" height="196" fill="url(#hay)"/>
     <ellipse cx="310" cy="150" rx="40" ry="14" fill="#F2CE7E"/><path d="M276 150 Q300 128 332 146 M286 146 Q312 130 342 150" stroke="#D9A84E" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </svg><svg viewBox="0 0 240 122" class="scene pen-sky" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs><linearGradient id="penSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ED8FA"/><stop offset=".75" stop-color="#DDF3FF"/></linearGradient></defs>
+    <rect width="240" height="122" fill="url(#penSky)"/>
+    <g class="sun" transform="translate(-10 6) scale(.9)" transform-origin="178 40">
+      <g fill="#FFD34D" stroke="#E0941C" stroke-width="2" stroke-linejoin="round">${[0, 45, 90, 135, 180, 225, 270, 315].map(r => `<path d="M174.5 27 l3.5 -6 l3.5 6Z" transform="rotate(${r} 178 40)"/>`).join('')}</g>
+      <circle cx="178" cy="40" r="14" fill="#FFE27A" stroke="#E0941C" stroke-width="2.5"/>
+      <circle cx="173" cy="38" r="1.7" fill="#5E3820"/><circle cx="183" cy="38" r="1.7" fill="#5E3820"/>
+      <path d="M174.5 43 q3.5 3 7 0" stroke="#5E3820" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="168.5" cy="43" rx="2.8" ry="1.6" fill="#FF9AA8"/><ellipse cx="187.5" cy="43" rx="2.8" ry="1.6" fill="#FF9AA8"/>
+    </g>
+    ${cloud(64, 42, 1, true)}${cloud(128, 26, .55, false)}${cloud(218, 66, .5, false)}
+    <path d="M-4 84 Q30 62 70 76 Q110 60 150 74 Q196 58 244 72 V122 H-4Z" fill="#BFE6A6" stroke="#86C46E" stroke-width="2.5" stroke-linejoin="round"/>
+    <g fill="#8FD07A" stroke="#5E9E4A" stroke-width="2.2">${[[22, 82, 7], [32, 84, 5], [112, 76, 6], [196, 76, 8], [208, 79, 5.5]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g>
+    <path d="M-4 96 Q50 82 110 92 Q170 82 244 94 V122 H-4Z" fill="#A7DB8C" stroke="#6DAE58" stroke-width="2.5" stroke-linejoin="round"/>
+    <g fill="#C9935A" stroke="#8A5634" stroke-width="2.5">${posts.map(x => `<rect x="${x - 4.5}" y="66" width="9" height="48" rx="4.5"/>`).join('')}</g>
+    <g fill="#E6B566" stroke="#9C6A3A" stroke-width="2.5"><rect x="-4" y="74" width="248" height="8" rx="4"/><rect x="-4" y="94" width="248" height="7" rx="3.5"/></g>
+    <g fill="#C9935A">${posts.map(x => `<rect x="${x - 3.2}" y="75.3" width="6.4" height="5.4"/><rect x="${x - 3.2}" y="95.3" width="6.4" height="4.4"/>`).join('')}</g>
+    <rect x="-4" y="108" width="248" height="18" fill="#C9935A" stroke="#8A5634" stroke-width="2.5"/>
+    <path d="M-4 112 H244" stroke="#E6B566" stroke-width="2.5" opacity=".7"/>
   </svg>`;
 }
 
