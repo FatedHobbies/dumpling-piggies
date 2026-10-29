@@ -5,7 +5,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 148;
+const VERSION = 149;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -131,6 +131,8 @@ const TUTORIAL = [
     enter: () => { lowNeed('hunger'); if (!Object.values(state.dumplings).some(c => c > 0)) state.dumplings['carrot+carrot'] = 1; } },
   { tab: 'steamer', on: 'scoop', text: n => `Uh oh, a poop! Tap it to scoop it up.`, target: '.poop', enter: () => { if (!state.poops.length) G.addPoop(state); } },
   { tab: null,      on: 'poopbook', text: n => `Every poop goes in your Poop Book! Tap it to look.`, target: '#poopbook' },
+  // Inside the open book: the arrow points at Close (the book's own backdrop dims the rest).
+  { tab: null,      on: 'bookclose', inModal: true, text: n => `There's your poop! Tap Close to go back.`, target: '.modal .row.center .btn' },
   { tab: 'garden',  on: 'plant', text: n => $('.plot.empty') || tab !== 'garden' ? `Poop helps veggies grow! Tap Plant.` : `Your veggies are growing! Tap one.`, target: () => $('.plot.empty') ? '.plot.empty' : '.plot',
     enter: () => { const need = Math.max(...G.unlockedFillings(state).map(G.plantCost)); if (state.compost < need) state.compost = need; } },
   { tab: 'kitchen', on: 'cook',  text: n => ['Let\'s cook! Tap a veggie.', 'Tap one more veggie.', 'Now tap Steam it!'][Math.min(2, selected.length)], target: () => selected.length < 2 ? '.fill:not(:disabled)' : '#cook',
@@ -290,7 +292,8 @@ function positionArrow() {
     dim = el(`<div id="tutdim" class="tut-dim" hidden></div>`);
     document.body.append(dim, arrow);
   }
-  const t = arrowTarget && !$('.modal') ? $(arrowTarget) : null;
+  const inModal = !!(TUTORIAL[tutStep()] || {}).inModal;
+  const t = arrowTarget && (inModal || !$('.modal')) ? $(arrowTarget) : null;
   let r = t && t.getBoundingClientRect();
   if (!t || !r.width) { arrow.hidden = true; dim.hidden = true; return; }
   // Bring the target on screen once per target (short phones hide the tray).
@@ -304,7 +307,7 @@ function positionArrow() {
     L = Math.min(L, q.left); T = Math.min(T, q.top); R = Math.max(R, q.right); B = Math.max(B, q.bottom);
   }
   const pad = 6;
-  dim.hidden = !!run;
+  dim.hidden = !!run || inModal;
   Object.assign(dim.style, { left: (L - pad) + 'px', top: (T - pad) + 'px', width: (R - L + pad * 2) + 'px', height: (B - T + pad * 2) + 'px' });
   // Things in the top bar get an arrow from the side, so it never covers the
   // instruction under the bar.
@@ -1948,7 +1951,7 @@ function poopBook() {
       <p class="book-hint">${filled ? 'A fresh page! Find every kind again.' : 'Scoop every kind of poop to fill the book.'}</p>
       <div class="pages">${tiers}</div>
     </div>
-    <div class="book-pane" data-pane="badges" hidden><div class="ach-list">${ach}</div></div>`, 'Close');
+    <div class="book-pane" data-pane="badges" hidden><div class="ach-list">${ach}</div></div>`, 'Close', () => tut('bookclose'));
   sfx.pop();
 }
 
