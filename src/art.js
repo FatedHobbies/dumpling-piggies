@@ -713,9 +713,13 @@ export const MAZE_THEMES = {
     deco: () => '',
   },
   pumpkin: {
-    side: '#8B5A2B', name: 'Pumpkin patch', board: '#7CB65A', floor: '#EBCB97', seen: '#DDB47A', start: '#A9DB7E', startEdge: '#5E9A3A', post: '#8A5634', postEdge: '#5A3A22',
-    wall: (px, py) => `<ellipse cx="${px + 13}" cy="${py + 40}" rx="11" ry="5" fill="#4F9A3C" transform="rotate(-15 ${px + 13} ${py + 40})"/><ellipse cx="${px + 35}" cy="${py + 40}" rx="11" ry="5" fill="#5FAE4E" transform="rotate(15 ${px + 35} ${py + 40})"/>
-      ${placeSvg(veggie('pumpkin', 64), px + 1, py - 1, 46)}<path d="M${px + 34} ${py + 9} q6 -4 9 2" stroke="#4F9A3C" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+    side: '#D0601C', name: 'Pumpkin patch', board: '#7CB65A', floor: '#EBCB97', seen: '#DDB47A', start: '#A9DB7E', startEdge: '#5E9A3A', post: '#8A5634', postEdge: '#5A3A22',
+    // A chunky, cube-ish pumpkin that fills the whole block.
+    wall: (px, py) => `<rect x="${px + 3}" y="${py + 6}" width="${C - 6}" height="${C - 10}" rx="13" fill="#FF8A2A" stroke="#B9531A" stroke-width="3"/>
+      <path d="M${px + 16} ${py + 8} Q${px + 11} ${py + 25} ${px + 16} ${py + 42} M${px + 24} ${py + 7} V${py + 43} M${px + 32} ${py + 8} Q${px + 37} ${py + 25} ${px + 32} ${py + 42}" stroke="#D96A1C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="${px + 11}" cy="${py + 16}" rx="3" ry="6" fill="#FFC27A" opacity=".7"/>
+      <path d="M${px + 22} ${py + 8} Q${px + 21} ${py + 1} ${px + 26} ${py - 1} L${px + 27} ${py + 2} Q${px + 25} ${py + 4} ${px + 26} ${py + 8}Z" fill="#6B8E2F" stroke="#3F5E1A" stroke-width="1.5"/>
+      <path d="M${px + 27} ${py + 1} q6 -3 8 3" stroke="#4F9A3C" stroke-width="2" fill="none" stroke-linecap="round"/>`,
     deco: (px, py, i) => `<circle cx="${px + 10 + jit(i, 1) * 28}" cy="${py + 10 + jit(i, 2) * 28}" r="1.6" fill="#C79B62"/><circle cx="${px + 12 + jit(i, 3) * 24}" cy="${py + 14 + jit(i, 4) * 22}" r="1.2" fill="#C79B62"/>`,
   },
   galaxy: {
