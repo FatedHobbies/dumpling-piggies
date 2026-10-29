@@ -1,3 +1,4 @@
+// Copyright (c) 2026 FatedHobbies. All rights reserved. No copying, modifying or redistributing without permission.
 // Maze rules. Pure logic like game.js: a grid of cells, a piggy that sniffs
 // its way to the dumpling, lures she drops, and a cheer that makes it zoom.
 

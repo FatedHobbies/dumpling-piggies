@@ -1,3 +1,4 @@
+// Copyright (c) 2026 FatedHobbies. All rights reserved. No copying, modifying or redistributing without permission.
 // Piggy names: the list random names come from, and the check that keeps
 // player-typed names kind. Everything runs on the device; nothing is sent anywhere.
 

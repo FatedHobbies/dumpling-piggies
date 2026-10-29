@@ -1,3 +1,4 @@
+// Copyright (c) 2026 FatedHobbies. All rights reserved. No copying, modifying or redistributing without permission.
 // Squishy-style art, all SVG strings so it stays sharp and tiny.
 import { COLORS, FILLINGS, RECIPES, hash } from './game.js';
 

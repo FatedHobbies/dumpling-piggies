@@ -1,3 +1,4 @@
+// Copyright (c) 2026 FatedHobbies. All rights reserved. No copying, modifying or redistributing without permission.
 // Save layer. On the web it is localStorage; on Reddit it becomes Redis.
 // The rest of the game only ever calls load() and save().
 

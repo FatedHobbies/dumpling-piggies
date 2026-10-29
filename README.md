@@ -14,3 +14,7 @@ Play it at **https://fatedhobbies.github.io/dumpling-piggies/** and use "Add to 
 - `sw.js` + `manifest.webmanifest` – lets it install and run offline.
 
 No build step. Open `index.html` through any static server, or just push to `main` and GitHub Pages serves it.
+
+## License
+
+Copyright (c) 2026 FatedHobbies. All rights reserved. The code and art may not be copied, modified or redistributed without permission. See [LICENSE](LICENSE).

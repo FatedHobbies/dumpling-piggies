@@ -1,3 +1,4 @@
+// Copyright (c) 2026 FatedHobbies. All rights reserved. No copying, modifying or redistributing without permission.
 // Tiny synthesized sounds so there are no audio files to load.
 let ctx = null;
 

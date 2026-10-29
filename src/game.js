@@ -1,3 +1,4 @@
+// Copyright (c) 2026 FatedHobbies. All rights reserved. No copying, modifying or redistributing without permission.
 // Pure game logic. No DOM, no storage. The UI calls these functions and
 // reads `state`; the save layer serializes `state`. Keeping this file free of
 // platform code is what lets the game move to Reddit later.

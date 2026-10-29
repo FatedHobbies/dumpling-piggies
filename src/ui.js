@@ -1,10 +1,11 @@
+// Copyright (c) 2026 FatedHobbies. All rights reserved. No copying, modifying or redistributing without permission.
 import * as G from './game.js';
 import * as Art from './art.js';
 import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 127;
+const VERSION = 128;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
