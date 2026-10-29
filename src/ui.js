@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 105;
+const VERSION = 106;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -123,12 +123,12 @@ const TUTORIAL = [
     enter: () => { lowNeed('hunger'); if (!Object.values(state.dumplings).some(c => c > 0)) state.dumplings['carrot+carrot'] = 1; } },
   { tab: 'steamer', on: 'scoop', text: n => `Uh oh, a poop! Tap it to scoop it up.`, target: '.poop', enter: () => { if (!state.poops.length) G.addPoop(state); } },
   { tab: null,      on: 'poopbook', text: n => `Every poop goes in your Poop Book! Tap it to look.`, target: '#poopbook' },
-  { tab: 'garden',  on: 'plant', text: n => `Poop helps veggies grow! Tap Plant.`, target: () => $('.plot.empty') ? '.plot.empty' : '.plot',
+  { tab: 'garden',  on: 'plant', text: n => $('.plot.empty') || tab !== 'garden' ? `Poop helps veggies grow! Tap Plant.` : `Your veggies are growing! Tap one.`, target: () => $('.plot.empty') ? '.plot.empty' : '.plot',
     enter: () => { const need = Math.max(...G.unlockedFillings(state).map(G.plantCost)); if (state.compost < need) state.compost = need; } },
-  { tab: 'kitchen', on: 'cook',  text: n => `Tap two veggies, then tap Steam it!`, target: () => selected.length < 2 ? '.fill:not(:disabled)' : '#cook',
+  { tab: 'kitchen', on: 'cook',  text: n => ['Let\'s cook! Tap a veggie.', 'Tap one more veggie.', 'Now tap Steam it!'][Math.min(2, selected.length)], target: () => selected.length < 2 ? '.fill:not(:disabled)' : '#cook',
     enter: () => { if (Object.values(state.pantry).reduce((a, b) => a + b, 0) < 2) state.pantry.carrot = (state.pantry.carrot || 0) + 2; } },
   { tab: 'steamer', on: 'feed',  text: n => `Yum! Feed your new dumpling to ${n}.`, target: '.dump', enter: () => lowNeed('hunger') },
-  { tab: 'maze',    on: 'maze',  text: n => `Tap Surprise me, then Go! Tap ${n} to cheer.`,
+  { tab: 'maze',    on: 'maze',  text: n => run ? `Tap ${n} to cheer!` : state.maze.cells.some(c => c) ? `Tap Go! to send ${n} in.` : `Let's make a maze! Tap Surprise me.`,
     target: () => run ? '#mpig' : state.maze.cells.some(c => c) ? '.go' : '.surprise' },
   // The shop is only shown: the arrow rests on her coins, then moves to the
   // Pen tab, and going home ends the tutorial.
@@ -195,11 +195,14 @@ function updateCoach() {
 
 // While the tutorial is on, only the thing she should tap can be tapped
 // (plus popups and the skip button). Everything else is dimmed and ignores taps.
+// While the maze runs she can tap anywhere (cheer, drop carrots) and watch.
 function tutBlock(e) {
-  if (!tutStep() || !(e.target instanceof Element)) return;
+  if (!tutStep() || run || !(e.target instanceof Element)) return;
   if (e.target.closest('.modal, #coach, .hi') && (Date.now() >= tutWait || e.target.closest('.modal, #coach'))) return;
   e.stopPropagation();
   if (e.type === 'click') e.preventDefault();
+  // A wrong tap gives the arrow and the instruction a little wiggle.
+  if (e.type === 'pointerdown' && Date.now() >= tutWait) for (const n of [$('#arrow'), $('#coach')]) { if (!n) continue; n.classList.remove('nudge'); void n.offsetWidth; n.classList.add('nudge'); }
 }
 for (const type of ['click', 'pointerdown', 'mousedown']) window.addEventListener(type, tutBlock, true);
 
@@ -227,12 +230,14 @@ function positionArrow() {
     L = Math.min(L, q.left); T = Math.min(T, q.top); R = Math.max(R, q.right); B = Math.max(B, q.bottom);
   }
   const pad = 6;
-  dim.hidden = false;
+  dim.hidden = !!run;
   Object.assign(dim.style, { left: (L - pad) + 'px', top: (T - pad) + 'px', width: (R - L + pad * 2) + 'px', height: (B - T + pad * 2) + 'px' });
-  const up = r.top < 90;   // things near the top get an arrow pointing up from below
+  // Things in the top bar get an arrow from the side, so it never covers the
+  // instruction under the bar.
+  const side = r.top < 90;
   arrow.hidden = false;
-  arrow.classList.toggle('up', up);
-  const x = r.left + r.width / 2, y = up ? r.bottom + 6 : r.top - 10;
+  arrow.classList.toggle('side', side);
+  const x = side ? r.left - 8 : r.left + r.width / 2, y = side ? r.top + r.height / 2 : r.top - 10;
   if (arrow.dataset.pos !== `${Math.round(x)},${Math.round(y)}`) { arrow.dataset.pos = `${Math.round(x)},${Math.round(y)}`; arrow.style.left = x + 'px'; arrow.style.top = y + 'px'; }
 }
 
@@ -322,6 +327,8 @@ function updateSteamer() {
     const next = state.piggies.filter(needOf).sort((a, b) => Math.min(a.hunger, a.fun) - Math.min(b.hunger, b.fun))[0];
     needPig = next ? next.id : null;
   }
+  // In the tutorial only her piggy asks for things, so the bubbles match the steps.
+  if (tutStep()) needPig = needOf(current()) ? current().id : null;
   const floor = $('#floor');
   // Piggies
   const have = new Map([...floor.querySelectorAll('.piggy')].map(c => [+c.dataset.id, c]));
@@ -492,6 +499,22 @@ function wanderTick() {
       continue;
     }
     if (!w) { w = { tx: pig.x, ty: pig.y, pause: now + Math.random() * 2000, face: pig.x < 0.5 ? 1 : -1 }; wander.set(pig.id, w); }
+    // The other piggies stand still too, and step aside if they are close
+    // enough to get in the way of her piggy.
+    if (held != null && !w.inside && !w.hide && !w.peek && !w.riding) {
+      const d = $(`.piggy[data-id="${pig.id}"]`);
+      if (w.using) stopSpot(w, d);
+      w.toy = w.spot = null;
+      const near = Math.abs(pig.x - 0.42) < 0.2 && Math.abs(pig.y - 0.55) < 0.3;
+      if (near) { w.tx = pig.x < 0.42 ? 0.1 : 0.8; w.ty = pig.y; } else { w.tx = pig.x; w.ty = pig.y; }
+      const dx = w.tx - pig.x, step = 0.018;
+      if (Math.abs(dx) > step) {
+        pig.x += Math.sign(dx) * step; w.face = Math.sign(dx); w.front = false;
+        if (d) { d.classList.add('walking'); syncPose(d, w); placePig(d, pig, w); }
+      } else if (d) { d.classList.remove('walking'); syncPose(d, w); }
+      w.pause = now + 1500;
+      continue;
+    }
     const sleepy = pig.effect === 'sleepy';
     const zoom = pig.effect === 'zoom';
     const d = $(`.piggy[data-id="${pig.id}"]`);
