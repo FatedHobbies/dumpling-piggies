@@ -205,15 +205,16 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
   traps.add(idx(FINISH.x, FINISH.y));
   const go = (to) => path(m, run.pos, to, traps) || path(m, run.pos, to, fin) || path(m, run.pos, to);
 
+  run.aim = null;   // where she's heading on purpose, if anywhere
   if (run.lure) {
     const p = go(run.lure);
-    if (p && p.length) next = p[0];
+    if (p && p.length) { next = p[0]; run.aim = run.lure; }
     else run.lure = null;
   }
   if (!next && (m.treasure || []).length && rng() < 0.7) {
     // Treasure close by smells good too.
     const near = m.treasure.map(t => go(t)).filter(p => p && p.length && p.length <= 3).sort((a, b) => a.length - b.length)[0];
-    if (near) next = near[0];
+    if (near) { next = near[0]; run.aim = near[near.length - 1]; }
   }
   if (!next) {
     // After wandering for a while the piggy "smells" the dumpling and heads straight there.
@@ -221,7 +222,7 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
     const p = go(FINISH);
     const fresh = open.filter(n => !run.visited[idx(n.x, n.y)]);
     const notBack = open.filter(n => !(run.lastDir && n.x === x - run.lastDir.x && n.y === y - run.lastDir.y));
-    if (p && p.length && rng() < smell) next = p[0];
+    if (p && p.length && rng() < smell) { next = p[0]; run.aim = FINISH; }
     else if (fresh.length) next = fresh[Math.floor(rng() * fresh.length)];
     else if (notBack.length) next = notBack[Math.floor(rng() * notBack.length)];
     else next = open[0] || run.pos;
@@ -236,11 +237,12 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
   // Finishing always wins, even if a carrot was dropped on the dumpling square.
   if (same(run.pos, FINISH)) { run.done = true; run.lure = null; return 'finish'; }
   const f = funAt(m, run.pos.x, run.pos.y);
-  // Each fun tile works once per run, and a tunnel pair is spent after one
-  // trip, so she can't pop in and out of it.
-  if (f && run.landed !== idx(f.x, f.y) && !run.used[idx(f.x, f.y)]) {
-    run.used[idx(f.x, f.y)] = 1;
-    if (f.kind === 'tunnel') run.used[idx(f.to.x, f.to.y)] = 1;
+  // Zoom pads and trampolines work once per run. Tunnels stay open, but she
+  // only pops in when she walks on by chance or a carrot sits on the tunnel,
+  // never on her way somewhere else, so she can't ping-pong.
+  const tunnelOk = f && f.kind === 'tunnel' && (!run.aim || same(run.aim, run.pos));
+  if (f && run.landed !== idx(f.x, f.y) && (f.kind === 'tunnel' ? tunnelOk : !run.used[idx(f.x, f.y)])) {
+    if (f.kind !== 'tunnel') run.used[idx(f.x, f.y)] = 1;
     if (f.kind === 'zoom') { run.zoomUntil = now + 3000; run.landed = idx(f.x, f.y); return 'zoom'; }
     run.lure = null;
     run.jump = f.kind;

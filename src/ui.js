@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 122;
+const VERSION = 123;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -1429,7 +1429,6 @@ function mazeView() {
     </g>`;
   }
   cells.innerHTML = html;
-  cells.querySelectorAll('.mcell').forEach(r => r.addEventListener('click', () => onCell(+r.dataset.x, +r.dataset.y)));
   let fence = '';
   for (let x = -6; x <= w + 6; x += 48) fence += `<rect x="${x - 4}" y="-12" width="8" height="14" rx="3" fill="${th.post}" stroke="${th.postEdge}" stroke-width="2"/><rect x="${x - 4}" y="${h - 2}" width="8" height="14" rx="3" fill="${th.post}" stroke="${th.postEdge}" stroke-width="2"/>`;
   const bar = $('.maze-bar', v), u = th.ui;
@@ -1443,6 +1442,16 @@ function mazeView() {
   $('#mfinish', v).innerHTML = `<g transform="translate(-20 -20) scale(.62)">${Art.dumpling('cabbage+carrot', 64)}</g>`;
   $('#mrot', v).innerHTML = Art.piggyTop({ hat: current().hat, coat: current().coat });
   $('#mpig', v).addEventListener('click', onCheer);
+  // One tap anywhere on a square counts, even on a prize, tile, carrot or a
+  // tall wall leaning over it: the square comes from where the finger landed.
+  g.addEventListener('click', (e) => {
+    if (e.target.closest('#mpig')) return;
+    const pt = g.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(g.getScreenCTM().inverse());
+    const x = Math.floor(p.x / CELL), y = Math.floor(p.y / CELL);
+    if (x >= 0 && y >= 0 && x < M.COLS && y < M.ROWS) onCell(x, y);
+  });
   mazeAngle = 0;
   return v;
 }
