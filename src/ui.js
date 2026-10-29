@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 37;
+const VERSION = 38;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -214,9 +214,9 @@ function render(force = false) {
 function steamerView() {
   const v = el(`<section class="pen">
     <div class="needs panel-dark">
-      <div class="need" data-need="hunger"><span class="need-ico">${Art.icon('hunger')}</span><div class="bar"><i></i></div></div>
-      <div class="need" data-need="fun"><span class="need-ico">${Art.icon('fun')}</span><div class="bar"><i></i></div></div>
-      <div class="need" data-need="clean"><span class="need-ico">${Art.icon('clean')}</span><div class="bar"><i></i></div></div>
+      <div class="need" data-need="hunger"><span class="need-ico">${Art.icon('hunger')}<small>Food</small></span><div class="bar"><i></i></div></div>
+      <div class="need" data-need="fun"><span class="need-ico">${Art.icon('fun')}<small>Fun</small></span><div class="bar"><i></i></div></div>
+      <div class="need" data-need="clean"><span class="need-ico">${Art.icon('clean')}<small>Clean</small></span><div class="bar"><i></i></div></div>
     </div>
     <div class="stage" id="stage">
       ${Art.penScene()}
