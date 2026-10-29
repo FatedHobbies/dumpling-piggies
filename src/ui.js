@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 68;
+const VERSION = 69;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -1097,11 +1097,13 @@ function updateShop() {
   if (hats.dataset.sig !== hsig) {
     hats.dataset.sig = hsig;
     // Who the hats are for, big and clear, with a row of faces to switch piggy.
+    // Other piggies on the left, the one being dressed in the middle, its name on the right.
+    const others = state.piggies.filter(q => q.id !== p.id);
     hats.innerHTML = `<div class="hat-pin"><div class="hat-for">
+        ${others.length ? `<div class="hat-pigs ${others.length > 2 ? 'two' : ''}">${others.map(q => `<button class="face" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div>` : ''}
         <div class="hat-model">${Art.piggySide({ coat: p.coat, hat: showing })}</div>
         <div class="hat-who"><small>Hats for</small><b>${esc(p.name)}</b>
-          ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}. Tap it again to buy!</em>` : ''}
-          ${state.piggies.length > 1 ? `<div class="hat-pigs">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div>` : ''}</div>
+          ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}. Tap it again to buy!</em>` : others.length ? '<em>Tap a face to switch</em>' : ''}</div>
       </div></div>
       <p class="hint">Buy a hat once and any piggy can wear it. Tap a hat to try it on.</p><div class="hat-grid"></div>`;
     hats.querySelectorAll('.hat-pigs .face').forEach(f => f.addEventListener('click', () => { selectedPig = +f.dataset.id; tryHat = null; sfx.pop(); render(); }));

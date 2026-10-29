@@ -626,3 +626,8 @@ button.pk:active { transform: scale(.95); }
 .hat-pin .hat-who b { font-size: 1.3rem; }
 .hat-pin .hat-pigs { justify-content: flex-start; margin-top: 4px; gap: 6px; }
 .hat-pin .hat-pigs .face { width: 38px; height: 38px; flex: 0 0 38px; }
+.hat-pin .hat-for { justify-content: flex-start; }
+.hat-pin .hat-pigs { display: grid; grid-template-columns: 38px; gap: 6px; margin: 0; flex: 0 0 auto; }
+.hat-pin .hat-pigs.two { grid-template-columns: 38px 38px; }
+.hat-pin .hat-model { flex: 0 0 auto; }
+.hat-pin .hat-who { flex: 1; }
