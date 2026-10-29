@@ -110,7 +110,7 @@ export function piggySide(opts = {}) {
   const legs = `<g class="legA">${foot(64, fy)}${foot(146, fy - 2, 0.9)}</g><g class="legB">${foot(84, fy)}${foot(128, fy - 2, 0.9)}</g>`;
 
   return `<svg viewBox="0 0 200 200" class="piggy-svg ${walking ? 'walking' : ''}" aria-hidden="true">
-    <ellipse cx="100" cy="176" rx="72" ry="7" fill="#000" opacity=".12"/>
+    <ellipse class="pig-shadow" cx="100" cy="176" rx="72" ry="7" fill="#000" opacity=".12"/>
     <g class="body">
       ${longHair ? '' : legs}
       <ellipse cx="96" cy="122" rx="72" ry="44" fill="${main}"/>
@@ -1153,7 +1153,7 @@ export function piggyFront(opts = {}) {
   const patch = skinny ? '#F7CDBB' : col(coat.patch);
   const face = piggyFace(opts).replace('<svg viewBox="0 0 100 100"', '<svg viewBox="0 0 100 100" x="46" y="52" width="108" height="108"');
   return `<svg viewBox="0 0 200 200" class="piggy-svg front" aria-hidden="true">
-    <ellipse cx="100" cy="176" rx="66" ry="7" fill="#000" opacity=".12"/>
+    <ellipse class="pig-shadow" cx="100" cy="176" rx="66" ry="7" fill="#000" opacity=".12"/>
     <g class="body">
       <ellipse cx="100" cy="140" rx="64" ry="34" fill="${main}"/>
       <ellipse cx="100" cy="150" rx="34" ry="22" fill="${patch}"/>
