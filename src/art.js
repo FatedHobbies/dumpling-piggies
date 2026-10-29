@@ -549,6 +549,8 @@ export function toyArt(id, left = 1) {
 // Small chunky icons for the Pen's need bars, need bubbles and the tab bar,
 // drawn in the same outlined style as coinIcon and mazeIcon.
 const ICONS = {
+  // A chunky green arrow pointing right (poop -> compost)
+  arrow: `<path d="M6 24 H34 V12 L58 32 L34 52 V40 H6Z" fill="#7CC66A" stroke="#3E8E3A" stroke-width="5" stroke-linejoin="round"/>`,
   // A bowl with a dumpling peeking out
   hunger: `<path d="M18 30 Q18 14 32 14 Q46 14 46 30Z" fill="#FFE6C8" stroke="#D9A86E" stroke-width="3" stroke-linejoin="round"/><path d="M32 14 Q27 20 26 26 M32 14 Q32 20 32 26 M32 14 Q37 20 38 26" stroke="#D9A86E" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M6 30 H58 Q56 52 32 54 Q8 52 6 30Z" fill="#4FA8F5" stroke="#2369B8" stroke-width="4" stroke-linejoin="round"/><path d="M14 38 Q32 44 50 38" stroke="#BFE0FF" stroke-width="4" fill="none" stroke-linecap="round"/>`,
   // A bouncy ball

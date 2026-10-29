@@ -289,7 +289,10 @@ button.pk:active { transform: scale(.95); }
 .scene-top .scene { position: static; width: 100%; height: auto; }
 .compost { display: flex; align-items: center; gap: 10px; padding: 4px 12px; font-family: var(--display); }
 .compost .ico svg { width: 30px; height: 30px; }
-.compost small { margin-left: auto; color: var(--soft); font-size: .72rem; text-align: right; font-family: var(--body); }
+.compost-eq { display: flex; align-items: center; gap: 1px; flex: none; }
+.compost-eq svg:first-child { width: 24px; height: 24px; }
+.compost-eq svg:nth-child(2) { width: 16px; height: 16px; }
+.compost small { margin-left: auto; line-height: 1.15; color: var(--soft); font-size: .72rem; text-align: right; font-family: var(--body); }
 .plots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
 .garden .scene-top .scene { height: 110px; }
 .garden .ribbon { margin-top: 4px; margin-bottom: 4px; }

@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 32;
+const VERSION = 33;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -514,7 +514,7 @@ function onScoop(id, btn) {
 function gardenView() {
   return el(`<section class="garden">
     <div class="scene-top">${Art.gardenScene({ coat: current().coat })}</div>
-    <div class="compost panel"><span class="ico">${Art.compostIcon()}</span><span>Compost: <b id="compost">0</b></span><small>Scoop poop to get more</small></div>
+    <div class="compost panel"><span class="ico compost-eq" aria-label="Poop makes compost">${Art.poop({ color: 'brown', shape: 'swirl' })}${Art.icon('arrow')}${Art.compostIcon()}</span><span>Compost: <b id="compost">0</b></span><small>Scoop poop to get more</small></div>
     <div class="plots" id="plots"></div>
     <div class="ribbon"><span>Pantry</span></div>
     <div class="pantry" id="pantry"></div>
