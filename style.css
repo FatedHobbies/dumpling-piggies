@@ -631,3 +631,8 @@ button.pk:active { transform: scale(.95); }
 .hat-pin .hat-pigs.two { grid-template-columns: 38px 38px; }
 .hat-pin .hat-model { flex: 0 0 auto; }
 .hat-pin .hat-who { flex: 1; }
+.hat-pin .hat-who { order: 1; text-align: left; }
+.hat-pin .hat-model { order: 2; }
+.hat-pin .hat-pigs { order: 3; }
+.hat-pin .hat-for { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.hat-pin .hat-pigs { justify-self: end; }

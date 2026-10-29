@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 71;
+const VERSION = 72;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -1100,7 +1100,7 @@ function updateShop() {
   if (hats.dataset.sig !== hsig) {
     hats.dataset.sig = hsig;
     // Who the hats are for, big and clear, with a row of faces to switch piggy.
-    // Other piggies on the left, the one being dressed in the middle, its name on the right.
+    // Its name on the left, the piggy being dressed in the middle, other piggies on the right.
     const others = state.piggies.filter(q => q.id !== p.id);
     hats.innerHTML = `<div class="hat-pin"><div class="hat-for">
         ${others.length ? `<div class="hat-pigs ${others.length > 2 ? 'two' : ''}">${others.map(q => `<button class="face" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div>` : ''}
