@@ -85,7 +85,12 @@ const HAT_SIDE = {
   crown: `<path d="M120 76 L116 42 L134 58 L150 34 L166 58 L184 42 L180 76Z" fill="#FFD34D" stroke="#E0941C" stroke-width="3" stroke-linejoin="round"/><circle cx="150" cy="66" r="5" fill="#FF5C7A"/><circle cx="132" cy="68" r="3.5" fill="#4FA8F5"/><circle cx="168" cy="68" r="3.5" fill="#6FCF4F"/>`,
   wizard: `<path d="M150 4 L126 74 L178 74Z" fill="#7B6CF6" stroke="#4F42B5" stroke-width="3" stroke-linejoin="round"/><ellipse cx="150" cy="74" rx="38" ry="9" fill="#7B6CF6" stroke="#4F42B5" stroke-width="3"/><path d="M146 30 l2 5 5 1 -4 3 1 5 -4 -3 -4 3 1 -5 -4 -3 5 -1z M156 52 l1.5 3.5 3.5 .5 -2.5 2.5 .5 3.5 -3 -2 -3 2 .5 -3.5 -2.5 -2.5 3.5 -.5z" fill="#FFD34D"/>`,
 };
-export function hatSide(id) { return HAT_SIDE[id] || ''; }
+// The poop hat reuses the swirly poop drawing, built on first use since the
+// poop colors are defined further down this file.
+export function hatSide(id) {
+  if (id === 'poop') return `<g transform="translate(120 22) scale(.95)">${poop({ shape: 'swirl', color: 'brown' }).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g>`;
+  return HAT_SIDE[id] || '';
+}
 
 // Simplified hats for the top-down maze piggy (nose points up, head centre at (0,-44)).
 const HAT_TOP = {
@@ -97,6 +102,7 @@ const HAT_TOP = {
   sunhat: `<circle cx="0" cy="-44" r="46" fill="#F2CE7E" stroke="#C98F4B" stroke-width="3"/><circle cx="0" cy="-44" r="26" fill="none" stroke="#FF5C7A" stroke-width="6"/><circle cx="0" cy="-44" r="22" fill="#F2CE7E" stroke="#C98F4B" stroke-width="3"/>`,
   chef: `<circle cx="0" cy="-44" r="30" fill="#fff" stroke="#D5CDBA" stroke-width="3"/><circle cx="-14" cy="-54" r="12" fill="#fff" stroke="#D5CDBA" stroke-width="3"/><circle cx="14" cy="-54" r="12" fill="#fff" stroke="#D5CDBA" stroke-width="3"/>`,
   dumpling: `<circle cx="0" cy="-44" r="22" fill="#FFE6C8" stroke="#D9A86E" stroke-width="3"/><path d="M0 -44 L-14 -58 M0 -44 L0 -64 M0 -44 L14 -58 M0 -44 L-18 -40 M0 -44 L18 -40" stroke="#D9A86E" stroke-width="2.5" stroke-linecap="round"/>`,
+  poop: `<circle cx="0" cy="-44" r="24" fill="#8A5634" stroke="#5E3820" stroke-width="3"/><circle cx="0" cy="-44" r="15" fill="#8A5634" stroke="#5E3820" stroke-width="2.5"/><circle cx="0" cy="-44" r="6" fill="#8A5634" stroke="#5E3820" stroke-width="2.5"/>`,
   crown: `<path d="M-28 -24 L-32 -60 L-16 -46 L0 -72 L16 -46 L32 -60 L28 -24Z" fill="#FFD34D" stroke="#E0941C" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="-36" r="5" fill="#FF5C7A"/>`,
   wizard: `<circle cx="0" cy="-44" r="38" fill="#7B6CF6" stroke="#4F42B5" stroke-width="3"/><circle cx="0" cy="-44" r="18" fill="#6A5BE0" stroke="#4F42B5" stroke-width="3"/><path d="M-4 -48 l2 5 5 1 -4 3 1 5 -4 -3 -4 3 1 -5 -4 -3 5 -1z" fill="#FFD34D"/>`,
 };

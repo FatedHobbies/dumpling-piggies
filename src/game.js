@@ -38,6 +38,7 @@ export const UPGRADES = {
 // Hats are bought once and any piggy can wear one. Each piggy has `hat`.
 export const HATS = {
   bow:        { name: 'Pink bow',        cost: 40 },
+  poop:       { name: 'Poop hat',        cost: 50 },
   strawberry: { name: 'Strawberry hat',  cost: 60 },
   flower:     { name: 'Daisy',           cost: 60 },
   party:      { name: 'Party hat',       cost: 70 },
