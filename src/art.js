@@ -823,7 +823,7 @@ export const MAZE_THEMES = {
   },
   galaxy: {
     side: '#3A2A8C', ui: { p: ['#2E2774', '#1E1A52', '#6E5BD6'], hint: '#D9D2FF', b: ['#9C86F0', '#6A50C8', '#2A1C6E', '#FFFFFF'], g: 'linear-gradient(#6FEBD8, #2FB8A6)', ge: '#17756A', t: ['#3A3290', '#5B4CB8', '#5EE3D0'] },
-    name: 'Galaxy', board: '#17123A', floor: '#2A2468', seen: '#3D368F', start: '#3FBFB0', startEdge: '#9FFFF2', post: '#FFD84D', postEdge: '#B8901A',
+    name: 'Galaxy', eraseEdge: '#8E7CF0', board: '#17123A', floor: '#2A2468', seen: '#3D368F', start: '#3FBFB0', startEdge: '#9FFFF2', post: '#FFD84D', postEdge: '#B8901A',
     // A space-rock cube: lit top face, darker front face with its own craters.
     cube: true,
     wall: (px, py, i) => {
@@ -986,8 +986,15 @@ export function veggieWall(filling, color) {
     <g transform="translate(12 2) scale(.62)">${veggie(filling, 64).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g></svg>`;
 }
 
-export function eraserIcon() {
-  return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="10" width="48" height="44" rx="10" fill="#D9F0B8" stroke="#8ACB6A" stroke-width="3" stroke-dasharray="6 5"/><path d="M22 22 L42 42 M42 22 L22 42" stroke="#E0564F" stroke-width="6" stroke-linecap="round"/></svg>`;
+// The maze tray's Eraser: an empty square of the theme's own floor with a
+// dashed edge and a red X, so it matches the Wall and Theme tiles beside it.
+export function eraserIcon(theme = 'hay') {
+  const t = MAZE_THEMES[theme] || MAZE_THEMES.hay;
+  const edge = t.eraseEdge || t.board;
+  return `<svg viewBox="-4 -4 56 56" aria-hidden="true"><rect x="0" y="0" width="48" height="48" rx="10" fill="${t.floor}"/>${t.deco(0, 0, 7)}
+    <rect x="1.5" y="1.5" width="45" height="45" rx="9" fill="none" stroke="${edge}" stroke-width="3" stroke-dasharray="6 5"/>
+    <path d="M15 15 L33 33 M33 15 L15 33" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".85"/>
+    <path d="M15 15 L33 33 M33 15 L15 33" stroke="#E0564F" stroke-width="5.5" stroke-linecap="round"/></svg>`;
 }
 
 export function hayWallIcon() {

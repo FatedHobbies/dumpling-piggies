@@ -1580,7 +1580,7 @@ function updateTray() {
   tray.hidden = !!run;
   if (run) return;
   const tile = (id, icon, label) => `<button class="mtile ${id === mazeTile ? 'on' : ''}" data-tile="${id}"><i>${icon}</i><span>${label}</span></button>`;
-  tray.innerHTML = tile(1, wallIcon(style), 'Wall') + tile(0, Art.eraserIcon(), 'Eraser') +
+  tray.innerHTML = tile(1, wallIcon(style), 'Wall') + tile(0, Art.eraserIcon(style), 'Eraser') +
     `<button class="mtile mtheme"><i>${themePreview(style)}</i><span>Theme</span></button>`;
   $('.mtheme', tray).addEventListener('click', () => { tut('theme'); pickMazeStyle(); });
   tray.querySelectorAll('.mtile[data-tile]').forEach(b => b.addEventListener('click', () => {
