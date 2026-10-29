@@ -96,14 +96,30 @@ h2 { font-family: var(--display); font-size: 1.2rem; margin: 18px 0 8px; }
 .hud-name { font-family: var(--display); font-weight: 600; color: #fff; font-size: 1rem; text-shadow: 0 2px 0 rgba(0,0,0,.35); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hud-name::after { content: "✎"; margin-left: 2px; opacity: .8; font-size: .75em; }
 .hud-coins { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; background: rgba(40, 60, 80, .55); border: 2px solid rgba(255,255,255,.4); border-radius: 999px; padding: 4px 10px 4px 4px; font-family: var(--display); font-weight: 600; color: #fff; font-size: 1.05rem; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
-.hud-book { position: relative; margin-left: auto; height: 46px; flex: 0 0 auto; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: #fff; border: 3px solid var(--wood-dark); box-shadow: 0 3px 0 #6A4524; padding: 0 8px 0 2px; font-family: var(--display); font-weight: 600; font-size: .7rem; line-height: 1; color: var(--wood-dark); text-align: left; }
-.hud-book svg { width: 28px; height: 28px; flex: 0 0 auto; }
+.hud-book { margin-left: auto; width: 46px; height: 46px; flex: 0 0 auto; border-radius: 12px; border: 3px solid var(--panel-edge, #D5CDBA); background: linear-gradient(#FFFFFF, #F1EBDF); box-shadow: 0 3px 0 rgba(0,0,0,.2); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; font: inherit; }
+.hud-book svg { width: 28px; height: 28px; display: block; margin-top: -3px; }
+.hud-book span { font-family: var(--display); font-weight: 600; font-size: .62rem; color: var(--wood-dark); line-height: 1; }
 .hud-book:active { transform: translateY(2px); box-shadow: none; }
-.hud-book .book-count { position: absolute; top: -8px; right: -10px; }
-.hud-music { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 50%; background: rgba(40, 60, 80, .55); border: 2px solid rgba(255,255,255,.4); box-shadow: inset 0 -3px 0 rgba(0,0,0,.25); font-size: 1.3rem; line-height: 1; padding: 0; }
-.hud-music svg { width: 28px; height: 28px; display: block; margin: auto; }
-.hud-music:active { transform: translateY(2px); box-shadow: none; }
-.hud-music.off { opacity: .7; }
+.hud-gear { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 50%; background: rgba(40, 60, 80, .55); border: 2px solid rgba(255,255,255,.4); box-shadow: inset 0 -3px 0 rgba(0,0,0,.25); padding: 0; }
+.hud-gear svg { width: 32px; height: 32px; display: block; margin: auto; }
+.hud-gear:active { transform: translateY(2px) rotate(30deg); box-shadow: none; }
+
+/* ---- Settings popup ---- */
+.snd { display: flex; flex-direction: column; gap: 10px; padding: 10px; background: #fff; }
+.snd-row { display: flex; align-items: center; gap: 10px; }
+.snd-ico svg { width: 36px; height: 36px; display: block; }
+.snd-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.snd-main b { font-family: var(--display); font-weight: 600; color: var(--ink); font-size: .95rem; }
+.snd-row.off .snd-ico, .snd-row.off .snd-main { opacity: .45; }
+.card .snd input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; margin: 0; padding: 0; border: 0; border-radius: 0; }
+.snd input[type=range]::-webkit-slider-runnable-track { height: 12px; border-radius: 999px; background: #E4DDCF; border: 2px solid #AFA48F; }
+.snd input[type=range]::-moz-range-track { height: 12px; border-radius: 999px; background: #E4DDCF; border: 2px solid #AFA48F; }
+.snd input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -9px; border-radius: 50%; background: #FFD34D; border: 3px solid #E0941C; box-shadow: 0 2px 0 rgba(0,0,0,.2); }
+.snd input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #FFD34D; border: 3px solid #E0941C; }
+.switch { flex: 0 0 auto; position: relative; width: 54px; height: 32px; border-radius: 999px; background: #C9C2B4; border: 3px solid #AFA48F; padding: 0; transition: background .15s; }
+.switch i { position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 0 rgba(0,0,0,.2); transition: left .15s; }
+.switch[aria-checked="true"] { background: var(--green, #6CC24A); border-color: var(--green-dark, #3E8E2A); }
+.switch[aria-checked="true"] i { left: 24px; }
 .coin-ico svg { width: 26px; height: 26px; }
 
 /* ---- Tutorial coach ---- */
@@ -196,8 +212,6 @@ button.pk:active { transform: scale(.95); }
 .poop-facts { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .poop-facts span { background: #fff; border: 2px solid var(--line); border-radius: 999px; padding: 4px 14px; font-weight: 700; color: var(--wood-dark); display: inline-flex; align-items: center; gap: 4px; }
 .poop-facts .coin-sm svg { width: 18px; height: 18px; vertical-align: middle; }
-.book-count { background: #FFD34D; color: #6A4524; border: 2px solid #E0941C; border-radius: 999px; padding: 0 6px; font-size: .72rem; line-height: 1.3; }
-.book-count[hidden] { display: none; }
 .book-prize { display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap; }
 .books-filled, .next-prize { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 3px solid var(--line); border-radius: 999px; padding: 3px 12px 3px 6px; font-family: var(--display); font-weight: 600; font-size: .9rem; color: var(--wood-dark); }
 .books-filled svg { width: 36px; height: 26px; }
@@ -598,14 +612,12 @@ button.pk:active { transform: scale(.95); }
 .dbook-btn:active { transform: translateY(2px); box-shadow: none; }
 .dbook-btn svg { width: 38px; height: 38px; display: block; margin-top: -4px; }
 .dbook-btn span { font-family: var(--display); font-size: .72rem; color: var(--wood-dark); line-height: 1; }
-.dbook-btn .book-count { position: absolute; top: -9px; right: -9px; }
 /* Keep the counter-bar squares below the countertop's top edge. */
 .counter-bar { bottom: 3.5%; }
 .dbook-btn { height: 56px; width: 56px; }
 .dbook-btn svg { width: 34px; height: 34px; margin-top: -2px; }
 .counter-bar .slot { width: 50px; height: 50px; }
 .counter-bar { bottom: 2.5%; }
-.dbook-btn .book-count { top: -5px; right: -8px; }
 .opt .count.have { background: var(--mint); color: #0E2E25; }
 
 .hat-pin { position: sticky; top: calc(var(--headh, 120px) - 12px); z-index: 4; margin: -10px -10px 8px; padding: 8px 10px 6px; background: var(--panel); border-radius: 16px 16px 0 0; box-shadow: 0 6px 6px -4px rgba(0,0,0,.15); }

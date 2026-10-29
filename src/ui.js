@@ -1,10 +1,10 @@
 import * as G from './game.js';
 import * as Art from './art.js';
 import { load, save, wipe } from './save.js';
-import { sfx, music } from './sound.js';
+import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 67;
+const VERSION = 68;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -78,9 +78,9 @@ function buildShell() {
   document.body.innerHTML = `
     <header class="hud">
       <button class="hud-pig" id="name" aria-label="Rename your piggy"><span class="hud-avatar" id="avatar"></span><span class="hud-name" id="pigname"></span></button>
-      <button class="hud-book" id="poopbook" aria-label="Poop Book">${Art.poop({ shape: 'swirl', color: 'brown' })}<span>Poop<br>Book</span><b class="book-count" id="bookcount" hidden></b></button>
-      <button class="hud-music" id="music" aria-label="Music on or off"></button>
+      <button class="hud-book" id="poopbook" aria-label="Poop Book">${Art.poop({ shape: 'swirl', color: 'brown' })}<span>Book</span></button>
       <div class="hud-coins"><span class="coin-ico">${Art.coinIcon()}</span><span id="coins">0</span></div>
+      <button class="hud-gear" id="gear" aria-label="Settings">${Art.icon('gear')}</button>
     </header>
     <div id="coach" class="coach" hidden><span class="coach-pig" id="coachpig"></span><p id="coachtext"></p><button class="coach-skip" id="coachskip" aria-label="Skip tutorial">✕</button></div>
     <main id="view"></main>
@@ -95,10 +95,7 @@ function buildShell() {
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); if (tab === 'shop' && b.dataset.tab === 'steamer') tut('home'); tab = b.dataset.tab; sfx.pop(); render(true); }));
   $('#name').addEventListener('click', renameDialog);
   $('#poopbook').addEventListener('click', poopBook);
-  const musicBtn = $('#music');
-  const showMusic = () => { musicBtn.innerHTML = Art.icon(music.on ? 'music' : 'mute'); musicBtn.classList.toggle('off', !music.on); };
-  musicBtn.addEventListener('click', () => { music.toggle(); sfx.pop(); showMusic(); });
-  showMusic();
+  $('#gear').addEventListener('click', () => { sfx.pop(); settings(); });
   $('#coachskip').addEventListener('click', () => confirmBox('Skip the tutorial?', () => { state.tutorial = { done: true }; render(); }));
 }
 
@@ -193,8 +190,6 @@ function positionArrow() {
 function render(force = false) {
   const p = current();
   $('#coins').textContent = state.coins;
-  $('#bookcount').hidden = !state.booksFilled;
-  $('#bookcount').textContent = `★${state.booksFilled}`;
   $('#pigname').textContent = p.name;
   const av = $('#avatar');
   const asig = p.id + JSON.stringify(p.coat) + (p.hat || '');
@@ -755,7 +750,7 @@ function kitchenView() {
   const v = el(`<section class="kitchen">
     <div class="kitchen-stage" id="kstage">${Art.kitchenScene({ coat: current().coat })}
       <div class="counter-bar">
-        <button class="dbook-btn" id="dbook" aria-label="Dumpling Book">${Art.dumpling('sp:gold', 40)}<span>Book</span><b class="book-count" id="rcount"></b></button>
+        <button class="dbook-btn" id="dbook" aria-label="Dumpling Book">${Art.dumpling('sp:gold', 40)}<span>Book</span></button>
         <div class="slots"><div class="slot" data-slot="0"></div><span class="plus">+</span><div class="slot" data-slot="1"></div></div>
         <button class="btn btn-red" id="cook">Steam it!</button>
       </div>
@@ -787,7 +782,6 @@ function updateKitchen() {
       fl.appendChild(b);
     }
   }
-  $('#rcount').textContent = G.dumplingsFound(state);
   const next = G.nextSeed(state);
   const hint = $('#seedhint');
   const hsig = next ? next.filling + next.need : 'all';
@@ -1024,7 +1018,6 @@ function shopView() {
     <div class="shop-sec" data-sec="upgrades"><div id="items"></div></div>
     <div class="shop-sec" data-sec="hats"><div class="hats panel" id="hats"></div></div>
     <div class="shop-sec" data-sec="toys"><div class="toys panel" id="toys"></div></div>
-    <div class="row center"><button class="btn btn-grey" id="replay">Replay tutorial</button></div>
     <button class="reset" id="reset">Start over</button>
     <p class="version">version ${VERSION}</p></section>`);
 }
@@ -1156,12 +1149,6 @@ function updateShop() {
     });
     items.appendChild(b);
   }
-  $('#replay').onclick = () => {
-    state.tutorial = { step: 1 };
-    if (!(state.dumplings['carrot+carrot'] > 0)) state.dumplings['carrot+carrot'] = 1;
-    if (state.compost < 1) state.compost = 1;
-    tab = 'steamer'; sfx.ding(); render(true);
-  };
   $('#reset').onclick = () => {
     confirmBox('Start over with a brand new piggy? Everything will be gone.', () => { wiped = true; wipe(); location.reload(); });
   };
@@ -1411,6 +1398,53 @@ function picker(title, options, onPick) {
     $('.opts', box).appendChild(b);
   }
   $('.btn-grey', box).onclick = () => box.remove();
+  document.body.appendChild(box);
+}
+
+// ---------- Settings ----------
+// The gear in the top bar: sound sliders with on/off switches, and the
+// tutorial replay.
+const SOUND_ROWS = [
+  { kind: 'master', name: 'All sound', icon: 'speaker' },
+  { kind: 'music',  name: 'Music',     icon: 'music' },
+  { kind: 'sfx',    name: 'Effects',   icon: 'sfx' },
+];
+function settings() {
+  const rows = SOUND_ROWS.map(r => `<div class="snd-row" data-kind="${r.kind}">
+      <span class="snd-ico">${Art.icon(r.icon)}</span>
+      <span class="snd-main"><b>${r.name}</b><input type="range" min="0" max="100" step="5" aria-label="${r.name} volume"></span>
+      <button class="switch" role="switch" aria-label="${r.name} on or off"><i></i></button>
+    </div>`).join('');
+  const box = el(`<div class="modal"><div class="card panel settings">
+    <div class="ribbon"><span>Settings</span></div>
+    <div class="snd panel">${rows}</div>
+    <div class="row center"><button class="btn btn-grey" id="replay">Replay tutorial</button></div>
+    <div class="row center"><button class="btn big" id="sclose">Done</button></div></div></div>`);
+  const show = () => {
+    const masterOn = volume.get('master').on;
+    box.querySelectorAll('.snd-row').forEach(row => {
+      const v = volume.get(row.dataset.kind);
+      row.querySelector('input').value = Math.round(v.vol * 100);
+      row.querySelector('.switch').setAttribute('aria-checked', v.on);
+      row.classList.toggle('off', !v.on || (row.dataset.kind !== 'master' && !masterOn));
+    });
+  };
+  box.querySelectorAll('.snd-row').forEach(row => {
+    const kind = row.dataset.kind;
+    const input = row.querySelector('input');
+    input.addEventListener('input', () => { volume.set(kind, { vol: input.value / 100, on: true }); show(); });
+    input.addEventListener('change', () => { if (kind !== 'music') sfx.pop(); });
+    row.querySelector('.switch').addEventListener('click', () => { volume.set(kind, { on: !volume.get(kind).on }); show(); sfx.pop(); });
+  });
+  $('#replay', box).onclick = () => {
+    box.remove();
+    state.tutorial = { step: 1 };
+    if (!(state.dumplings['carrot+carrot'] > 0)) state.dumplings['carrot+carrot'] = 1;
+    if (state.compost < 1) state.compost = 1;
+    tab = 'steamer'; sfx.ding(); render(true);
+  };
+  $('#sclose', box).onclick = () => { box.remove(); sfx.pop(); updateCoach(); };
+  show();
   document.body.appendChild(box);
 }
 

@@ -9,9 +9,34 @@ function ac() {
   return ctx;
 }
 
+// ---------- Volume settings ----------
+// Master, Music and Effects each have an on/off switch and a 0-1 volume,
+// remembered on this device. Everything plays through master; music and
+// effects each have their own knob in front of it.
+const AUDIO_KEY = 'dumpling-piggies-audio';
+const MUSIC_KEY = 'dumpling-piggies-music'; // the old music on/off switch
+const audio = { master: { on: true, vol: 1 }, music: { on: true, vol: 1 }, sfx: { on: true, vol: 1 } };
+try {
+  const saved = JSON.parse(localStorage.getItem(AUDIO_KEY) || 'null');
+  if (saved) for (const k of Object.keys(audio)) Object.assign(audio[k], saved[k]);
+  else if (localStorage.getItem(MUSIC_KEY) === 'off') audio.music.on = false;
+} catch (e) { /* ignore */ }
+const level = (k) => (audio[k].on ? audio[k].vol : 0);
+let masterBus = null;
+let sfxBus = null;
+
+function buses(c) {
+  if (!masterBus) {
+    masterBus = c.createGain(); masterBus.gain.value = level('master'); masterBus.connect(c.destination);
+    sfxBus = c.createGain(); sfxBus.gain.value = level('sfx'); sfxBus.connect(masterBus);
+  }
+}
+
 function tone(freqFrom, freqTo, dur, type = 'sine', gain = 0.12, when = 0) {
+  if (!level('master') || !level('sfx')) return;
   const c = ac();
   if (!c) return;
+  buses(c);
   const o = c.createOscillator();
   const g = c.createGain();
   o.type = type;
@@ -21,7 +46,7 @@ function tone(freqFrom, freqTo, dur, type = 'sine', gain = 0.12, when = 0) {
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(gain, t + 0.02);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(c.destination);
+  o.connect(g).connect(sfxBus);
   o.start(t);
   o.stop(t + dur + 0.05);
 }
@@ -40,8 +65,7 @@ export const sfx = {
 // ---------- Background music ----------
 // A quiet music-box lullaby made on the fly, so there is no file to download
 // or license. It loops forever, starts on the first tap (phones block sound
-// until then), and the on/off choice is remembered on this device.
-const MUSIC_KEY = 'dumpling-piggies-music';
+// until then), and its volume comes from the settings above.
 const BPM = 76;
 const EIGHTH = 30 / BPM;
 const VOLUME = 0.05;
@@ -64,8 +88,8 @@ const MELODY = [
 ];
 const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
-let musicOn = true;
-try { musicOn = localStorage.getItem(MUSIC_KEY) !== 'off'; } catch (e) { /* ignore */ }
+const musicOn = () => level('master') > 0 && level('music') > 0;
+const musicVol = () => VOLUME * audio.music.vol;
 let bus = null;        // music volume knob, so effects can duck it
 let timer = null;
 let step = 0;          // eighth notes since the loop started
@@ -106,12 +130,13 @@ function schedule() {
 }
 
 function startMusic() {
-  if (timer || !musicOn || document.hidden) return;
+  if (timer || !musicOn() || document.hidden) return;
   const c = ac();
   if (!c) return;
-  if (!bus) { bus = c.createGain(); bus.gain.value = 0; bus.connect(c.destination); }
+  buses(c);
+  if (!bus) { bus = c.createGain(); bus.gain.value = 0; bus.connect(masterBus); }
   bus.gain.cancelScheduledValues(c.currentTime);
-  bus.gain.setTargetAtTime(VOLUME, c.currentTime, 0.8); // gentle fade in
+  bus.gain.setTargetAtTime(musicVol(), c.currentTime, 0.8); // gentle fade in
   nextAt = c.currentTime + 0.1;
   schedule();
   timer = setInterval(schedule, 100);
@@ -122,8 +147,8 @@ function duck() {
   if (!bus || !timer) return;
   const t = ctx.currentTime;
   bus.gain.cancelScheduledValues(t);
-  bus.gain.setTargetAtTime(VOLUME * 0.35, t, 0.03);
-  bus.gain.setTargetAtTime(VOLUME, t + 0.6, 0.4);
+  bus.gain.setTargetAtTime(musicVol() * 0.35, t, 0.03);
+  bus.gain.setTargetAtTime(musicVol(), t + 0.6, 0.4);
 }
 
 function stopMusic() {
@@ -133,7 +158,6 @@ function stopMusic() {
 }
 
 export const music = {
-  get on() { return musicOn; },
   // Call once at startup: waits for the first tap, then plays if switched on.
   init() {
     // On iPhone, "ambient" keeps the silent switch muting us and lets a
@@ -143,10 +167,21 @@ export const music = {
     ['touchend', 'click', 'keydown'].forEach(t => document.addEventListener(t, first, true));
     document.addEventListener('visibilitychange', () => { if (document.hidden) stopMusic(); else if (ctx) startMusic(); });
   },
-  toggle() {
-    musicOn = !musicOn;
-    try { localStorage.setItem(MUSIC_KEY, musicOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
-    if (musicOn) startMusic(); else stopMusic();
-    return musicOn;
+};
+
+// The Settings popup reads and changes these. kind: 'master' | 'music' | 'sfx'.
+export const volume = {
+  get(kind) { return { ...audio[kind] }; },
+  set(kind, change) {
+    Object.assign(audio[kind], change);
+    try { localStorage.setItem(AUDIO_KEY, JSON.stringify(audio)); } catch (e) { /* ignore */ }
+    if (masterBus) {
+      const t = ctx.currentTime;
+      masterBus.gain.setTargetAtTime(level('master'), t, 0.05);
+      sfxBus.gain.setTargetAtTime(level('sfx'), t, 0.05);
+    }
+    if (!musicOn()) stopMusic();
+    else if (timer) bus.gain.setTargetAtTime(musicVol(), ctx.currentTime, 0.1);
+    else startMusic();
   },
 };

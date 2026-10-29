@@ -822,8 +822,23 @@ const ICONS = {
   kitchen: `<path d="M6 44 Q6 18 32 16 Q58 18 58 44 Q32 54 6 44Z" fill="#FFE6C8" stroke="#D9A86E" stroke-width="3.5" stroke-linejoin="round"/><path d="M32 16 Q22 24 18 38 M32 16 Q30 28 28 42 M32 16 Q36 28 38 42 M32 16 Q44 24 46 38" stroke="#D9A86E" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="24" cy="44" r="2" fill="#2A1A14"/><circle cx="40" cy="44" r="2" fill="#2A1A14"/><path d="M29 47 Q32 50 35 47" stroke="#2A1A14" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
   music: `<path d="M24 46 V14 L50 8 V40" fill="none" stroke="#E0941C" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="18" cy="46" rx="9" ry="7" fill="#FFD34D" stroke="#E0941C" stroke-width="3.5"/><ellipse cx="44" cy="40" rx="9" ry="7" fill="#FFD34D" stroke="#E0941C" stroke-width="3.5"/>`,
   mute: `<g opacity=".8"><path d="M24 46 V14 L50 8 V40" fill="none" stroke="#8E99A8" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="18" cy="46" rx="9" ry="7" fill="#D8DEE6" stroke="#8E99A8" stroke-width="3.5"/><ellipse cx="44" cy="40" rx="9" ry="7" fill="#D8DEE6" stroke="#8E99A8" stroke-width="3.5"/></g><path d="M10 54 L54 10" stroke="#C93A5B" stroke-width="6" stroke-linecap="round"/>`,
+  // A friendly gear for Settings
+  gear: `<path d="${gearPath()}" fill="#D8DEE6" stroke="#5C6B7E" stroke-width="3.5" stroke-linejoin="round"/><circle cx="32" cy="32" r="8" fill="#8FD3F7" stroke="#5C6B7E" stroke-width="3.5"/>`,
+  // A speaker with sound waves, for All sound
+  speaker: `<path d="M10 25 H20 L33 13 V51 L20 39 H10Z" fill="#FFD34D" stroke="#E0941C" stroke-width="3.5" stroke-linejoin="round"/><path d="M41 24 Q46 32 41 40 M47 18 Q56 32 47 46" fill="none" stroke="#E0941C" stroke-width="4.5" stroke-linecap="round"/>`,
+  // A sparkly star, for sound effects
+  sfx: `<path d="M32 6 L39 24 L58 25 L43 37 L48 56 L32 45 L16 56 L21 37 L6 25 L25 24Z" fill="#FF8FA8" stroke="#C93A5B" stroke-width="3.5" stroke-linejoin="round"/><circle cx="27" cy="30" r="3" fill="#fff"/>`,
   shop: `<path d="M22 22 Q22 8 32 8 Q42 8 42 22" fill="none" stroke="#C93A5B" stroke-width="4" stroke-linecap="round"/><path d="M10 22 H54 L50 56 H14Z" fill="#FF8FA8" stroke="#C93A5B" stroke-width="4" stroke-linejoin="round"/><path d="M14 34 H50" stroke="#FFD34D" stroke-width="6"/><circle cx="32" cy="44" r="4" fill="#fff"/>`,
 };
+// Eight chunky rounded teeth around a wheel.
+function gearPath() {
+  const pts = [];
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    for (const [da, r] of [[-0.24, 21], [-0.15, 28], [0.15, 28], [0.24, 21]]) pts.push([32 + r * Math.cos(a + da), 32 + r * Math.sin(a + da)]);
+  }
+  return 'M' + pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L') + 'Z';
+}
 export function icon(name) {
   return `<svg viewBox="0 0 64 64" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 }
