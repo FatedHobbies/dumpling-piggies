@@ -134,7 +134,7 @@ export function piggySide(opts = {}) {
 // Hats drawn in side-view piggy coordinates. The head is around (148, 112),
 // its top at about y 76, the ear at (136, 80).
 const HAT_SIDE = {
-  strawberry: `<path d="M112 70 Q114 38 140 36 Q164 36 166 62 Q148 58 132 66 Q122 72 112 70Z" fill="#FF5C7A" stroke="#D93A5B" stroke-width="2.5" stroke-linejoin="round"/><g fill="#FFF3B0"><circle cx="122" cy="60" r="2.5"/><circle cx="132" cy="50" r="2.5"/><circle cx="148" cy="46" r="2.5"/><circle cx="156" cy="56" r="2.5"/><circle cx="140" cy="58" r="2.5"/></g><path d="M140 40 L126 36 L134 32 L130 24 L140 30 L150 24 L146 32 L154 36Z" fill="#4CAF50" stroke="#2E7D32" stroke-width="2" stroke-linejoin="round"/><path d="M140 30 Q140 20 146 16" stroke="#4CAF50" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+  strawberry: `<path d="M112 76 Q112 42 140 40 Q168 42 168 74 Q140 66 112 76Z" fill="#FF5C7A" stroke="#D93A5B" stroke-width="2.5" stroke-linejoin="round"/><g fill="#FFF3B0"><circle cx="122" cy="64" r="2.5"/><circle cx="130" cy="52" r="2.5"/><circle cx="146" cy="50" r="2.5"/><circle cx="158" cy="60" r="2.5"/><circle cx="140" cy="62" r="2.5"/></g><path d="M140 44 L126 40 L134 36 L130 28 L140 34 L150 28 L146 36 L154 40Z" fill="#4CAF50" stroke="#2E7D32" stroke-width="2" stroke-linejoin="round"/><path d="M140 34 Q140 24 146 20" stroke="#4CAF50" stroke-width="4" fill="none" stroke-linecap="round"/>`,
   bow: `<path d="M150 66 Q128 46 126 62 Q126 76 150 66Z M150 66 Q172 46 174 62 Q174 76 150 66Z" fill="#FF5C7A" stroke="#C93A5B" stroke-width="2.5" stroke-linejoin="round"/><circle cx="150" cy="66" r="6" fill="#FF8FA8" stroke="#C93A5B" stroke-width="2.5"/>`,
   flower: `<g fill="#fff" stroke="#E6DCC8" stroke-width="2">${[0, 60, 120, 180, 240, 300].map(a => `<ellipse cx="150" cy="50" rx="7" ry="13" transform="rotate(${a} 150 62)"/>`).join('')}</g><circle cx="150" cy="62" r="7" fill="#FFD34D" stroke="#E0941C" stroke-width="2"/>`,
   party: `<path d="M150 14 L124 76 L176 76Z" fill="#7B6CF6" stroke="#4F42B5" stroke-width="3" stroke-linejoin="round"/><path d="M138 44 L162 44 M131 60 L169 60" stroke="#FFD34D" stroke-width="5"/><circle cx="150" cy="14" r="7" fill="#FF8FA8" stroke="#C93A5B" stroke-width="2"/>`,
@@ -149,12 +149,15 @@ const HAT_SIDE = {
 // poop colors are defined further down this file.
 export function hatSide(id) {
   if (id === 'poop') return `<g transform="translate(120 22) scale(.95)">${poop({ shape: 'swirl', color: 'brown' }).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g>`;
-  return HAT_SIDE[id] || '';
+  const [dx, dy] = HAT_NUDGE[id] || [0, 0];
+  return dx || dy ? `<g transform="translate(${dx} ${dy})">${HAT_SIDE[id] || ''}</g>` : HAT_SIDE[id] || '';
 }
+// Hats that perched on the ear tip get pulled down onto the head.
+const HAT_NUDGE = { strawberry: [6, 10], crown: [2, 6], dumpling: [2, 5], chef: [2, 5], party: [0, 4] };
 
 // Simplified hats for the top-down maze piggy (nose points up, head centre at (0,-44)).
 const HAT_TOP = {
-  strawberry: `<path d="M-30 -56 Q0 -96 30 -60 Q14 -62 0 -58 Q-16 -54 -30 -56Z" fill="#FF5C7A"/><circle cx="-14" cy="-66" r="4" fill="#FFF3B0"/><circle cx="4" cy="-76" r="4" fill="#FFF3B0"/><circle cx="18" cy="-66" r="4" fill="#FFF3B0"/><g fill="#4CAF50" stroke="#2E7D32" stroke-width="1.5">${[0, 72, 144, 216, 288].map(a => `<ellipse cx="0" cy="-84" rx="4" ry="8" transform="rotate(${a} 0 -76)"/>`).join('')}</g>`,
+  strawberry: `<circle cx="0" cy="-44" r="24" fill="#FF5C7A" stroke="#D93A5B" stroke-width="3"/><g fill="#FFF3B0"><circle cx="-12" cy="-30" r="3"/><circle cx="12" cy="-30" r="3"/><circle cx="-16" cy="-52" r="3"/><circle cx="16" cy="-52" r="3"/><circle cx="0" cy="-26" r="3"/></g><g fill="#4CAF50" stroke="#2E7D32" stroke-width="1.5">${[0, 72, 144, 216, 288].map(a => `<ellipse cx="0" cy="-52" rx="4" ry="8" transform="rotate(${a} 0 -44)"/>`).join('')}</g>`,
   bow: `<path d="M0 -40 Q-26 -58 -24 -40 Q-24 -24 0 -40Z M0 -40 Q26 -58 24 -40 Q24 -24 0 -40Z" fill="#FF5C7A" stroke="#C93A5B" stroke-width="2.5"/><circle cx="0" cy="-40" r="6" fill="#FF8FA8" stroke="#C93A5B" stroke-width="2.5"/>`,
   flower: `<g fill="#fff" stroke="#E6DCC8" stroke-width="2">${[0, 60, 120, 180, 240, 300].map(a => `<ellipse cx="0" cy="-56" rx="7" ry="13" transform="rotate(${a} 0 -44)"/>`).join('')}</g><circle cx="0" cy="-44" r="7" fill="#FFD34D" stroke="#E0941C" stroke-width="2"/>`,
   party: `<circle cx="0" cy="-44" r="24" fill="#7B6CF6" stroke="#4F42B5" stroke-width="3"/><circle cx="0" cy="-44" r="14" fill="#FFD34D"/><circle cx="0" cy="-44" r="6" fill="#FF8FA8"/>`,
@@ -169,8 +172,18 @@ const HAT_TOP = {
 export function hatTop(id) { return HAT_TOP[id] || ''; }
 
 // A hat by itself, for the shop.
+// Each hat's bounds in side-view coordinates (x, y, w, h), so the shop tile
+// can frame every hat whole instead of clipping the wide or tall ones.
+const HAT_BOX = {
+  bow: [126, 55, 48, 17], poop: [130, 34, 42, 44], strawberry: [112, 20, 56, 56], flower: [125, 37, 50, 50],
+  party: [124, 7, 52, 69], beanie: [112, 22, 76, 66], sunhat: [96, 38, 104, 48], chef: [117, 36, 66, 44],
+  dumpling: [130, 36, 40, 40], crown: [116, 34, 68, 42], wizard: [112, 4, 76, 79],
+};
 export function hatIcon(id) {
-  return `<svg viewBox="104 0 92 92" aria-hidden="true"><g transform="translate(0 8)">${hatSide(id)}</g></svg>`;
+  const [x0, y0, w, h] = HAT_BOX[id] || [104, 0, 92, 92];
+  const [dx, dy] = HAT_NUDGE[id] || [0, 0], x = x0 + dx, y = y0 + dy;
+  const size = Math.max(w, h, 56) + 10;
+  return `<svg viewBox="${x + w / 2 - size / 2} ${y + h / 2 - size / 2} ${size} ${size}" aria-hidden="true">${hatSide(id)}</svg>`;
 }
 
 // Front-view face for the portrait row in the pen, drawn in a 100x100 box.
