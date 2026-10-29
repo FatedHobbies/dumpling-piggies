@@ -1017,7 +1017,7 @@ export function plotArt() {
     <path d="M${150 - w} ${y - 3} Q150 ${y - 10} ${150 + w} ${y - 3}" stroke="#B07A4C" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/>`;
   const clods = [[52, 46], [104, 40], [196, 41], [244, 47], [80, 62], [150, 56], [222, 63]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="3" fill="#5A3A1E" opacity=".45"/>`).join('');
   const nails = [26, 274].map(x => `<circle cx="${x}" cy="94" r="2.6" fill="#7A4E2A"/><circle cx="${x}" cy="110" r="2.6" fill="#7A4E2A"/>`).join('');
-  return `<svg viewBox="0 0 300 130" class="scene" preserveAspectRatio="none" aria-hidden="true">
+  return `<svg viewBox="0 16 300 112" class="scene" preserveAspectRatio="none" aria-hidden="true">
     <rect width="300" height="130" fill="#A7DB8C"/>
     ${tuft(10, 30, .8)}${tuft(288, 26, .8)}${tuft(150, 14, .6, '#7DC768')}${tuft(70, 16, .6, '#7DC768')}${tuft(232, 16, .6, '#7DC768')}
     <ellipse cx="150" cy="124" rx="140" ry="8" fill="#3E8E2A" opacity=".3"/>

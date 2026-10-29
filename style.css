@@ -369,7 +369,7 @@ button.pk:active { transform: scale(.95); }
 .plot.busy .lbl { opacity: 0; }
 .ring { position: absolute; top: 6px; left: 12px; right: 12px; height: 8px; background: rgba(255,255,255,.6); border-radius: 5px; overflow: hidden; border: 2px solid #fff; }
 .ring i { display: block; height: 100%; background: var(--mint); }
-.lbl { position: relative; z-index: 1; font-family: var(--display); font-weight: 600; font-size: .85rem; padding: 2px 0 5px; color: #fff; text-shadow: 0 2px 0 #7A4E2A, 0 0 5px rgba(90,58,30,.6); }
+.lbl { position: relative; z-index: 1; font-family: var(--display); font-weight: 600; font-size: .85rem; padding: 0 0 3px; color: #fff; text-shadow: 0 2px 0 #7A4E2A, 0 0 5px rgba(90,58,30,.6); }
 .plot.ready { animation: wobble 1s infinite; }
 @keyframes wobble { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-2deg); } 75% { transform: rotate(2deg); } }
 .pantry { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
@@ -660,9 +660,9 @@ button.pk:active { transform: scale(.95); }
 .pk.pk-pad { visibility: hidden; }
 .book-pane[data-pane="dumplings"] .pk-grid { grid-auto-rows: 1fr; }
 /* Plots are short raised beds; the crop stands in the soil above the front board. */
-.garden .plot { height: 78px; }
-.garden .plant { bottom: 28px; }
-.garden .plant svg { width: 42px; height: 42px; }
+.garden .plot { height: 64px; }
+.garden .plant { bottom: 22px; }
+.garden .plant svg { width: 38px; height: 38px; }
 .garden .pantry { margin-top: 12px; }
 .pitem svg { width: 36px; height: 36px; }
 .pitem.locked { background: #F4EEE0; font-family: inherit; }
