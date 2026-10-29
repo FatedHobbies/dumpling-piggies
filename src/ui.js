@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 90;
+const VERSION = 91;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -335,7 +335,7 @@ function updateSteamer() {
     tray.innerHTML = keys.length ? '' : `<p class="hint">No dumplings yet. Cook some in the Kitchen!</p>`;
     for (const k of keys) {
       const b = el(`<button class="dump tile ${rank(k) < 4 ? 'special' : ''}" aria-label="Feed ${G.dumplingInfo(k).name}">${Art.dumpling(k, 52)}<b class="count">${state.dumplings[k]}</b></button>`);
-      b.addEventListener('click', () => onFeed(k));
+      b.addEventListener('click', () => onFeed(k, b));
       tray.appendChild(b);
     }
   }
@@ -668,7 +668,7 @@ function onPet(id) {
   render();
 }
 
-function onFeed(key) {
+function onFeed(key, btn) {
   const target = current();
   const r = G.feed(state, key, target.id);
   if (!r.ok) {
@@ -676,18 +676,59 @@ function onFeed(key) {
     if (r.reason === 'full') {
       // The chosen piggy is full: offer it to whoever is hungriest instead.
       const h = G.hungriest(state);
-      if (h.id !== target.id && h.hunger < 98) { selectedPig = h.id; return onFeed(key); }
+      if (h.id !== target.id && h.hunger < 98) { selectedPig = h.id; return onFeed(key, btn); }
       toast(`${esc(target.name)} is full!`);
     } else toast('None left');
     return;
   }
-  sfx.munch();
   const d = $(`.piggy[data-id="${r.piggy.id}"]`);
-  if (d) { bubble(d, 'nom!'); d.classList.remove('munch'); void d.offsetWidth; d.classList.add('munch'); }
-  floatCoin(r.coins);
+  const nom = () => {
+    sfx.munch();
+    if (d) { bubble(d, 'nom!'); d.classList.remove('munch'); void d.offsetWidth; d.classList.add('munch'); }
+    floatCoin(r.coins);
+  };
+  if (btn && d) flyDumpling(key, btn, d, nom); else nom();
   if (r.effect) setTimeout(() => sfx.ding(), 300);
   tut('feed');
   render();
+}
+
+// The fed dumpling hops out of the tray and arcs over to the piggy's mouth,
+// shrinking a little on the way, then squishes in and the piggy says "nom!".
+function flyDumpling(key, btn, d, done) {
+  const from = btn.querySelector('svg')?.getBoundingClientRect() || btn.getBoundingClientRect();
+  const fly = el(`<div class="fly-dump">${Art.dumpling(key, 52)}</div>`);
+  fly.style.width = fly.style.height = from.width + 'px';
+  document.body.appendChild(fly);
+  btn.classList.remove('fed'); void btn.offsetWidth; btn.classList.add('fed');
+  const x0 = from.left + from.width / 2, y0 = from.top + from.height / 2;
+  // Aim for the mouth: the front of a side-on piggy, or the middle of a front-facing one.
+  const mouth = () => {
+    const art = $('.pose.front', d)?.offsetParent ? $('.pose.front', d) : $('.pose.side', d) || d;
+    const a = art.getBoundingClientRect();
+    if (!a.width) return null;
+    if (art.classList.contains('front')) return [a.left + a.width / 2, a.top + a.height * 0.62];
+    const f = Number(d.style.getPropertyValue('--f')) < 0 ? -1 : 1;
+    return [a.left + a.width * (f > 0 ? 0.84 : 0.16), a.top + a.height * 0.6];
+  };
+  const T = 650, start = performance.now();
+  let last = [x0, y0];
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / T);
+    const m = mouth() || last;   // follow the piggy if it is still walking
+    last = m;
+    const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const lift = Math.max(130, Math.hypot(m[0] - x0, m[1] - y0) * 0.45);
+    const x = x0 + (m[0] - x0) * e;
+    const y = y0 + (m[1] - y0) * e - lift * 4 * e * (1 - e);
+    const sc = 1 - 0.45 * e;
+    fly.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${Math.sin(e * Math.PI * 2) * 18}deg) scale(${sc})`;
+    if (t < 1) return requestAnimationFrame(step);
+    fly.classList.add('gulp');
+    done();
+    setTimeout(() => fly.remove(), 260);
+  };
+  requestAnimationFrame(step);
 }
 
 function onScoop(id, btn) {
