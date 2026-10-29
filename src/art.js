@@ -752,9 +752,18 @@ export const MAZE_THEMES = {
   },
   kitchen: {
     side: '#A8763A', name: 'Dumpling kitchen', board: '#E9B98A', floor: '#D3F1E4', seen: '#B7E6D2', start: '#FFE08A', startEdge: '#E0A93A', post: '#C9935A', postEdge: '#8A5634',
-    wall: (px, py) => `<ellipse cx="${px + 24}" cy="${py + 12}" rx="20" ry="7" fill="#F2D59A" stroke="#9C6A3A" stroke-width="3"/>
-      <path d="M${px + 4} ${py + 13} V${py + 38} Q${px + 24} ${py + 46} ${px + 44} ${py + 38} V${py + 13}" fill="#E8C27A" stroke="#9C6A3A" stroke-width="3"/>
-      <path d="M${px + 4} ${py + 24} Q${px + 24} ${py + 31} ${px + 44} ${py + 24}" stroke="#B5823F" stroke-width="2.5" fill="none"/>`,
+    // A tall stack of bamboo steamer baskets, nothing underneath.
+    cube: true,
+    wall: (px, py) => {
+      const l = px + 4, r = px + 44, cx = px + 24, top = py + 9, bot = py + 47, ry = 6;
+      const band = (y) => `<path d="M${l} ${y} Q${cx} ${y + ry * 1.6} ${r} ${y}" stroke="#9C6A3A" stroke-width="2.5" fill="none"/>`;
+      return `<path d="M${l} ${top} V${bot - ry} Q${cx} ${bot + ry * .6} ${r} ${bot - ry} V${top}Z" fill="#E8C27A" stroke="#9C6A3A" stroke-width="3" stroke-linejoin="round"/>
+        ${band(py + 22)}${band(py + 34)}
+        <path d="M${l + 5} ${py + 15} V${py + 40}" stroke="#F6DDA4" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="${cx}" cy="${top}" rx="${(r - l) / 2}" ry="${ry}" fill="#F2D59A" stroke="#9C6A3A" stroke-width="3"/>
+        <path d="M${l + 7} ${top} Q${cx} ${top + 4} ${r - 7} ${top} M${l + 9} ${top - 2} Q${cx} ${top + 1} ${r - 9} ${top - 2}" stroke="#D9A85A" stroke-width="1.5" fill="none"/>
+        <ellipse cx="${cx}" cy="${top - 1}" rx="5" ry="2" fill="#B5823F"/>`;
+    },
     deco: (px, py) => `<path d="M${px + 24} ${py + 4} V${py + 44} M${px + 4} ${py + 24} H${px + 44}" stroke="#fff" stroke-width="2" opacity=".7"/>`,
   },
   snow: {
