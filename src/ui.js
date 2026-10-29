@@ -317,8 +317,8 @@ function updateSteamer() {
       b.addEventListener('click', () => onScoop(poop.id, b));
       floor.appendChild(b);
       // Poops already there when the game opens just sit there; new ones
-      // sometimes drop out of a piggy's behind, otherwise they just plop.
-      if (poopsShown && !(Math.random() < 0.5 && dropFromPiggy(poop, b))) sfx.plop();
+      // drop out of a piggy's behind, or just plop if nobody is out.
+      if (poopsShown && !dropFromPiggy(poop, b)) sfx.plop();
     }
     poops.delete(poop.id);
   }
