@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 46;
+const VERSION = 47;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -323,6 +323,7 @@ function updateSteamer() {
 }
 
 function placePig(d, pig, w) {
+  if (w && w.riding) return;   // the slide ride places the piggy itself
   d.style.setProperty('--x', pig.x.toFixed(3));
   d.style.setProperty('--y', pig.y.toFixed(3));
   d.style.setProperty('--s', (0.62 + pig.y * 0.38).toFixed(3));
@@ -536,31 +537,42 @@ const SLIDE_PATH = [
 ];
 function rideSlide(pig, w, d) {
   const toy = $('.toy[data-toy="slide"]'), floor = $('#floor');
-  if (!toy || !floor || !d.animate) return;
-  const fr = floor.getBoundingClientRect(), tr = toy.getBoundingClientRect();
-  const ax = pig.x * fr.width, ay = pig.y * fr.height;
-  const at = (px, py) => [tr.left - fr.left + px / 120 * tr.width - ax, tr.top - fr.top + py / 100 * tr.height - ay];
-  const ride = Math.min(0.6, tr.width / d.offsetWidth * 0.6);
-  const frames = SLIDE_PATH.map(([offset, px, py, rot]) => {
-    const [x, y] = at(px, py);
-    const sc = offset === 0 ? 1 : offset === 1 ? 1 : offset > 0.94 ? ride * 1.1 : ride;
-    return { offset, translate: `${x.toFixed(1)}px ${y.toFixed(1)}px`, rotate: `${rot}deg`, scale: `${sc}` };
-  });
-  const dur = 3400;
+  if (!toy || !floor || !floor.offsetWidth) return;
+  // Points in the slide picture become floor positions, so the ride uses the
+  // same left/top placement as walking (no extra transforms to fight with).
+  const fw = floor.offsetWidth, fh = floor.offsetHeight;
+  const tw = toy.offsetWidth, th = toy.offsetHeight;
+  const tl = G.TOYS.slide.x * fw - tw / 2, tt = G.TOYS.slide.y * fh - th * 0.94;
+  const at = (px, py) => [(tl + px / 120 * tw) / fw, (tt + py / 100 * th) / fh];
+  const ride = Math.min(0.6, tw / d.offsetWidth * 0.6);
+  const path = SLIDE_PATH.map(([t, px, py, rot]) => [t, ...at(px, py), rot]);
+  const dur = 3400, start = performance.now();
   w.riding = true; w.front = false; w.face = 1;
   w.pause = Date.now() + dur + 900;
-  d.classList.remove('walking'); syncPose(d, w); placePig(d, pig, w);
-  d.style.zIndex = depth(G.TOYS.slide.y) + 1;
-  const anim = d.animate(frames, { duration: dur, easing: 'linear', fill: 'forwards' });
+  d.classList.remove('walking'); syncPose(d, w);
   setTimeout(() => bubble(d, 'Wheee!'), dur * 0.58);
-  setTimeout(() => {
-    const [lx, ly] = at(126, 94);
-    pig.x = Math.min(0.95, (ax + lx) / fr.width); pig.y = Math.min(1, (ay + ly) / fr.height);
-    w.tx = pig.x; w.ty = pig.y; w.riding = false;
+  const step = (now) => {
+    const k = Math.min(1, (now - start) / dur);
+    let i = 0;
+    while (i < path.length - 2 && path[i + 1][0] < k) i++;
+    const [t0, x0, y0, r0] = path[i], [t1, x1, y1, r1] = path[i + 1];
+    const f = Math.min(1, Math.max(0, (k - t0) / (t1 - t0)));
+    const x = x0 + (x1 - x0) * f, y = y0 + (y1 - y0) * f, r = r0 + (r1 - r0) * f;
+    const grow = k < 0.1 ? 1 - (1 - ride) * k / 0.1 : k > 0.94 ? ride + (1 - ride) * (k - 0.94) / 0.06 : ride;
     const cur = $(`.piggy[data-id="${pig.id}"]`);
-    if (cur) { syncPose(cur, w); placePig(cur, pig, w); }
-    anim.cancel();
-  }, dur);
+    if (cur) {
+      cur.classList.add('riding');
+      cur.style.setProperty('--x', x.toFixed(4)); cur.style.setProperty('--y', y.toFixed(4));
+      cur.style.setProperty('--s', ((0.62 + G.TOYS.slide.y * 0.38) * grow).toFixed(3));
+      cur.style.setProperty('--f', 1); cur.style.setProperty('--r', r.toFixed(1) + 'deg');
+      cur.style.zIndex = depth(G.TOYS.slide.y) + 1;
+    }
+    if (k < 1) { requestAnimationFrame(step); return; }
+    pig.x = Math.min(0.95, x); pig.y = Math.min(1, Math.max(pig.y, y));
+    w.tx = pig.x; w.ty = pig.y; w.riding = false;
+    if (cur) { cur.classList.remove('riding'); cur.style.removeProperty('--r'); syncPose(cur, w); placePig(cur, pig, w); }
+  };
+  requestAnimationFrame(step);
 }
 
 function pickPig(id) {
