@@ -156,6 +156,7 @@ h2 { font-family: var(--display); font-size: 1.2rem; margin: 18px 0 8px; }
 .coach-skip { width: 28px; height: 28px; border-radius: 50%; background: var(--line); color: var(--soft); font-size: .9rem; display: grid; place-items: center; flex: 0 0 auto; }
 .tut-arrow { position: fixed; width: 56px; height: 56px; transform: translate(-50%, -100%); z-index: 40; pointer-events: none; filter: drop-shadow(0 3px 0 rgba(0,0,0,.25)); animation: bounce .5s ease-in-out infinite alternate; }
 .tut-arrow[hidden] { display: none; }
+.tut-arrow.up { transform: translate(-50%, 0) rotate(180deg); animation-name: bounce-up; }
 .tut-arrow.side { transform: translate(-100%, -50%) rotate(-90deg); animation-name: bounce-side; }
 .tut-arrow.nudge svg, .coach.nudge { animation: nudge .4s; }
 @keyframes bounce-side { from { margin-left: -14px; } to { margin-left: 0; } }
