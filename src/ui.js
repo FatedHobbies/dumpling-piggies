@@ -335,6 +335,7 @@ function render(force = false) {
 function steamerView() {
   const v = el(`<section class="pen">
     <div class="needs panel-dark">
+      <div class="whose"><span class="wf"></span><b></b></div>
       <div class="need" data-need="hunger"><span class="need-ico">${Art.icon('hunger')}<small>Food</small></span><div class="bar"><i></i></div></div>
       <div class="need" data-need="fun"><span class="need-ico">${Art.icon('fun')}<small>Fun</small></span><div class="bar"><i></i></div></div>
       <div class="need" data-need="clean"><span class="need-ico">${Art.icon('clean')}<small>Clean</small></span><div class="bar"><i></i></div></div>
@@ -348,6 +349,7 @@ function steamerView() {
       </div>
       <div class="faces" id="faces"></div>
       <span class="pen-count" id="pencount"></span>
+      <div class="feed-badge"><span class="wf"></span><i>Feed</i><b></b></div>
     </div>
     <div class="tray panel" id="tray"></div>
   </section>`);
@@ -364,6 +366,15 @@ function updateSteamer() {
   $('[data-need="hunger"] i').style.width = p.hunger + '%';
   $('[data-need="fun"] i').style.width = p.fun + '%';
   $('[data-need="clean"] i').style.width = Math.max(0, 100 - state.poops.length / G.MAX_POOPS * 100) + '%';
+  // The picked piggy's face sits by its Food/Fun bars and above the
+  // dumplings, so it is clear who the bars and the dumplings are for.
+  const wsig = p.id + JSON.stringify(p.coat) + (p.hat || '') + p.name;
+  for (const w of document.querySelectorAll('.whose, .feed-badge')) {
+    if (w.dataset.sig === wsig) continue;
+    w.dataset.sig = wsig;
+    $('.wf', w).innerHTML = Art.piggyFace({ coat: p.coat, hat: p.hat });
+    $('b', w).textContent = p.name;
+  }
   $('#pencount').textContent = `${state.piggies.length} / ${G.capacity(state)} piggies`;
   // Portrait row across the top of the window; tapping one picks that piggy.
   const faces = $('#faces');
