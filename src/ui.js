@@ -355,6 +355,16 @@ function steamerView() {
   </section>`);
   for (const b of v.querySelectorAll('.spot-hit')) b.addEventListener('click', () => goToSpot(current(), b.dataset.spot));
   $('.fixture[data-fix="house"]', v).addEventListener('click', () => goToToy(current(), 'house'));
+  // Poops stack by depth like everything else, so a piggy can walk in front
+  // of one, but a tap anywhere over a poop still scoops it, even through a
+  // piggy, toy or house. Taps with no poop underneath go through as normal.
+  $('#floor', v).addEventListener('click', e => {
+    if (e.target.closest('.poop')) return;
+    const p = document.elementsFromPoint(e.clientX, e.clientY).find(n => n.matches('#floor .poop:not(.gone)'));
+    if (!p) return;
+    e.stopPropagation(); e.preventDefault();
+    p.click();
+  }, true);
   return v;
 }
 
@@ -460,7 +470,7 @@ function updateSteamer() {
   const poops = new Map([...floor.querySelectorAll('.poop')].map(c => [+c.dataset.id, c]));
   for (const poop of state.poops) {
     if (!poops.has(poop.id)) {
-      const b = el(`<button class="poop ${poop.color || 'brown'}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y}">${Art.poop(poop)}</button>`);
+      const b = el(`<button class="poop ${poop.color || 'brown'}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y};z-index:${depth(poop.y)}">${Art.poop(poop)}</button>`);
       b.addEventListener('click', () => onScoop(poop.id, b));
       floor.appendChild(b);
       // Poops already there when the game opens just sit there; new ones
@@ -520,6 +530,7 @@ function dropFromPiggy(poop, b) {
   poop.x = x; poop.y = y;
   b.style.setProperty('--x', x.toFixed(3));
   b.style.setProperty('--y', y.toFixed(3));
+  b.style.zIndex = depth(y);
   b.style.setProperty('--drop', Math.max(0, fr.top + y * fr.height - rearY).toFixed(0) + 'px');
   b.style.setProperty('--pz', depth(pig.y) - 1);   // starts tucked behind the piggy
   b.classList.add('plop');
