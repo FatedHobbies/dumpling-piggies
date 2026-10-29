@@ -524,5 +524,5 @@ button.pk:active { transform: scale(.95); }
 .hat.trying { border-color: var(--pink); box-shadow: 0 3px 0 #D9577A; background: #FFF0F4; }
 .price.buy { color: #fff; background: var(--green); border: 2px solid var(--green-dark); border-radius: 999px; padding: 0 8px; }
 .piggy.riding .pose { transform: rotate(var(--r, 0deg)); transform-origin: 50% 88%; }
-.piggy.riding .tag, .piggy.riding .need-bubble { display: none; }
+.piggy.riding .tag, .piggy.riding .need-bubble, .piggy.riding .pick-ring { display: none; }
 .fixture[data-fix="house"] { pointer-events: auto; cursor: pointer; }
