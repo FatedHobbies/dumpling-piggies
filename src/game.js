@@ -699,7 +699,7 @@ export const POOP_ODDS = [
 // The Poop Book groups kinds by how rare they are.
 export const POOP_TIERS = [
   { label: 'Everyday', odds: 'common', colors: ['brown', ...PLAIN_COLORS] },
-  { label: 'Glitter', odds: '1 in 17', colors: GLITTER_COLORS },
+  { label: 'Glitter', odds: 'any glitter 1 in 17 · each color 1 in 100', colors: GLITTER_COLORS },
   { label: 'Super rare', odds: 'rainbow 1 in 100 · golden 1 in 333 · crystal 1 in 500', colors: ['rainbow', 'gold', 'crystal'] },
 ];
 export const POOP_VALUE = { brown: { coins: 1, compost: 1 }, rainbow: { coins: 5, compost: 3 }, gold: { coins: 25, compost: 5 }, crystal: { coins: 50, compost: 8 } };
@@ -764,7 +764,7 @@ function variantsOf(id) {
   return [false, true].flatMap(g => tints.map(t => specialVariant(id, t, g)));
 }
 POOP_TIERS.push(
-  ...specialsOn('shapes').map(id => ({ label: SPECIAL_POOPS[id].name, odds: 'all colors: 1 in 25 · sparkly 1 in 6 of those', colors: variantsOf(id) })),
+  ...specialsOn('shapes').map(id => ({ label: SPECIAL_POOPS[id].name, odds: 'any color 1 in 28 · each color 1 in 220 · sparkly 1 in 6 of those', colors: variantsOf(id) })),
   { label: 'Patterns', odds: '1 in 230 each · sparkly 1 in 6 of those', colors: specialsOn('patterns').flatMap(variantsOf) },
   { label: 'Silly', odds: '1 in 450 each · sparkly 1 in 6 of those', colors: specialsOn('silly').flatMap(variantsOf) },
   { label: 'Legendary', odds: 'super rare, or after something special', colors: specialsOn('legend') },
