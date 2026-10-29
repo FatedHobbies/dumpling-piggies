@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 62;
+const VERSION = 63;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -527,7 +527,13 @@ function hideIn(pig, id, w) {
   syncPose(el(), w);
   if (Math.random() < 0.6) {
     setTimeout(() => { const d = el(); if (w.hide !== id || !d) return; w.peekW = peekSize(id, d); w.inside = false; w.peek = true; syncPose(d, w); }, 1300 + Math.random() * 900);
-    setTimeout(() => { if (w.hide !== id) return; w.peek = false; w.inside = true; syncPose(el(), w); }, 2600 + Math.random() * 400);
+    // Ducking back in: the face shrinks and fades into the doorway first, and
+    // only then does the peek pose go away, so the whole body never flashes.
+    setTimeout(() => {
+      if (w.hide !== id) return;
+      w.inside = true; syncPose(el(), w);
+      setTimeout(() => { if (w.hide !== id || !w.inside) return; w.peek = false; syncPose(el(), w); }, 400);
+    }, 2600 + Math.random() * 400);
   }
   setTimeout(() => {
     if (w.hide !== id) return;
