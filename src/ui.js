@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 31;
+const VERSION = 32;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -977,8 +977,8 @@ function poopBook() {
   const tile = k => {
     const n = book[k.key] || 0;
     const name = `${G.POOP_COLORS[k.color]} ${G.POOP_SHAPES[k.shape].toLowerCase()}`;
-    if (page[k.key]) return `<div class="pk">${Art.poop(k)}<span>${name}</span><b class="count">${n}</b></div>`;
-    return `<div class="pk unknown">${Art.poopShadow(k)}<span>${n ? name : '???'}</span><b class="count">${n || '?'}</b></div>`;
+    if (page[k.key]) return `<button class="pk" data-key="${k.key}">${Art.poop(k)}<span>${name}</span><b class="count">${n}</b></button>`;
+    return `<button class="pk unknown" data-key="${k.key}">${Art.poopShadow(k)}<span>${n ? name : '???'}</span><b class="count">${n || '?'}</b></button>`;
   };
   // One page per rarity group, flipped with the arrows.
   const n = G.POOP_TIERS.length;
@@ -1011,6 +1011,8 @@ function poopBook() {
 // Poop Book tabs (Poops / Badges) and page arrows. Delegated, since popups can be queued.
 let bookPageIdx = 0;
 document.addEventListener('click', (e) => {
+  const tileBtn = e.target.closest('.pk[data-key]');
+  if (tileBtn) { poopDetail(tileBtn.dataset.key); return; }
   const arrow = e.target.closest('.pager .arrow');
   if (arrow) {
     const pages = [...arrow.closest('.book-pane').querySelectorAll('.tier')];
@@ -1026,6 +1028,30 @@ document.addEventListener('click', (e) => {
   for (const p of card.querySelectorAll('.book-pane')) p.hidden = p.dataset.pane !== b.dataset.pane;
   sfx.pop();
 });
+
+// A closer look at one poop kind, shown over the open book.
+function poopDetail(key) {
+  const k = G.poopKinds().find(x => x.key === key);
+  if (!k) return;
+  const n = (state.poopBook || {})[key] || 0;
+  const onPage = !!(state.bookPage || {})[key];
+  const name = `${G.POOP_COLORS[k.color]} ${G.POOP_SHAPES[k.shape].toLowerCase()}`;
+  const tier = G.POOP_TIERS.find(t => t.colors.includes(k.color));
+  const odds = (G.POOP_ODDS.find(o => o.label === G.POOP_COLORS[k.color]) || tier).odds;
+  const v = G.POOP_VALUE[k.color] || G.POOP_VALUE.brown;
+  const body = n
+    ? `<div class="pig-card poop-card">${Art.poop(k)}</div>
+       <div class="poop-facts"><span><b>${n}</b> scooped</span><span>${tier.label} · ${odds}</span><span>Worth <b>${v.coins}</b> <i class="coin-sm">${Art.coinIcon()}</i> and <b>${v.compost}</b> compost</span></div>
+       ${onPage ? '' : '<p>Not on this page yet. Scoop another to add it!</p>'}`
+    : `<div class="pig-card poop-card">${Art.poopShadow(k)}</div>
+       <div class="poop-facts"><span>${tier.label} · ${odds}</span></div><p>Not found yet. Keep scooping!</p>`;
+  const box = el(`<div class="modal over"><div class="card panel">
+    <div class="ribbon"><span>${n ? name : '???'}</span></div>${body}
+    <div class="row center"><button class="btn big">Back</button></div></div></div>`);
+  $('.btn', box).onclick = () => { box.remove(); sfx.pop(); };
+  document.body.appendChild(box);
+  if (n) sfx.ding(); else sfx.pop();
+}
 
 // When every kind is on the page: big prize, a celebration, and a fresh page.
 function bookCheck(delay = 0) {

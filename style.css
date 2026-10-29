@@ -185,6 +185,12 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .tier-odds { display: block; font-size: .68rem; color: var(--soft); margin: 4px 0 10px; }
 .tier .pk-grid { row-gap: 10px; }
 .pk.unknown span { color: var(--soft); }
+button.pk { font-family: inherit; cursor: pointer; }
+button.pk:active { transform: scale(.95); }
+.modal.over { z-index: 30; }
+.poop-facts { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.poop-facts span { background: #fff; border: 2px solid var(--line); border-radius: 999px; padding: 4px 14px; font-weight: 700; color: var(--wood-dark); display: inline-flex; align-items: center; gap: 4px; }
+.poop-facts .coin-sm svg { width: 18px; height: 18px; vertical-align: middle; }
 .book-count { background: #FFD34D; color: #6A4524; border: 2px solid #E0941C; border-radius: 999px; padding: 0 6px; font-size: .72rem; line-height: 1.3; }
 .book-count[hidden] { display: none; }
 .book-prize { display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap; }
