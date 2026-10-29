@@ -4,16 +4,31 @@
 
 import { NAMES, NAME_MAX, SHORT_NAMES, isNiceName } from './names.js';
 
+// Veggies, in the order their seeds unlock. `adj` and `noun` name the
+// dumplings they make, `poop` is the poop color they give, `fx` the effect.
 export const FILLINGS = {
-  carrot:     { name: 'Carrot',     color: '#FF9A3C' },
-  cabbage:    { name: 'Cabbage',    color: '#8FD07A' },
-  pea:        { name: 'Pea',        color: '#5BC86A' },
-  strawberry: { name: 'Strawberry', color: '#FF5C7A' },
+  carrot:     { name: 'Carrot',     color: '#FF9A3C', rgb: [255, 196, 120], adj: 'Crunchy', noun: 'Crunch',   poop: 'orange',   fx: null },
+  cabbage:    { name: 'Cabbage',    color: '#8FD07A', rgb: [205, 240, 180], adj: 'Leafy',   noun: 'Bao',      poop: 'green',    fx: 'sleepy' },
+  pea:        { name: 'Pea',        color: '#5BC86A', rgb: [170, 230, 170], adj: 'Sprouty', noun: 'Puff',     poop: 'green',    fx: null },
+  strawberry: { name: 'Strawberry', color: '#FF5C7A', rgb: [255, 180, 205], adj: 'Berry',   noun: 'Bun',      poop: 'pink',     fx: 'sparkle' },
+  corn:       { name: 'Corn',       color: '#FFD23C', rgb: [255, 230, 130], adj: 'Corny',   noun: 'Pop',      poop: 'orange',   fx: 'zoom' },
+  tomato:     { name: 'Tomato',     color: '#F0543F', rgb: [255, 150, 130], adj: 'Saucy',   noun: 'Squish',   poop: 'red',      fx: null },
+  pumpkin:    { name: 'Pumpkin',    color: '#FF8A2A', rgb: [255, 186, 110], adj: 'Plumpy',  noun: 'Pocket',   poop: 'orange',   fx: 'sleepy' },
+  blueberry:  { name: 'Blueberry',  color: '#5A7FE0', rgb: [175, 195, 255], adj: 'Bluey',   noun: 'Drop',     poop: 'blue',     fx: 'sparkle' },
+  broccoli:   { name: 'Broccoli',   color: '#4FA84A', rgb: [160, 215, 140], adj: 'Bushy',   noun: 'Bite',     poop: 'green',    fx: null },
+  radish:     { name: 'Radish',     color: '#F0507A', rgb: [255, 170, 190], adj: 'Rosy',    noun: 'Roll',     poop: 'pink',     fx: 'zoom' },
+  cucumber:   { name: 'Cucumber',   color: '#6CC070', rgb: [190, 235, 200], adj: 'Cool',    noun: 'Bean',     poop: 'green',    fx: 'sleepy' },
+  pepper:     { name: 'Pepper',     color: '#FFC21C', rgb: [255, 220, 110], adj: 'Zippy',   noun: 'Wonton',   poop: 'orange',   fx: 'zoom' },
+  eggplant:   { name: 'Eggplant',   color: '#8A4FC0', rgb: [205, 170, 235], adj: 'Purply',  noun: 'Pillow',   poop: 'lavender', fx: 'sleepy' },
+  bokchoy:    { name: 'Bok choy',   color: '#7CCB5A', rgb: [215, 245, 190], adj: 'Chompy',  noun: 'Mochi',    poop: 'white',    fx: null },
+  beet:       { name: 'Beet',       color: '#B8306A', rgb: [235, 150, 190], adj: 'Beety',   noun: 'Blob',     poop: 'red',      fx: 'sparkle' },
+  apple:      { name: 'Apple',      color: '#E8443C', rgb: [255, 200, 180], adj: 'Sweetie', noun: 'Nugget',   poop: 'white',    fx: 'sparkle' },
 };
+export const FILLING_ORDER = Object.keys(FILLINGS);
 
-// Every pair of fillings (order doesn't matter) is a recipe. Effects are
-// what the piggy does after eating one.
-export const RECIPES = {
+// The first ten recipes keep their hand-picked names and effects. Every other
+// pair of veggies (order doesn't matter) is a recipe too, named from its parts.
+const CLASSIC = {
   'carrot+carrot':         { name: 'Carrot Crunch',   effect: null,      hunger: 35, coins: 4 },
   'cabbage+cabbage':       { name: 'Cabbage Bao',     effect: null,      hunger: 35, coins: 4 },
   'pea+pea':               { name: 'Pea Puff',        effect: null,      hunger: 30, coins: 4 },
@@ -25,6 +40,131 @@ export const RECIPES = {
   'cabbage+strawberry':    { name: 'Pink Bao',        effect: 'sparkle', hunger: 30, coins: 6 },
   'pea+strawberry':        { name: 'Confetti Dumpling', effect: 'zoom',  hunger: 30, coins: 7 },
 };
+// A small steady hash so each recipe always gets the same little quirks.
+export function hash(str) {
+  let h = 7;
+  for (const c of str) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return h;
+}
+export const RECIPES = {};
+// Recipes are listed so the ones made from early seeds come first.
+FILLING_ORDER.forEach((b, j) => FILLING_ORDER.slice(0, j + 1).forEach(a => {
+  const key = recipeKey(a, b);
+  const [first, second] = [a, b];
+  const h = hash(key);
+  const fx = [FILLINGS[first].fx, FILLINGS[second].fx].filter(Boolean);
+  RECIPES[key] = CLASSIC[key] || {
+    name: `${FILLINGS[first].adj} ${FILLINGS[second].noun}`,
+    effect: fx.length ? fx[h % fx.length] : null,
+    hunger: 30 + (h % 3) * 5,
+    coins: 4 + (h % 4),
+  };
+}));
+
+// Seeds unlock as she finds recipes: four to start, one more every 3 recipes.
+export const SEED_STEP = 3;
+export function unlockedFillings(state) {
+  const n = Math.min(FILLING_ORDER.length, 4 + Math.floor((state.discovered || []).length / SEED_STEP));
+  return FILLING_ORDER.slice(0, n);
+}
+export function nextSeed(state) {
+  const have = unlockedFillings(state).length;
+  if (have >= FILLING_ORDER.length) return null;
+  return { filling: FILLING_ORDER[have], need: (have - 3) * SEED_STEP - state.discovered.length };
+}
+
+// Blind-box dumplings. Any steaming can pop out a surprise: a shiny version of
+// the recipe, or one of the special dumplings below. Some specials only hide in
+// recipes with a certain veggie (`from`).
+export const DUMPLING_TIERS = [
+  { id: 'shiny',  label: 'Shiny',      odds: '1 in 10',  chance: 1 / 10,  coins: 2 },
+  { id: 'rare',   label: 'Rare',       odds: '1 in 30',  chance: 1 / 30,  coins: 15, prize: 100 },
+  { id: 'super',  label: 'Super rare', odds: '1 in 120', chance: 1 / 120, coins: 30, prize: 250 },
+  { id: 'secret', label: 'Secret',     odds: '1 in 500', chance: 1 / 500, coins: 60, prize: 500 },
+];
+export const SPECIALS = {
+  polka:   { name: 'Polka Dot Bao',  tier: 'rare',   from: null,         effect: 'sparkle' },
+  cloud:   { name: 'Cloud Puff',     tier: 'rare',   from: null,         effect: 'sleepy' },
+  heart:   { name: 'Heart Bun',      tier: 'rare',   from: 'strawberry', effect: 'sparkle' },
+  lantern: { name: 'Pumpkin Lantern', tier: 'rare',  from: 'pumpkin',    effect: 'sparkle' },
+  bubble:  { name: 'Bubble Bun',     tier: 'rare',   from: 'blueberry',  effect: 'zoom' },
+  popcorn: { name: 'Popcorn Puff',   tier: 'rare',   from: 'corn',       effect: 'zoom' },
+  rainbow: { name: 'Rainbow Bao',    tier: 'super',  from: null,         effect: 'sparkle' },
+  gold:    { name: 'Golden Dumpling', tier: 'super', from: null,         effect: 'sparkle' },
+  galaxy:  { name: 'Galaxy Bao',     tier: 'super',  from: null,         effect: 'zoom' },
+  moon:    { name: 'Moon Bun',       tier: 'super',  from: 'cabbage',    effect: 'sleepy' },
+  piggy:   { name: 'Piggy Dumpling', tier: 'secret', from: null,         effect: 'sparkle' },
+  crystal: { name: 'Crystal Bao',    tier: 'secret', from: null,         effect: 'sparkle' },
+  dragon:  { name: 'Dragon Dumpling', tier: 'secret', from: 'pepper',    effect: 'zoom' },
+  king:    { name: 'King Bun',       tier: 'secret', from: null,         effect: 'sparkle' },
+};
+
+// Every dumpling in the book has a key: 'a+b' for a recipe, 'shiny:a+b' for
+// its shiny version, 'sp:id' for a special.
+export function dumplingInfo(key) {
+  if (RECIPES[key]) return { ...RECIPES[key], tier: 'plain', recipe: key };
+  if (key.startsWith('shiny:')) {
+    const r = RECIPES[key.slice(6)];
+    if (!r) return null;
+    return { ...r, name: 'Shiny ' + r.name, tier: 'shiny', recipe: key.slice(6), effect: 'sparkle', coins: r.coins * 2 };
+  }
+  const sp = SPECIALS[key.slice(3)];
+  if (!key.startsWith('sp:') || !sp) return null;
+  const t = DUMPLING_TIERS.find(x => x.id === sp.tier);
+  return { name: sp.name, effect: sp.effect, hunger: 50, coins: t.coins, tier: sp.tier, from: sp.from };
+}
+
+// Roll the blind box for one steaming of recipe a+b.
+export function rollSurprise(a, b, rng = Math.random) {
+  const r = rng();
+  let acc = 0;
+  for (const t of [...DUMPLING_TIERS].reverse()) {
+    acc += t.chance;
+    if (r >= acc) continue;
+    if (t.id === 'shiny') return 'shiny:' + recipeKey(a, b);
+    const ids = Object.keys(SPECIALS).filter(id => SPECIALS[id].tier === t.id);
+    const here = ids.filter(id => SPECIALS[id].from === a || SPECIALS[id].from === b);
+    const any = ids.filter(id => !SPECIALS[id].from);
+    // A matching veggie makes its special the likely pick, but not the only one.
+    const pool = here.length && rng() < 0.6 ? here : any;
+    return 'sp:' + pool[Math.floor(rng() * pool.length)];
+  }
+  return null;
+}
+
+// The Dumpling Book: one page per 16 recipes, then the specials by tier.
+export function dumplingPages() {
+  const keys = Object.keys(RECIPES);
+  const pages = [];
+  for (let i = 0; i < keys.length; i += 16) pages.push({ id: 'r' + i / 16, label: 'Recipes', keys: keys.slice(i, i + 16), prize: 40 });
+  for (const t of DUMPLING_TIERS.slice(1)) {
+    pages.push({ id: t.id, label: t.label, odds: t.odds, keys: Object.keys(SPECIALS).filter(id => SPECIALS[id].tier === t.id).map(id => 'sp:' + id), prize: t.prize });
+  }
+  return pages;
+}
+export function dumplingsFound(state) {
+  const b = state.recipeBook || {};
+  return dumplingPages().reduce((n, p) => n + p.keys.filter(k => b[k]).length, 0);
+}
+export function dumplingTotal() {
+  return dumplingPages().reduce((n, p) => n + p.keys.length, 0);
+}
+export function shinyFound(state) {
+  return Object.keys(state.recipeBook || {}).filter(k => k.startsWith('shiny:')).length;
+}
+// Each page pays a prize once, the first time every spot on it is found.
+export function checkDumplingPages(state) {
+  state.dbookPrizes = state.dbookPrizes || {};
+  const b = state.recipeBook || {};
+  const won = [];
+  for (const p of dumplingPages()) {
+    if (state.dbookPrizes[p.id] || !p.keys.every(k => b[k])) continue;
+    state.dbookPrizes[p.id] = true;
+    state.coins += p.prize;
+    won.push(p);
+  }
+  return won;
+}
 
 export const UPGRADES = {
   plot4:    { name: 'Fourth garden plot', desc: 'One more plot to grow veggies in.',             cost: 60,  icon: 'plot' },
@@ -202,6 +342,8 @@ export function newState(now = Date.now()) {
     dumplings: { 'carrot+carrot': 1 }, // one dumpling to feed during the tutorial
     tutorial: { step: 1 },          // first-play tutorial progress; { done: true } when finished
     discovered: [],                 // recipe keys found so far
+    recipeBook: {},                 // dumpling key -> how many ever steamed (recipes, shiny, specials)
+    dbookPrizes: {},                // Dumpling Book pages whose prize was paid
     upgrades: {},                   // upgradeId -> true
     hats: {},                       // hatId -> true (owned)
     bookPage: {},                   // poop kinds found on the current Poop Book page
@@ -238,6 +380,11 @@ export function migrate(state) {
     state.bookPage = {};
     for (const k of Object.keys(state.poopBook || {})) if (state.poopBook[k] > 0) state.bookPage[k] = true;
     state.booksFilled = 0;
+  }
+  if (!state.recipeBook) {                                 // saves from before the Dumpling Book
+    state.recipeBook = {};
+    for (const k of state.discovered || []) state.recipeBook[k] = 1;
+    state.dbookPrizes = {};
   }
   if (state.version >= 2) return state;
   const old = state.piggy || {};
@@ -397,12 +544,11 @@ export function poopKind(state, rng = Math.random) {
   const pooper = fed[Math.floor(rng() * fed.length)] || state.piggies[0];
   const shape = rng() < 0.4 ? 'swirl' : 'beans';
   let color = 'brown';
-  const food = pooper && pooper.lastFood ? pooper.lastFood : '';
-  if (food.includes('strawberry')) color = 'pink';
-  else if (food.includes('carrot')) color = 'orange';
-  else if (food.includes('cabbage') || food.includes('pea')) color = 'green';
-  // A quarter of plain poops come out in a surprise plain color.
-  else if (rng() < 0.25) color = PLAIN_COLORS[Math.floor(rng() * PLAIN_COLORS.length)];
+  // Recipes color the poop after one of their veggies; specials give a surprise color.
+  const food = (pooper && pooper.lastFood ? pooper.lastFood : '').replace(/^shiny:/, '');
+  const veg = food.split('+').filter(f => FILLINGS[f]);
+  if (veg.length) color = FILLINGS[veg[Math.floor(rng() * veg.length)]].poop;
+  else if (food.startsWith('sp:') || rng() < 0.25) color = PLAIN_COLORS[Math.floor(rng() * PLAIN_COLORS.length)];
   const r = rng();
   // Rare ones: crystal 1 in 250, golden 1 in 100, rainbow 1 in 33, glitter 1 in 12.
   if (r < 0.004) color = 'crystal';
@@ -477,7 +623,7 @@ export function checkAchievements(state) {
 }
 
 export function feed(state, key, piggyId = null, now = Date.now()) {
-  const r = RECIPES[key];
+  const r = dumplingInfo(key);
   if (!r || !(state.dumplings[key] > 0)) return { ok: false, reason: 'none' };
   const p = (piggyId != null && piggy(state, piggyId)) || hungriest(state);
   if (!p) return { ok: false, reason: 'none' };
@@ -519,7 +665,7 @@ export function scoop(state, id) {
 
 export function plant(state, plot, filling, now = Date.now()) {
   if (plot >= plotCount(state) || state.garden[plot]) return { ok: false, reason: 'busy' };
-  if (!FILLINGS[filling]) return { ok: false };
+  if (!unlockedFillings(state).includes(filling)) return { ok: false };
   if (state.compost < 1) return { ok: false, reason: 'compost' };
   state.compost -= 1;
   state.garden[plot] = { filling, plantedAt: now };
@@ -541,22 +687,31 @@ export function harvest(state, plot, now = Date.now()) {
   return { ok: true, filling: g.filling, amount: 2 };
 }
 
-export function cook(state, a, b) {
+export function cook(state, a, b, rng = Math.random) {
   if (!FILLINGS[a] || !FILLINGS[b]) return { ok: false };
   const need = a === b ? 2 : 1;
   if ((state.pantry[a] || 0) < need || (a !== b && (state.pantry[b] || 0) < 1)) return { ok: false, reason: 'pantry' };
   state.pantry[a] -= 1;
   state.pantry[b] -= 1;
   const key = recipeKey(a, b);
-  state.dumplings[key] = (state.dumplings[key] || 0) + 1;
   state.stats.cooked += 1;
+  const seedsBefore = unlockedFillings(state).length;
   let isNew = false;
   if (!state.discovered.includes(key)) {
     state.discovered.push(key);
     state.coins += 10;
     isNew = true;
   }
-  return { ok: true, key, isNew, recipe: RECIPES[key] };
+  // The very first steaming of a recipe is always the plain one, so she sees
+  // it in the book before any surprise version.
+  const surprise = isNew ? null : rollSurprise(a, b, rng);
+  const made = surprise || key;
+  state.dumplings[made] = (state.dumplings[made] || 0) + 1;
+  state.recipeBook = state.recipeBook || {};
+  const firstFind = !state.recipeBook[made];
+  state.recipeBook[made] = (state.recipeBook[made] || 0) + 1;
+  const seed = unlockedFillings(state).length > seedsBefore ? FILLING_ORDER[seedsBefore] : null;
+  return { ok: true, key: made, recipeKey: key, isNew, surprise, firstFind, seed, recipe: dumplingInfo(made), pages: checkDumplingPages(state) };
 }
 
 export function canBuy(state, id) {

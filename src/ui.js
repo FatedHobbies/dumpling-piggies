@@ -310,13 +310,15 @@ function updateSteamer() {
   for (const [, c] of poops) c.remove();
   // Dumpling tray
   const tray = $('#tray');
-  const keys = Object.keys(state.dumplings).filter(k => state.dumplings[k] > 0);
+  // Surprise dumplings sit at the front of the tray.
+  const rank = k => ({ secret: 0, super: 1, rare: 2, shiny: 3 }[G.dumplingInfo(k)?.tier] ?? 4);
+  const keys = Object.keys(state.dumplings).filter(k => state.dumplings[k] > 0 && G.dumplingInfo(k)).sort((a, b) => rank(a) - rank(b));
   const sig = keys.map(k => k + state.dumplings[k]).join('|');
   if (tray.dataset.sig !== sig) {
     tray.dataset.sig = sig;
     tray.innerHTML = keys.length ? '' : `<p class="hint">No dumplings yet. Cook some in the Kitchen!</p>`;
     for (const k of keys) {
-      const b = el(`<button class="dump tile" aria-label="Feed ${G.RECIPES[k].name}">${Art.dumpling(k, 52)}<b class="count">${state.dumplings[k]}</b></button>`);
+      const b = el(`<button class="dump tile ${rank(k) < 4 ? 'special' : ''}" aria-label="Feed ${G.dumplingInfo(k).name}">${Art.dumpling(k, 52)}<b class="count">${state.dumplings[k]}</b></button>`);
       b.addEventListener('click', () => onFeed(k));
       tray.appendChild(b);
     }
@@ -677,7 +679,7 @@ function updateGarden() {
   if (pantry.dataset.sig === psig) return;
   pantry.dataset.sig = psig;
   pantry.innerHTML = '';
-  for (const f of Object.keys(G.FILLINGS)) {
+  for (const f of G.unlockedFillings(state)) {
     pantry.appendChild(el(`<div class="pitem tile">${Art.veggie(f, 44)}<b class="count">${state.pantry[f] || 0}</b><span>${G.FILLINGS[f].name}</span></div>`));
   }
 }
@@ -695,7 +697,7 @@ function onPlot(i) {
     return;
   }
   if (state.compost < 1) { sfx.nope(); toast('You need compost. Scoop some poop first!'); return; }
-  picker('What should we plant?', Object.keys(G.FILLINGS).map(f => ({ id: f, html: Art.veggie(f, 48), label: G.FILLINGS[f].name })), (f) => {
+  picker('What should we plant?', G.unlockedFillings(state).map(f => ({ id: f, html: Art.veggie(f, 48), label: G.FILLINGS[f].name })), (f) => {
     gardenerRun(i, () => {
       const r = G.plant(state, i, f);
       if (r.ok) { sfx.pop(); tut('plant'); render(); }
@@ -724,10 +726,11 @@ function kitchenView() {
       <button class="btn btn-red" id="cook">Steam it!</button>
     </div>
     <div class="fillings" id="fillings"></div>
-    <div class="ribbon"><span>Recipe book <small id="rcount"></small></span></div>
-    <div class="book panel" id="book"></div>
+    <button class="dbook-btn panel" id="dbook"><span class="dbook-ico">${Art.dumpling('sp:gold', 52)}</span><span class="txt"><b>Dumpling Book</b><small id="rcount"></small></span><span class="dbook-go">›</span></button>
+    <p class="seed-hint" id="seedhint"></p>
   </section>`);
   $('#cook', v).addEventListener('click', onCook);
+  $('#dbook', v).addEventListener('click', dumplingBook);
   v.querySelectorAll('.slot').forEach(s => s.addEventListener('click', () => { selected.splice(+s.dataset.slot, 1); render(); }));
   return v;
 }
@@ -741,23 +744,23 @@ function updateKitchen() {
   if (fl.dataset.sig !== fsig) {
     fl.dataset.sig = fsig;
     fl.innerHTML = '';
-    for (const f of Object.keys(G.FILLINGS)) {
+    fl.classList.toggle('many', G.unlockedFillings(state).length > 8);
+    for (const f of G.unlockedFillings(state)) {
       const have = (state.pantry[f] || 0) - selected.filter(x => x === f).length;
       const b = el(`<button class="fill tile" ${have < 1 ? 'disabled' : ''}>${Art.veggie(f, 44)}<b class="count">${Math.max(0, have)}</b></button>`);
       b.addEventListener('click', () => { if (selected.length < 2) { selected.push(f); sfx.pop(); render(); } });
       fl.appendChild(b);
     }
   }
-  const keys = Object.keys(G.RECIPES);
-  $('#rcount').textContent = `${state.discovered.length} / ${keys.length}`;
-  const book = $('#book');
-  if (book.dataset.sig === String(state.discovered.length)) return;
-  book.dataset.sig = String(state.discovered.length);
-  book.innerHTML = '';
-  for (const k of keys) {
-    const found = state.discovered.includes(k);
-    book.appendChild(el(`<div class="recipe ${found ? '' : 'unknown'}">${found ? Art.dumpling(k, 44) : '<span class="q">?</span>'}<span>${found ? G.RECIPES[k].name : '???'}</span></div>`));
-  }
+  $('#rcount').textContent = `${G.dumplingsFound(state)} / ${G.dumplingTotal()} found`;
+  const next = G.nextSeed(state);
+  const hint = $('#seedhint');
+  const hsig = next ? next.filling + next.need : 'all';
+  if (hint.dataset.sig === hsig) return;
+  hint.dataset.sig = hsig;
+  hint.innerHTML = next
+    ? `<span class="seed-shadow">${Art.veggieShadow(next.filling, 28)}</span>Find <b>${next.need}</b> more ${next.need === 1 ? 'recipe' : 'recipes'} for a new seed!`
+    : 'You have every seed!';
 }
 
 function onCook() {
@@ -771,10 +774,24 @@ function onCook() {
   setTimeout(() => {
     stage.classList.remove('cooking');
     if (r.isNew) { sfx.fanfare(); popup('New recipe!', `<div class="pig-card">${Art.dumpling(r.key, 96)}</div><p><b>${r.recipe.name}</b><br>+10 coins for finding it</p>`, 'Yum!'); floatCoin(10); }
+    else if (r.surprise) surpriseReveal(r);
     else { sfx.ding(); toast(`Made a ${r.recipe.name}`); }
+    if (r.seed) setTimeout(() => { sfx.fanfare(); popup('New seed!', `<div class="pig-card seed-card">${Art.veggie(r.seed, 110)}</div><p><b>${G.FILLINGS[r.seed].name}</b><br>Plant it in the Garden!</p>`, 'Yay!'); }, 300);
+    for (const p of r.pages) setTimeout(() => { sfx.fanfare(); floatCoin(p.prize); popup('Page filled!', `<div class="pig-card">${Art.dumpling(p.keys[p.keys.length - 1], 96)}</div><p>You filled the <b>${p.label}</b> page of the Dumpling Book!</p><div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${p.prize}</span></div>`, 'Hooray!'); }, 400);
     tut('cook');
     render();
   }, 1500);
+}
+
+// The blind box moment: a surprise dumpling popped out of the steamer.
+const REVEAL_TITLE = { shiny: 'A shiny one!', rare: 'Rare dumpling!', super: 'Super rare!', secret: 'SECRET dumpling!' };
+function surpriseReveal(r) {
+  const t = G.DUMPLING_TIERS.find(x => x.id === r.recipe.tier);
+  sfx.fanfare();
+  if (t.id !== 'shiny') setTimeout(() => sfx.fanfare(), 500);
+  popup(REVEAL_TITLE[t.id], `<div class="reveal tier-${t.id}"><div class="rays"></div>${Art.dumpling(r.key, 130)}</div>
+    <p><b>${r.recipe.name}</b><br><span class="tier-pill tier-${t.id}">${t.label} · ${t.odds}</span></p>
+    ${r.firstFind ? '<p class="new-in-book">New in your Dumpling Book!</p>' : ''}`, 'Wow!');
 }
 
 // ---------- Maze ----------
@@ -1145,7 +1162,7 @@ function poopBook() {
     return `<div class="ach ${won ? 'got' : ''}"><span class="badge">${won ? Art.badgeIcon() : Art.badgeIcon(true)}</span><span class="txt"><b>${a.name}</b><small>${a.desc}</small></span><span class="price ${won ? 'can' : ''}">${won ? 'Done!' : `${a.coins} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></div>`;
   }).join('');
   popup(`Poop Book`, `<div class="book-tabs"><button class="on" data-pane="poops">Poops <small>${found} / ${kinds.length}</small></button><button data-pane="badges">Badges <small>${got} / ${G.ACHIEVEMENTS.length}</small></button></div>
-    <div class="book-pane" data-pane="poops">
+    <div class="book-pane swipe" data-pane="poops">
       <div class="book-prize">${filled ? `<span class="books-filled">${Art.poopBookArt(true)}<span>Filled <b>${filled}</b> ${filled === 1 ? 'time' : 'times'}</span></span>` : ''}
         <span class="next-prize">Fill it: <b>${G.bookReward(filled)}</b> <i class="coin-sm">${Art.coinIcon()}</i></span></div>
       <p class="book-hint">${filled ? 'A fresh page! Find every kind again.' : 'Scoop every kind of poop to fill the book.'}</p>
@@ -1157,21 +1174,23 @@ function poopBook() {
 
 // Poop Book tabs (Poops / Badges) and page arrows. Delegated, since popups can be queued.
 let bookPageIdx = 0;
+let dbookIdx = 0;           // the Dumpling Book's open page, remembered between visits
 let swipedAt = 0;
-// Flip the Poop Book a page forward (1) or back (-1), sliding in from that side.
+// Flip a book a page forward (1) or back (-1), sliding in from that side.
 function flipBook(pane, step) {
   const pages = [...pane.querySelectorAll('.tier')];
-  bookPageIdx = (bookPageIdx + step + pages.length) % pages.length;
-  pages.forEach((p, i) => { p.hidden = i !== bookPageIdx; p.classList.remove('slide-l', 'slide-r'); });
-  void pages[bookPageIdx].offsetWidth;   // restart the slide animation
-  pages[bookPageIdx].classList.add(step > 0 ? 'slide-l' : 'slide-r');
+  const idx = (pages.findIndex(p => !p.hidden) + step + pages.length) % pages.length;
+  if (pane.dataset.pane === 'dumplings') dbookIdx = idx; else bookPageIdx = idx;
+  pages.forEach((p, i) => { p.hidden = i !== idx; p.classList.remove('slide-l', 'slide-r'); });
+  void pages[idx].offsetWidth;   // restart the slide animation
+  pages[idx].classList.add(step > 0 ? 'slide-l' : 'slide-r');
   sfx.pop();
 }
 // Swipe left or right on the poop pages to flip them. Mostly-vertical drags
 // are left alone so the book still scrolls.
 let swipe = null;
 document.addEventListener('touchstart', (e) => {
-  const pane = e.target.closest('.book-pane[data-pane="poops"]');
+  const pane = e.target.closest('.book-pane.swipe');
   swipe = pane && e.touches.length === 1 ? { pane, x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
 }, { passive: true });
 document.addEventListener('touchend', (e) => {
@@ -1185,6 +1204,8 @@ document.addEventListener('click', (e) => {
   if (Date.now() - swipedAt < 400 && e.target.closest('.book-pane')) return;   // the tap that ended a swipe
   const tileBtn = e.target.closest('.pk[data-key]');
   if (tileBtn) { poopDetail(tileBtn.dataset.key); return; }
+  const dTile = e.target.closest('.pk[data-dkey]');
+  if (dTile) { dumplingDetail(dTile.dataset.dkey); return; }
   const arrow = e.target.closest('.pager .arrow');
   if (arrow) { flipBook(arrow.closest('.book-pane'), Number(arrow.dataset.step)); return; }
   const b = e.target.closest('.book-tabs button');
@@ -1213,6 +1234,75 @@ function poopDetail(key) {
        <div class="poop-facts"><span>${tier.label} · ${odds}</span></div><p>Not found yet. Keep scooping!</p>`;
   const box = el(`<div class="modal over"><div class="card panel">
     <div class="ribbon"><span>${n ? name : '???'}</span></div>${body}
+    <div class="row center"><button class="btn big">Back</button></div></div></div>`);
+  $('.btn', box).onclick = () => { box.remove(); sfx.pop(); };
+  document.body.appendChild(box);
+  if (n) sfx.ding(); else sfx.pop();
+}
+
+// ---------- Dumpling Book ----------
+// Like the Poop Book: one page per 16 recipes, then a page for each surprise
+// tier. Unfound spots are silhouettes; a gold star marks a found shiny.
+function dumplingBook() {
+  const book = state.recipeBook || {};
+  const pages = G.dumplingPages();
+  const prizes = state.dbookPrizes || {};
+  dbookIdx = Math.min(dbookIdx, pages.length - 1);
+  const nameOf = k => G.dumplingInfo(k).name;
+  const tile = k => {
+    const n = book[k] || 0;
+    const shiny = book['shiny:' + k] ? '<i class="shiny-mark" aria-label="Shiny found">★</i>' : '';
+    if (n) return `<button class="pk" data-dkey="${k}">${Art.dumpling(k, 44)}<span>${nameOf(k)}</span><b class="count">${n}</b>${shiny}</button>`;
+    return `<button class="pk unknown" data-dkey="${k}">${Art.dumplingShadow(k, 44)}<span>???</span><b class="count">?</b></button>`;
+  };
+  let recipePage = 0;
+  const html = pages.map((p, i) => {
+    const have = p.keys.filter(k => book[k]).length;
+    const isRecipes = p.label === 'Recipes';
+    const label = isRecipes ? `${p.label} ${++recipePage}` : p.label;
+    const sub = `${p.odds ? p.odds + ' · ' : ''}${prizes[p.id] ? 'Prize won!' : `Fill it: ${p.prize} coins`}`;
+    return `<div class="tier dtier-${isRecipes ? 'recipes' : p.id}" data-page="${i}" ${i === dbookIdx ? '' : 'hidden'}>
+      <div class="pager"><button class="arrow" data-step="-1" aria-label="Previous page">‹</button>
+        <h4><span>${label}</span><b class="${have === p.keys.length ? 'done' : ''}">${have} / ${p.keys.length}</b></h4>
+        <button class="arrow" data-step="1" aria-label="Next page">›</button></div>
+      <small class="tier-odds">${sub}</small>
+      <div class="pk-grid">${p.keys.map(tile).join('')}</div>
+      <div class="dots">${pages.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}</div></div>`;
+  }).join('');
+  popup('Dumpling Book', `<div class="book-prize"><span class="next-prize">Found <b>${G.dumplingsFound(state)}</b> / ${G.dumplingTotal()}</span>
+      <span class="next-prize shiny-count"><i class="shiny-mark">★</i> Shiny <b>${G.shinyFound(state)}</b> / ${Object.keys(G.RECIPES).length}</span></div>
+    <p class="book-hint">Every steaming is a surprise. Rare ones can pop out of any recipe!</p>
+    <div class="book-pane swipe" data-pane="dumplings">${html}</div>`, 'Close');
+  sfx.pop();
+}
+
+// A closer look at one dumpling, shown over the open book.
+function dumplingDetail(key) {
+  const info = G.dumplingInfo(key);
+  if (!info) return;
+  const book = state.recipeBook || {};
+  const n = book[key] || 0;
+  const tier = G.DUMPLING_TIERS.find(t => t.id === info.tier);
+  const shinyN = info.tier === 'plain' ? book['shiny:' + key] || 0 : 0;
+  const pic = n ? Art.dumpling(key, 120) : Art.dumplingShadow(key, 120);
+  const facts = [];
+  if (n) facts.push(`<span><b>${n}</b> steamed</span>`);
+  if (info.tier === 'plain' && n) {
+    const [a, b] = key.split('+');
+    facts.push(`<span class="mix">${Art.veggie(a, 26)} + ${Art.veggie(b, 26)}</span>`);
+  }
+  if (tier) facts.push(`<span class="tier-pill tier-${tier.id}">${tier.label} · ${tier.odds}</span>`);
+  if (info.from) facts.push(`<span>Hides in ${Art.veggie(info.from, 24)} ${G.FILLINGS[info.from].name} dumplings</span>`);
+  else if (tier) facts.push('<span>Can pop out of any recipe</span>');
+  if (n) facts.push(`<span>Worth <b>${info.coins}</b> <i class="coin-sm">${Art.coinIcon()}</i> to eat</span>`);
+  const shiny = info.tier !== 'plain' || !n ? ''
+    : shinyN ? `<div class="shiny-row">${Art.dumpling('shiny:' + key, 64)}<span><i class="shiny-mark">★</i> Shiny found <b>${shinyN}</b></span></div>`
+    : `<div class="shiny-row">${Art.dumplingShadow(key, 64)}<span>Shiny one: 1 in 10</span></div>`;
+  const box = el(`<div class="modal over"><div class="card panel">
+    <div class="ribbon"><span>${n ? info.name : '???'}</span></div>
+    <div class="pig-card poop-card">${pic}</div>
+    <div class="poop-facts">${facts.join('')}</div>${shiny}
+    ${n ? '' : `<p>Not found yet. Keep steaming!</p>`}
     <div class="row center"><button class="btn big">Back</button></div></div></div>`);
   $('.btn', box).onclick = () => { box.remove(); sfx.pop(); };
   document.body.appendChild(box);
@@ -1273,7 +1363,7 @@ function popup(title, html, button = 'OK', onClose = null) {
 }
 
 function picker(title, options, onPick) {
-  const box = el(`<div class="modal"><div class="card panel"><div class="ribbon"><span>${title}</span></div><div class="opts"></div><div class="row center"><button class="btn btn-grey">Cancel</button></div></div></div>`);
+  const box = el(`<div class="modal"><div class="card panel"><div class="ribbon"><span>${title}</span></div><div class="opts ${options.length > 6 ? 'many' : ''}"></div><div class="row center"><button class="btn btn-grey">Cancel</button></div></div></div>`);
   for (const o of options) {
     const b = el(`<button class="opt tile">${o.html}<span>${o.label}</span></button>`);
     b.onclick = () => { box.remove(); onPick(o.id); };

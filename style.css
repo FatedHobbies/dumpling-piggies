@@ -526,3 +526,49 @@ button.pk:active { transform: scale(.95); }
 .piggy.riding .pose { transform: rotate(var(--r, 0deg)); transform-origin: 50% 88%; }
 .piggy.riding .tag, .piggy.riding .need-bubble, .piggy.riding .pick-ring { display: none; }
 .fixture[data-fix="house"] { pointer-events: auto; cursor: pointer; }
+
+/* ---- Dumpling Book & blind-box surprises ---- */
+.book-pane[data-pane="dumplings"] { touch-action: pan-y; overflow: hidden; }
+.dbook-btn { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 14px; padding: 8px 14px; text-align: left; font: inherit; color: var(--ink); cursor: pointer; }
+.dbook-btn:active { transform: translateY(2px); }
+.dbook-btn .txt { flex: 1; display: flex; flex-direction: column; }
+.dbook-btn .txt b { font-family: var(--display); font-weight: 600; font-size: 1.1rem; color: var(--wood-dark); }
+.dbook-btn .txt small { color: var(--soft); font-weight: 700; font-size: .8rem; }
+.dbook-ico svg { display: block; }
+.dbook-go { font-family: var(--display); font-size: 2rem; color: var(--blue-dark); line-height: 1; }
+.seed-hint { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 0; font-size: .82rem; font-weight: 700; color: var(--soft); text-align: center; }
+.seed-hint b { color: var(--green-dark); }
+.seed-shadow svg { display: block; }
+.opts.many { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.opts.many .opt { font-size: .66rem; padding: 6px 2px; }
+.opts.many .opt svg { width: 40px; height: 40px; }
+.shiny-mark { position: absolute; left: -4px; top: -6px; font-style: normal; color: #FFD34D; font-size: 1.05rem; line-height: 1; text-shadow: 0 0 2px #E0941C, 0 1px 0 #B8730F; }
+.shiny-count { position: relative; padding-left: 26px; }
+.shiny-count .shiny-mark { left: 8px; top: 50%; transform: translateY(-50%); }
+.tier-pill { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: .78rem; font-weight: 700; background: var(--line); color: var(--wood-dark); }
+.poop-facts .tier-pill { padding: 4px 14px; font-size: .85rem; }
+.tier-pill.tier-shiny { background: #FFF3B0; color: #8A5A0B; }
+.tier-pill.tier-rare { background: #D6ECFF; color: #1F5A9C; }
+.tier-pill.tier-super { background: #EBD9FF; color: #5E2E9C; }
+.tier-pill.tier-secret { background: linear-gradient(90deg, #FFD6E2, #FFF3B0, #D6F5E6, #D6E6FF); color: #6A2E5A; }
+.dtier-rare { background: #EEF7FF; } .dtier-super { background: #F5EEFF; } .dtier-secret { background: #FFF6E6; }
+.poop-facts .mix svg, .poop-facts span svg { vertical-align: middle; }
+.shiny-row { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; color: var(--wood-dark); }
+.shiny-row span { position: relative; padding-left: 18px; } .shiny-row .shiny-mark { left: 0; top: 0; }
+.new-in-book { font-family: var(--display); color: var(--green-dark) !important; }
+.seed-card svg { width: 110px; height: 110px; }
+.reveal { position: relative; display: grid; place-items: center; height: 170px; margin: 0 auto; width: 100%; overflow: hidden; }
+.reveal > svg { position: relative; animation: reveal-pop .7s cubic-bezier(.3, 1.6, .5, 1) both, wobble 2.4s .7s ease-in-out infinite; }
+.reveal .rays { position: absolute; width: 300px; height: 300px; left: 50%; top: 50%; margin: -150px 0 0 -150px; border-radius: 50%;
+  background: repeating-conic-gradient(var(--ray, #FFE27A) 0 12deg, transparent 12deg 30deg); opacity: .55; animation: spin 8s linear infinite;
+  -webkit-mask: radial-gradient(circle, #000 25%, transparent 70%); mask: radial-gradient(circle, #000 25%, transparent 70%); }
+.reveal.tier-rare .rays { --ray: #8FC8FF; } .reveal.tier-super .rays { --ray: #C9A6FF; }
+.reveal.tier-secret .rays { background: repeating-conic-gradient(#FF8FA8 0 10deg, transparent 10deg 20deg, #FFD166 20deg 30deg, transparent 30deg 40deg, #7FDCA8 40deg 50deg, transparent 50deg 60deg); opacity: .7; }
+@keyframes reveal-pop { 0% { transform: scale(.2) rotate(-20deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.dump.special { border-color: #FFD34D; box-shadow: 0 0 0 2px #FFF3B0, 0 3px 0 #E0941C; }
+.fillings.many { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.fillings.many .fill svg { width: 38px; height: 38px; }
+/* With lots of veggies the garden pantry is one row you can swipe along. */
+.garden .pantry { display: flex; overflow-x: auto; padding: 8px 4px 6px; scroll-snap-type: x proximity; }
+.garden .pantry .pitem { flex: 0 0 78px; scroll-snap-align: start; }

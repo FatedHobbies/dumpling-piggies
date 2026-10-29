@@ -1,5 +1,5 @@
 // Squishy-style art, all SVG strings so it stays sharp and tiny.
-import { COLORS } from './game.js';
+import { COLORS, FILLINGS, RECIPES, hash } from './game.js';
 
 const INK = '#2A1A14';
 const DEFAULT_COAT = { breed: 'american', main: 'ginger', patch: 'white' };
@@ -265,10 +265,9 @@ export function piggyTop(opts = {}) {
 // A squishy-toy dumpling: a round glossy bun with pleats swirling to the top,
 // a kawaii face and blush, sitting in a little bamboo steamer basket.
 export function dumpling(key, size = 64, opts = {}) {
-  const [a, b] = key.split('+');
-  const r = RECIPE_LOOK[key] || {};
-  const fill = r.color || tint(a, b);
-  const dark = shade(fill);
+  const r = lookFor(key);
+  const fill = r.color;
+  const dark = r.dark || shade(fill);
   // A short bamboo-steamer cylinder: the rim behind the bun, the front wall in
   // front of it so the dumpling sits down inside.
   // Plain tan cylinder with a slightly wider lip, seen from a little above.
@@ -289,23 +288,111 @@ export function dumpling(key, size = 64, opts = {}) {
     : `<path d="M28.5 33 Q32 37.5 35.5 33Z" fill="${INK}"/><path d="M30.5 35 Q32 36.5 33.5 35" fill="#FF8FA8"/>`;
   const hat = r.hat ? `<path d="M23 18 Q32 5 43 16 Q36 14 30 18 Q27 20 23 18Z" fill="#FF5C7A"/><circle cx="28" cy="15" r="1.3" fill="#FFF3B0"/><circle cx="35" cy="11" r="1.3" fill="#FFF3B0"/>` : '';
   const stripes = r.stripes ? `<path d="M14 25 Q32 19 50 25" stroke="${r.stripes}" stroke-width="2.5" fill="none" opacity=".6"/>` : '';
+  const pattern = r.pattern ? patternArt(r.pattern, r.patternColor) : '';
+  const topper = r.topper ? TOPPER[r.topper] || '' : '';
+  const behind = (r.glow ? `<ellipse cx="32" cy="32" rx="30" ry="24" fill="#FFE27A" opacity=".55"/>` : '') + (r.topper === 'ears' ? EARS : '');
+  const shiny = r.shiny ? `<g fill="#FFD34D" stroke="#E0941C" stroke-width=".8"><path d="M52 6 l2 4.5 4.5 2 -4.5 2 -2 4.5 -2 -4.5 -4.5 -2 4.5 -2z"/><path d="M9 22 l1.4 3 3 1.4 -3 1.4 -1.4 3 -1.4 -3 -3 -1.4 3 -1.4z"/><path d="M55 30 l1 2.2 2.2 1 -2.2 1 -1 2.2 -1 -2.2 -2.2 -1 2.2 -1z"/></g>` : '';
+  const defs = DUMP_DEFS[r.grad] || '';
   // A wide squishy bun: flat bottom, pleats gathered to a little twist on top,
   // the face low on the front.
-  return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">
+  return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">${defs}
     ${back}
-    <g transform="translate(0 ${dy})">
+    <g transform="translate(0 ${dy})">${behind}
     <path d="M13 44 C9 30 20 17 32 17 C44 17 55 30 51 44 Q32 48 13 44Z" fill="${fill}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>
-    ${stripes}
+    ${stripes}${pattern}
     <path d="M32 19 Q24 25 19 36 M32 19 Q28 27 26 40 M32 19 Q32 30 32 42 M32 19 Q36 27 38 40 M32 19 Q40 25 45 36 M32 19 Q21 21 14 30 M32 19 Q43 21 50 30" stroke="${dark}" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".5"/>
     <path d="M28 18 Q32 12 36 18 Q32 21 28 18Z" fill="${dark}" opacity=".55"/>
     <ellipse cx="21" cy="25" rx="5" ry="2.6" transform="rotate(-25 21 25)" fill="#fff" opacity=".55"/>
     ${sparkle}
     <g stroke="#FF6F8E" stroke-width="1.8" stroke-linecap="round" opacity=".8"><path d="M18 30 l1.5 3 M21.5 29 l1.5 3 M41 29 l1.5 3 M44.5 30 l1.5 3"/></g>
-    ${eyes}${mouth}${hat}
+    ${eyes}${mouth}${hat}${topper}
     </g>
-    ${front}
+    ${front}${shiny}
   </svg>`;
 }
+
+// Grey silhouette of a dumpling for the Dumpling Book spots not found yet.
+export function dumplingShadow(key, size = 64) {
+  return dumpling(key, size).replace(/<defs>.*?<\/defs>/s, '').replace(/fill="(?!none)[^"]*"/g, 'fill="#D5CDBA"').replace(/stroke="[^"]*"/g, 'stroke="#B7AC94"');
+}
+
+// Which look a dumpling key gets: a recipe ('a+b'), its shiny version
+// ('shiny:a+b'), or a special ('sp:id').
+function lookFor(key) {
+  if (key.startsWith('sp:')) return SPECIAL_LOOK[key.slice(3)] || { color: 'rgb(255,226,122)' };
+  const shiny = key.startsWith('shiny:');
+  const base = shiny ? key.slice(6) : key;
+  const r = RECIPE_LOOK[base] || recipeLook(base);
+  return shiny ? { ...r, glitter: true, shiny: true, dark: '#E0A21B' } : r;
+}
+
+// Recipes past the first ten get their look from their two veggies: a blended
+// color, a pattern in the second veggie's color, and a face picked by hash.
+function recipeLook(key) {
+  const [a, b] = key.split('+');
+  if (!FILLINGS[a] || !FILLINGS[b]) return { color: 'rgb(255,226,122)' };
+  const h = hash(key);
+  const fx = (RECIPES[key] || {}).effect;
+  const look = { color: tint(a, b) };
+  if (fx === 'sleepy') look.sleepy = true; else if ((h >> 2) % 3 === 0) look.wink = true;
+  if (fx === 'sparkle' && h % 2) look.glitter = true;
+  const pat = h % 4;
+  if (pat === 1) look.stripes = FILLINGS[b].color;
+  else if (pat === 2) { look.pattern = 'dots'; look.patternColor = FILLINGS[b].color; }
+  else if (pat === 3) look.topper = 'leaf';
+  if ((h >> 4) % 7 === 0) look.hat = true;
+  return look;
+}
+
+const SPOTS = [[17, 38], [47, 38], [22, 23], [42, 23], [32, 20.5], [14.5, 31], [49.5, 31]];
+function patternArt(kind, c = '#FF5C7A') {
+  const cs = Array.isArray(c) ? c : [c];
+  return SPOTS.map(([x, y], i) => {
+    const k = cs[i % cs.length];
+    if (kind === 'dots') return `<circle cx="${x}" cy="${y}" r="2.6" fill="${k}" opacity=".85"/>`;
+    if (kind === 'hearts') return `<path d="M${x} ${y + 2.5} l-3 -3 a1.8 1.8 0 0 1 3 -2 a1.8 1.8 0 0 1 3 2z" fill="${k}"/>`;
+    if (kind === 'stars') return `<path d="M${x} ${y - 3} l.9 2.1 2.1 .9 -2.1 .9 -.9 2.1 -.9 -2.1 -2.1 -.9 2.1 -.9z" fill="${k}"/>`;
+    if (kind === 'bubbles') return `<circle cx="${x}" cy="${y}" r="${2 + (i % 2)}" fill="none" stroke="#fff" stroke-width="1.2" opacity=".9"/>`;
+    if (kind === 'craters') return i % 2 ? '' : `<circle cx="${x}" cy="${y}" r="2.8" fill="${k}" opacity=".5"/>`;
+    if (kind === 'ribs') return i > 1 ? '' : `<path d="M${i ? 40 : 24} 19 Q${i ? 48 : 16} 31 ${i ? 42 : 22} 45" stroke="${k}" stroke-width="2" fill="none" opacity=".5"/>`;
+    return '';
+  }).join('');
+}
+
+// Bits that sit on top of a dumpling. Ears go behind the bun.
+const EARS = `<ellipse cx="18" cy="24" rx="6" ry="4.5" transform="rotate(-35 18 24)" fill="#F2A391" stroke="#D9806F" stroke-width="2"/><ellipse cx="46" cy="24" rx="6" ry="4.5" transform="rotate(35 46 24)" fill="#F2A391" stroke="#D9806F" stroke-width="2"/>`;
+const TOPPER = {
+  leaf: `<path d="M32 18 Q30 10 23 9 Q25 16 32 18Z" fill="#6CC070" stroke="#3E8E2A" stroke-width="1.4"/>`,
+  stem: `<path d="M30 18 Q30 11 34 8" stroke="#4F9A3C" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
+  ears: `<ellipse cx="32" cy="35.5" rx="3" ry="2" fill="#E0668A"/>`,
+  crown: `<path d="M22 19 L23 8 L28 13 L32 5 L36 13 L41 8 L42 19Z" fill="#FFD34D" stroke="#E0941C" stroke-width="2" stroke-linejoin="round"/><circle cx="32" cy="14" r="1.8" fill="#FF5C7A"/>`,
+  horns: `<path d="M24 20 Q19 12 22 6 Q26 13 28 18Z M40 20 Q45 12 42 6 Q38 13 36 18Z" fill="#FFE27A" stroke="#D9A21B" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 40 l-5 -2 4 -3 M52 40 l5 -2 -4 -3" stroke="#3E8E2A" stroke-width="2" fill="none" stroke-linejoin="round"/>`,
+  moon: `<path d="M51 6 a6 6 0 1 0 5 9 a4.5 4.5 0 1 1 -5 -9z" fill="#FFE27A" stroke="#D9A21B" stroke-width="1.2"/>`,
+  popcorn: `<g fill="#FFFBEA" stroke="#E8C66A" stroke-width="1.4"><circle cx="26" cy="17" r="4.5"/><circle cx="33" cy="13" r="5"/><circle cx="39" cy="17.5" r="4.2"/></g>`,
+  cloud: `<g fill="#fff" stroke="#BFD8F0" stroke-width="1.4"><circle cx="12" cy="40" r="5"/><circle cx="52" cy="40" r="5"/><circle cx="33" cy="16" r="5"/></g>`,
+};
+const DUMP_DEFS = {
+  rainbow: `<defs><linearGradient id="rbDump" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF8FA8"/><stop offset=".3" stop-color="#FFD166"/><stop offset=".6" stop-color="#7FDCA8"/><stop offset="1" stop-color="#8FB4FF"/></linearGradient></defs>`,
+  galaxy: `<defs><linearGradient id="gxDump" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#2E2470"/><stop offset=".6" stop-color="#6A3FB8"/><stop offset="1" stop-color="#C46AD6"/></linearGradient></defs>`,
+  crystal: `<defs><linearGradient id="crDump" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#9FD9FF"/><stop offset=".45" stop-color="#E8F7FF"/><stop offset=".7" stop-color="#C9B8FF"/><stop offset="1" stop-color="#F6F0FF"/></linearGradient></defs>`,
+};
+// The blind-box specials.
+const SPECIAL_LOOK = {
+  polka:   { color: 'rgb(255,247,230)', pattern: 'dots', patternColor: ['#FF5C7A', '#5BA8F0', '#FFD23C', '#5BC86A'] },
+  cloud:   { color: 'rgb(232,244,255)', topper: 'cloud', sleepy: true },
+  heart:   { color: 'rgb(255,196,214)', pattern: 'hearts', patternColor: '#F0435F', wink: true },
+  lantern: { color: 'rgb(255,170,80)', pattern: 'ribs', patternColor: '#C8641C', topper: 'stem', glow: true },
+  bubble:  { color: 'rgb(160,200,255)', pattern: 'bubbles', glitter: true },
+  popcorn: { color: 'rgb(255,226,140)', topper: 'popcorn', wink: true },
+  rainbow: { color: 'url(#rbDump)', dark: '#B48CE0', grad: 'rainbow', glitter: true },
+  gold:    { color: '#FFD34D', dark: '#C98F1B', glitter: true, shiny: true },
+  galaxy:  { color: 'url(#gxDump)', dark: '#231A5A', grad: 'galaxy', pattern: 'stars', patternColor: '#FFF3B0' },
+  moon:    { color: 'rgb(255,244,196)', pattern: 'craters', patternColor: '#D9C27A', topper: 'moon', sleepy: true },
+  piggy:   { color: 'rgb(240,184,124)', dark: '#B9824A', topper: 'ears', pattern: 'craters', patternColor: '#FFFFFF' },
+  crystal: { color: 'url(#crDump)', dark: '#6FA8DC', grad: 'crystal', glitter: true, shiny: true },
+  dragon:  { color: 'rgb(140,214,120)', dark: '#3E8E2A', topper: 'horns', pattern: 'dots', patternColor: '#FFE27A', wink: true },
+  king:    { color: 'rgb(255,236,200)', topper: 'crown', glitter: true, wink: true },
+};
 
 // Small looks that make each recipe its own collectable.
 const RECIPE_LOOK = {
@@ -327,8 +414,24 @@ export function veggie(filling, size = 48) {
     cabbage: `<circle cx="32" cy="34" r="22" fill="#8FD07A"/><path d="M14 30 Q32 20 50 30 M18 42 Q32 34 46 42" stroke="#5FAE4E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="32" cy="34" r="9" fill="#C8F0B0"/>`,
     pea: `<path d="M10 40 Q32 8 56 32 Q34 50 10 40Z" fill="#5BC86A"/><circle cx="22" cy="34" r="6" fill="#8FE38A"/><circle cx="35" cy="30" r="6" fill="#8FE38A"/><circle cx="47" cy="31" r="5" fill="#8FE38A"/>`,
     strawberry: `<path d="M32 56 Q10 40 14 24 Q22 12 32 20 Q42 12 50 24 Q54 40 32 56Z" fill="#FF5C7A"/><path d="M24 14 Q32 8 40 14 L32 22Z" fill="#4CAF50"/><g fill="#FFF3B0"><circle cx="24" cy="30" r="1.8"/><circle cx="36" cy="28" r="1.8"/><circle cx="30" cy="40" r="1.8"/><circle cx="40" cy="40" r="1.8"/></g>`,
+    corn: `<path d="M22 16 Q32 6 42 16 Q46 34 32 56 Q18 34 22 16Z" fill="#FFD23C"/><g fill="#FFE98A">${[[28,18],[36,18],[26,26],[32,24],[38,26],[27,34],[33,32],[38,35],[29,42],[35,41],[32,49]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.6"/>`).join('')}</g><path d="M32 58 Q16 46 16 24 Q24 40 32 50Z M32 58 Q48 46 48 24 Q40 40 32 50Z" fill="#6CC070"/>`,
+    tomato: `<circle cx="32" cy="36" r="20" fill="#F0543F"/><path d="M32 18 l4 -6 2 7 7 -1 -5 5 -8 1 -8 -1 -5 -5 7 1 2 -7z" fill="#4CAF50"/><ellipse cx="24" cy="30" rx="5" ry="3" transform="rotate(-30 24 30)" fill="#fff" opacity=".45"/>`,
+    pumpkin: `<path d="M30 16 Q30 8 36 6" stroke="#4F9A3C" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="20" cy="36" rx="10" ry="17" fill="#FF8A2A"/><ellipse cx="44" cy="36" rx="10" ry="17" fill="#FF8A2A"/><ellipse cx="32" cy="36" rx="11" ry="19" fill="#FFA04A"/><path d="M26 22 Q24 36 26 50 M38 22 Q40 36 38 50" stroke="#D96A1C" stroke-width="2" fill="none"/>`,
+    blueberry: `<circle cx="22" cy="40" r="12" fill="#5A7FE0"/><circle cx="42" cy="40" r="12" fill="#4A6FD0"/><circle cx="32" cy="24" r="12" fill="#6A8FF0"/><path d="M29 19 l3 3 3 -3 M29 22 l6 0" stroke="#2E4A9C" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="19" cy="36" r="2.5" fill="#fff" opacity=".5"/><circle cx="28" cy="20" r="2.5" fill="#fff" opacity=".5"/>`,
+    broccoli: `<path d="M28 58 L30 36 H34 L36 58Z" fill="#B8E39A"/><g fill="#4FA84A"><circle cx="20" cy="30" r="10"/><circle cx="44" cy="30" r="10"/><circle cx="32" cy="20" r="11"/><circle cx="32" cy="34" r="9"/></g><g fill="#7CCB5A"><circle cx="20" cy="27" r="3"/><circle cx="32" cy="16" r="3.5"/><circle cx="44" cy="27" r="3"/></g>`,
+    radish: `<path d="M24 16 Q20 4 14 6 Q18 12 28 18Z M40 16 Q44 4 50 6 Q46 12 36 18Z M32 16 V4" stroke="#4CAF50" stroke-width="3" fill="#6CC070" stroke-linecap="round"/><circle cx="32" cy="34" r="16" fill="#F0507A"/><path d="M28 48 Q32 50 36 48 L32 60Z" fill="#F8F6EE"/><ellipse cx="25" cy="29" rx="4" ry="2.5" transform="rotate(-30 25 29)" fill="#fff" opacity=".5"/>`,
+    cucumber: `<path d="M20 52 Q8 44 14 30 Q24 10 44 12 Q56 16 50 30 Q40 50 20 52Z" fill="#6CC070" stroke="#3E8E2A" stroke-width="2"/><g fill="#B8E39A"><circle cx="22" cy="40" r="1.8"/><circle cx="30" cy="30" r="1.8"/><circle cx="40" cy="22" r="1.8"/><circle cx="34" cy="40" r="1.8"/><circle cx="44" cy="30" r="1.8"/></g>`,
+    pepper: `<path d="M30 16 Q30 8 36 6" stroke="#4F9A3C" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M14 26 Q16 14 32 16 Q48 14 50 26 Q52 44 44 54 Q38 58 32 52 Q26 58 20 54 Q12 44 14 26Z" fill="#FFC21C"/><path d="M32 20 Q30 36 32 50" stroke="#E09A10" stroke-width="2" fill="none"/><ellipse cx="22" cy="28" rx="3" ry="6" fill="#fff" opacity=".4"/>`,
+    eggplant: `<path d="M36 18 Q54 22 52 42 Q48 58 32 56 Q14 54 16 40 Q20 30 28 24 Q30 18 36 18Z" fill="#8A4FC0"/><path d="M26 18 Q34 10 44 14 Q42 22 34 22 Q30 22 26 18Z" fill="#4CAF50"/><path d="M38 12 Q40 6 44 6" stroke="#4CAF50" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="24" cy="42" rx="3" ry="6" transform="rotate(30 24 42)" fill="#fff" opacity=".35"/>`,
+    bokchoy: `<path d="M24 58 Q20 40 26 28 H38 Q44 40 40 58Z" fill="#F4F8EC" stroke="#C8DDB0" stroke-width="2"/><path d="M26 30 Q10 20 18 6 Q28 8 30 28Z M38 30 Q54 20 46 6 Q36 8 34 28Z M32 28 Q24 12 32 2 Q40 12 32 28Z" fill="#5FAE4E"/><path d="M32 30 V56" stroke="#C8DDB0" stroke-width="2"/>`,
+    beet: `<path d="M26 18 Q20 4 14 8 Q20 12 28 20Z M38 18 Q44 4 50 8 Q44 12 36 20Z" fill="#6CC070" stroke="#B8306A" stroke-width="1.5"/><circle cx="32" cy="36" r="17" fill="#B8306A"/><path d="M30 52 Q32 54 34 52 L32 62Z" fill="#B8306A"/><ellipse cx="25" cy="31" rx="4" ry="2.5" transform="rotate(-30 25 31)" fill="#fff" opacity=".4"/>`,
+    apple: `<path d="M32 20 Q20 12 14 24 Q8 42 22 54 Q28 58 32 54 Q36 58 42 54 Q56 42 50 24 Q44 12 32 20Z" fill="#E8443C"/><path d="M32 20 Q31 12 34 8" stroke="#8A5634" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M34 12 Q42 6 46 12 Q40 16 34 12Z" fill="#6CC070"/><ellipse cx="22" cy="30" rx="3" ry="6" transform="rotate(20 22 30)" fill="#fff" opacity=".4"/>`,
   }[filling];
   return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">${v}</svg>`;
+}
+
+export function veggieShadow(filling, size = 48) {
+  return veggie(filling, size).replace(/fill="(?!none)[^"]*"/g, 'fill="#D5CDBA"').replace(/stroke="[^"]*"/g, 'stroke="#B7AC94"');
 }
 
 export function sprout(progress, filling) {
@@ -610,8 +713,7 @@ export function shopScene() {
 }
 
 function tint(a, b) {
-  const c = { carrot: [255, 196, 120], cabbage: [205, 240, 180], pea: [170, 230, 170], strawberry: [255, 180, 205] };
-  const x = c[a], y = c[b];
+  const x = FILLINGS[a].rgb, y = FILLINGS[b].rgb;
   const m = x.map((v, i) => Math.round((v + y[i]) / 2));
   return `rgb(${m[0]},${m[1]},${m[2]})`;
 }
