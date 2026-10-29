@@ -422,7 +422,8 @@ button.pk:active { transform: scale(.95); }
 .maze-bar.running .maze-btns { flex: 0 0 auto; }
 .maze-btns .go { flex: 1; font-size: 1.2rem; }
 .maze-top { display: flex; align-items: center; gap: 10px; }
-.maze-top .maze-hint { flex: 1; min-width: 0; font-size: .78rem; line-height: 1.25; }
+.maze-top .maze-tray { flex: none; width: max-content; overflow: visible; }
+.maze-top .maze-hint { flex: 1 1 0; min-width: 0; font-size: .78rem; line-height: 1.25; }
 .maze-bar.running .maze-top .maze-hint { font-size: .88rem; }
 .maze-bar.running .maze-btns { order: 2; }
 .mtheme i svg { border-radius: 8px; }
