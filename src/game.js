@@ -15,6 +15,7 @@ export const FILLINGS = {
   tomato:     { name: 'Tomato',     color: '#F0543F', rgb: [255, 150, 130], adj: 'Saucy',   noun: 'Squish',   poop: 'red',      fx: null },
   pumpkin:    { name: 'Pumpkin',    color: '#FF8A2A', rgb: [255, 186, 110], adj: 'Plumpy',  noun: 'Pocket',   poop: 'orange',   fx: 'sleepy' },
   blueberry:  { name: 'Blueberry',  color: '#5A7FE0', rgb: [175, 195, 255], adj: 'Bluey',   noun: 'Drop',     poop: 'blue',     fx: 'sparkle' },
+  hay:        { name: 'Hay',        color: '#E2B84A', rgb: [240, 222, 150], adj: 'Fluffy',  noun: 'Bale',     poop: 'brown',    fx: 'sleepy' },
   broccoli:   { name: 'Broccoli',   color: '#4FA84A', rgb: [160, 215, 140], adj: 'Bushy',   noun: 'Bite',     poop: 'green',    fx: null },
   radish:     { name: 'Radish',     color: '#F0507A', rgb: [255, 170, 190], adj: 'Rosy',    noun: 'Roll',     poop: 'pink',     fx: 'zoom' },
   cucumber:   { name: 'Cucumber',   color: '#6CC070', rgb: [190, 235, 200], adj: 'Cool',    noun: 'Bean',     poop: 'green',    fx: 'sleepy' },
@@ -61,16 +62,19 @@ FILLING_ORDER.forEach((b, j) => FILLING_ORDER.slice(0, j + 1).forEach(a => {
   };
 }));
 
-// Seeds unlock as she finds recipes: four to start, one more every 3 recipes.
+// Hay is the piggies' main snack, so it can always be grown. The veggie seeds
+// unlock as she finds recipes: four to start, one more every 3 recipes.
 export const SEED_STEP = 3;
+const SEEDS = FILLING_ORDER.filter(f => f !== 'hay');
+const seedCount = (state) => Math.min(SEEDS.length, 4 + Math.floor((state.discovered || []).length / SEED_STEP));
 export function unlockedFillings(state) {
-  const n = Math.min(FILLING_ORDER.length, 4 + Math.floor((state.discovered || []).length / SEED_STEP));
-  return FILLING_ORDER.slice(0, n);
+  const seeds = SEEDS.slice(0, seedCount(state));
+  return FILLING_ORDER.filter(f => f === 'hay' || seeds.includes(f));
 }
 export function nextSeed(state) {
-  const have = unlockedFillings(state).length;
-  if (have >= FILLING_ORDER.length) return null;
-  return { filling: FILLING_ORDER[have], need: (have - 3) * SEED_STEP - state.discovered.length };
+  const have = seedCount(state);
+  if (have >= SEEDS.length) return null;
+  return { filling: SEEDS[have], need: (have - 3) * SEED_STEP - state.discovered.length };
 }
 
 // Blind-box dumplings. Any steaming can pop out a surprise: a shiny version of
@@ -338,7 +342,7 @@ export function newState(now = Date.now()) {
     poops: [],                      // { id, x, y }
     garden: [null, null, null],     // null or { filling, plantedAt }
     compost: 2,                     // scooped poop, needed to plant
-    pantry: { carrot: 2, cabbage: 1, pea: 1, strawberry: 0 },
+    pantry: { carrot: 2, cabbage: 1, pea: 1, strawberry: 0, hay: 2 },
     dumplings: { 'carrot+carrot': 1 }, // one dumpling to feed during the tutorial
     tutorial: { step: 1 },          // first-play tutorial progress; { done: true } when finished
     discovered: [],                 // recipe keys found so far
@@ -381,6 +385,7 @@ export function migrate(state) {
     for (const k of Object.keys(state.poopBook || {})) if (state.poopBook[k] > 0) state.bookPage[k] = true;
     state.booksFilled = 0;
   }
+  if (state.pantry && state.pantry.hay == null) state.pantry.hay = 2;   // hay arrived in version 54
   if (!state.recipeBook) {                                 // saves from before the Dumpling Book
     state.recipeBook = {};
     for (const k of state.discovered || []) state.recipeBook[k] = 1;
@@ -695,7 +700,7 @@ export function cook(state, a, b, rng = Math.random) {
   state.pantry[b] -= 1;
   const key = recipeKey(a, b);
   state.stats.cooked += 1;
-  const seedsBefore = unlockedFillings(state).length;
+  const seedsBefore = unlockedFillings(state);
   let isNew = false;
   if (!state.discovered.includes(key)) {
     state.discovered.push(key);
@@ -710,7 +715,7 @@ export function cook(state, a, b, rng = Math.random) {
   state.recipeBook = state.recipeBook || {};
   const firstFind = !state.recipeBook[made];
   state.recipeBook[made] = (state.recipeBook[made] || 0) + 1;
-  const seed = unlockedFillings(state).length > seedsBefore ? FILLING_ORDER[seedsBefore] : null;
+  const seed = unlockedFillings(state).find(f => !seedsBefore.includes(f)) || null;
   return { ok: true, key: made, recipeKey: key, isNew, surprise, firstFind, seed, recipe: dumplingInfo(made), pages: checkDumplingPages(state) };
 }
 

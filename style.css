@@ -572,6 +572,8 @@ button.pk:active { transform: scale(.95); }
 .dump.special { border-color: #FFD34D; box-shadow: 0 0 0 2px #FFF3B0, 0 3px 0 #E0941C; }
 .fillings.many { grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .fillings.many .fill svg { width: 38px; height: 38px; }
-/* With lots of veggies the garden pantry is one row you can swipe along. */
-.garden .pantry { display: flex; overflow-x: auto; padding: 8px 4px 6px; scroll-snap-type: x proximity; }
-.garden .pantry .pitem { flex: 0 0 78px; scroll-snap-align: start; }
+/* With lots of veggies the garden pantry wraps into smaller cards. */
+.garden .pantry { grid-template-columns: repeat(5, 1fr); gap: 8px 6px; }
+.garden .pantry .pitem { padding-left: 2px; padding-right: 2px; min-width: 0; }
+.garden .pantry .pitem svg { width: 36px; height: 36px; }
+.garden .pantry .pitem span { font-size: .6rem; white-space: nowrap; }
