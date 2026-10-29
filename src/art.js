@@ -218,15 +218,32 @@ export function sprout(progress, filling) {
 
 const POOP_FILL = {
   brown: ['#8A5634', '#5E3820'], green: ['#8FD07A', '#4F9A3C'], orange: ['#FFAE5C', '#D9772B'], pink: ['#FFA8C0', '#E0668A'],
-  gold: ['#FFD34D', '#D9A21B'], rainbow: ['url(#rainbowPoop)', '#B48CE0'],
+  white: ['#F8F6EE', '#B8B3A4'], red: ['#F0543F', '#A32E20'], blue: ['#6FB4F0', '#3579B8'], lavender: ['#D9B8F0', '#9C72C8'],
+  gred: ['#E23B3B', '#8E1F1F'], ggreen: ['#4FC86A', '#2B8A44'], gpink: ['#FFA8C8', '#D45A8C'], silver: ['#D8DEE6', '#8E99A8'],
+  aqua: ['#7FDCD6', '#3BA8A0'], purple: ['#9B5BD8', '#5E2E9C'],
+  gold: ['#FFD34D', '#D9A21B'], rainbow: ['url(#rainbowPoop)', '#B48CE0'], crystal: ['url(#crystalPoop)', '#6FA8DC'],
+};
+const POOP_GLITTER = new Set(['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple', 'gold', 'crystal']);
+// Glitter speckles, placed inside the body of each shape.
+const SPECK = {
+  swirl: [[16,46],[22,55],[30,44],[38,56],[46,48],[50,54],[21,34],[30,37],[40,32],[44,38],[26,24],[33,18],[37,27],[36,43],[14,52]],
+  beans: [[19,38],[24,48],[20,52],[34,40],[38,50],[33,53],[44,34],[49,42],[46,46],[27,41],[40,45],[23,43]],
 };
 // A poop. `poop` is { shape: 'beans'|'swirl', color } or nothing for a plain one.
 export function poop(p = {}) {
   const [fill, dark] = POOP_FILL[p.color] || POOP_FILL.brown;
-  const defs = p.color === 'rainbow' ? `<defs><linearGradient id="rainbowPoop" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF8FA8"/><stop offset=".3" stop-color="#FFD166"/><stop offset=".6" stop-color="#5BC8A8"/><stop offset="1" stop-color="#7AA6FF"/></linearGradient></defs>` : '';
+  const defs = p.color === 'rainbow' ? `<defs><linearGradient id="rainbowPoop" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF8FA8"/><stop offset=".3" stop-color="#FFD166"/><stop offset=".6" stop-color="#5BC8A8"/><stop offset="1" stop-color="#7AA6FF"/></linearGradient></defs>`
+    : p.color === 'crystal' ? `<defs><linearGradient id="crystalPoop" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#9FD9FF"/><stop offset=".45" stop-color="#E8F7FF"/><stop offset=".7" stop-color="#C9B8FF"/><stop offset="1" stop-color="#F6F0FF"/></linearGradient></defs>` : '';
   // Sparkles sit beside the poop, never on it, so the swirl shape stays clear.
   const shine = p.color === 'gold' ? `<path d="M54 8 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="#FFF3B0" stroke="#D9A21B" stroke-width="1"/><path d="M8 20 l1.3 3 3 1.3 -3 1.3 -1.3 3 -1.3 -3 -3 -1.3 3 -1.3z" fill="#FFF3B0" stroke="#D9A21B" stroke-width="1"/>`
-    : p.color === 'rainbow' ? `<path d="M55 12 l1.5 3.5 3.5 1.5 -3.5 1.5 -1.5 3.5 -1.5 -3.5 -3.5 -1.5 3.5 -1.5z" fill="#fff" stroke="#C96AD6" stroke-width="1"/>` : '';
+    : p.color === 'rainbow' ? `<path d="M55 12 l1.5 3.5 3.5 1.5 -3.5 1.5 -1.5 3.5 -1.5 -3.5 -3.5 -1.5 3.5 -1.5z" fill="#fff" stroke="#C96AD6" stroke-width="1"/>`
+    : p.color === 'crystal' ? `<path d="M55 10 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="#fff" stroke="#6FA8DC" stroke-width="1"/><path d="M8 18 l1.5 3.5 3.5 1.5 -3.5 1.5 -1.5 3.5 -1.5 -3.5 -3.5 -1.5 3.5 -1.5z" fill="#fff" stroke="#6FA8DC" stroke-width="1"/><path d="M50 58 l1 2.5 2.5 1 -2.5 1 -1 2.5 -1 -2.5 -2.5 -1 2.5 -1z" fill="#fff" stroke="#B48CE0" stroke-width="1"/>` : '';
+  const specks = !POOP_GLITTER.has(p.color) ? '' : SPECK[p.shape === 'swirl' ? 'swirl' : 'beans']
+    .map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${i % 3 === 0 ? 1.3 : 0.9}" fill="#fff" opacity="${i % 2 ? .95 : .7}"/>`).join('');
+  // Crystal poops get a few facet lines so they read as cut gems.
+  const facets = p.color !== 'crystal' ? '' : p.shape === 'swirl'
+    ? `<path d="M18 45 L26 52 M40 43 L48 50 M24 31 L30 38 M34 16 L30 26" stroke="#fff" stroke-width="1.6" opacity=".8" fill="none" stroke-linecap="round"/>`
+    : `<path d="M17 36 L21 50 M33 38 L36 54 M44 32 L48 44" stroke="#fff" stroke-width="1.6" opacity=".8" fill="none" stroke-linecap="round"/>`;
   // The swirly poop is the one from the art page: three stacked tiers with a
   // curl on top, eyes and blush on the bottom tier.
   const body = p.shape === 'swirl'
@@ -240,7 +257,7 @@ export function poop(p = {}) {
        <ellipse cx="36" cy="46" rx="7" ry="11" transform="rotate(15 36 46)" fill="${fill}" stroke="${dark}" stroke-width="2"/>
        <ellipse cx="46" cy="40" rx="6" ry="10" transform="rotate(35 46 40)" fill="${fill}" stroke="${dark}" stroke-width="2"/>
        <circle cx="20" cy="40" r="1.6" fill="#fff"/><circle cx="25" cy="41" r="1.6" fill="#fff"/>`;
-  return `<svg viewBox="0 0 64 64" aria-hidden="true">${defs}${body}${shine}</svg>`;
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${defs}${body}${specks}${facets}${shine}</svg>`;
 }
 
 // Grey silhouette of a poop kind for the Poop Book.

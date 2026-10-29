@@ -281,8 +281,22 @@ export function applyAway(state, now = Date.now()) {
 
 // Poops come in kinds. The shape is random, the color comes from the last
 // dumpling the pooping piggy ate, and now and then one is rainbow or golden.
-export const POOP_COLORS = { brown: 'Plain', green: 'Green', orange: 'Orange', pink: 'Pink', rainbow: 'Rainbow', gold: 'Golden' };
-export const POOP_VALUE = { brown: { coins: 2, compost: 1 }, green: { coins: 3, compost: 1 }, orange: { coins: 3, compost: 1 }, pink: { coins: 3, compost: 1 }, rainbow: { coins: 10, compost: 3 }, gold: { coins: 25, compost: 5 } };
+// Colors match the squishy dumpling set: plain ones, then the glitter ones.
+export const POOP_COLORS = {
+  brown: 'Plain', white: 'White', pink: 'Pink', red: 'Red', blue: 'Blue', green: 'Green', orange: 'Orange', lavender: 'Lavender',
+  gred: 'Glitter red', ggreen: 'Glitter green', gpink: 'Glitter pink', silver: 'Silver', aqua: 'Aqua', purple: 'Purple',
+  rainbow: 'Rainbow', gold: 'Golden', crystal: 'Crystal',
+};
+export const GLITTER = ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple', 'gold', 'crystal'];
+export const PLAIN_COLORS = ['white', 'pink', 'red', 'blue', 'green', 'orange', 'lavender'];
+// Odds per poop, shown in the Poop Book.
+export const POOP_ODDS = [
+  { label: 'Plain colors', odds: 'common' }, { label: 'Glitter', odds: '1 in 12' }, { label: 'Rainbow', odds: '1 in 33' },
+  { label: 'Golden', odds: '1 in 100' }, { label: 'Crystal', odds: '1 in 250' },
+];
+export const POOP_VALUE = { brown: { coins: 2, compost: 1 }, rainbow: { coins: 10, compost: 3 }, gold: { coins: 25, compost: 5 }, crystal: { coins: 50, compost: 8 } };
+for (const c of PLAIN_COLORS) POOP_VALUE[c] = { coins: 3, compost: 1 };
+for (const c of ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple']) POOP_VALUE[c] = { coins: 6, compost: 2 };
 
 export function poopKind(state, rng = Math.random) {
   const fed = state.piggies.filter(p => p.hunger > 30);
@@ -293,9 +307,14 @@ export function poopKind(state, rng = Math.random) {
   if (food.includes('strawberry')) color = 'pink';
   else if (food.includes('carrot')) color = 'orange';
   else if (food.includes('cabbage') || food.includes('pea')) color = 'green';
+  // A quarter of plain poops come out in a surprise plain color.
+  else if (rng() < 0.25) color = PLAIN_COLORS[Math.floor(rng() * PLAIN_COLORS.length)];
   const r = rng();
-  if (r < 0.01) color = 'gold';
-  else if (r < 0.04) color = 'rainbow';
+  // Rare ones: crystal 1 in 250, golden 1 in 100, rainbow 1 in 33, glitter 1 in 12.
+  if (r < 0.004) color = 'crystal';
+  else if (r < 0.014) color = 'gold';
+  else if (r < 0.044) color = 'rainbow';
+  else if (r < 0.127) color = ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple'][Math.floor(rng() * 6)];
   return { shape, color };
 }
 
@@ -326,6 +345,8 @@ export const ACHIEVEMENTS = [
   { id: 'swirly',   name: 'Swirly spotter',   desc: 'Collect a swirly poop.',             coins: 10,  test: s => Object.keys(s.poopBook || {}).some(k => k.startsWith('swirl')) },
   { id: 'rainbow',  name: 'Rainbow hunter',   desc: 'Find a rainbow poop.',               coins: 25,  test: s => poopKinds().some(k => k.color === 'rainbow' && (s.poopBook || {})[k.key]) },
   { id: 'gold',     name: 'Golden touch',     desc: 'Find a golden poop.',                coins: 50,  test: s => poopKinds().some(k => k.color === 'gold' && (s.poopBook || {})[k.key]) },
+  { id: 'glitter',  name: 'Glitter getter',   desc: 'Find a glitter poop.',               coins: 15,  test: s => poopKinds().some(k => ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple'].includes(k.color) && (s.poopBook || {})[k.key]) },
+  { id: 'crystal',  name: 'Crystal gazer',    desc: 'Find a crystal poop.',               coins: 75,  test: s => poopKinds().some(k => k.color === 'crystal' && (s.poopBook || {})[k.key]) },
   { id: 'five',     name: 'Collector',        desc: 'Collect 5 different kinds of poop.', coins: 20,  test: s => poopsFound(s) >= 5 },
   { id: 'all',      name: 'Poop professor',   desc: 'Fill the whole Poop Book.',          coins: 100, test: s => poopsFound(s) >= poopKinds().length },
   { id: 'scoop50',  name: 'Scooper',          desc: 'Scoop 50 poops.',                    coins: 20,  test: s => s.stats.scooped >= 50 },

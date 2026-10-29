@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 16;
+const VERSION = 17;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -346,9 +346,9 @@ function onScoop(id, btn) {
   setTimeout(() => btn.remove(), 250);
   floatCoin(r.coins);
   const c = r.poop.color;
-  if (c === 'rainbow' || c === 'gold') {
+  if (c === 'rainbow' || c === 'gold' || c === 'crystal') {
     sfx.fanfare();
-    popup(c === 'gold' ? 'A golden poop!' : 'A rainbow poop!', `<div class="pig-card poop-card">${Art.poop(r.poop)}</div><p>Wow! That's worth <b>${r.coins} coins</b> and <b>${r.compost} compost</b>.</p>`, 'Wow!');
+    popup(c === 'gold' ? 'A golden poop!' : c === 'crystal' ? 'A crystal poop!' : 'A rainbow poop!', `<div class="pig-card poop-card">${Art.poop(r.poop)}</div><p>Wow! That's worth <b>${r.coins} coins</b> and <b>${r.compost} compost</b>.</p>`, 'Wow!');
   } else if (c !== 'brown') toast(`${G.POOP_COLORS[c]} poop! +${r.coins} coins`);
   tut('scoop');
   for (const a of G.checkAchievements(state)) {
@@ -782,7 +782,8 @@ function poopBook() {
     const got = !!(state.achievements || {})[a.id];
     return `<div class="ach ${got ? 'got' : ''}"><span class="badge">${got ? Art.badgeIcon() : Art.badgeIcon(true)}</span><span class="txt"><b>${a.name}</b><small>${a.desc}</small></span><span class="price ${got ? 'can' : ''}">${got ? 'Done!' : `${a.coins} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></div>`;
   }).join('');
-  popup(`Poop Book ${found} / ${kinds.length}`, `<p>Scoop every kind of poop to fill the book. Rare ones are worth more!</p>
+  const odds = G.POOP_ODDS.map(o => `${o.label}: <b>${o.odds}</b>`).join(' · ');
+  popup(`Poop Book ${found} / ${kinds.length}`, `<p>Scoop every kind of poop to fill the book. Rare ones are worth more!</p><p class="odds">${odds}</p>
     <div class="pk-grid">${grid}</div>
     <div class="ribbon"><span>Achievements</span></div>
     <div class="ach-list">${ach}</div>`, 'Close');
