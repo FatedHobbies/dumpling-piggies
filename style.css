@@ -576,8 +576,10 @@ button.pk:active { transform: scale(.95); }
 /* ---- Modals & toasts ---- */
 .modal { position: fixed; inset: 0; background: rgba(30, 20, 15, .55); display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding: 36px 20px 24px; z-index: 20; }
 .card { margin: auto 0; flex: 0 0 auto; padding: 14px 18px 18px; width: min(100%, 360px); display: flex; flex-direction: column; gap: 10px; align-items: stretch; animation: pop-in .2s; }
-/* Ribbon sits centred on the card's top edge, half above the box. */
-.card .ribbon { margin-top: -37px; margin-bottom: 8px; }
+/* Ribbon sits centred on the card's top edge, its tails tucked inside. */
+.card .ribbon { margin-top: -32px; margin-bottom: 8px; }
+/* Tails start at the edge so none of them sits on the dark backdrop. */
+.card .ribbon::before, .card .ribbon::after { top: 14px; }
 .card p { color: var(--soft); text-align: center; }
 .card .pig-card { margin: 0 auto; }
 .card input { font: inherit; font-size: 1.1rem; padding: 10px 12px; border-radius: 12px; border: 3px solid var(--line); background: #fff; }
