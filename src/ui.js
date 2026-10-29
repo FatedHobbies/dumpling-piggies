@@ -90,8 +90,11 @@ function buildShell() {
   document.body.innerHTML = `
     <header class="hud">
       <button class="hud-pig" id="name" aria-label="Rename your piggy"><span class="hud-avatar" id="avatar"></span><span class="hud-name" id="pigname"></span></button>
+      <div class="hud-books">
       <button class="hud-book" id="poopbook" aria-label="Poop Book">${Art.poop({ shape: 'swirl', color: 'brown' })}<span>Book</span></button>
       <button class="hud-book" id="dumpbook" aria-label="Dumpling Book">${Art.dumpling('sp:gold', 40)}<span>Book</span></button>
+      <button class="hud-book" id="stuffbook" aria-label="Collection Book">${Art.hatIcon('crown')}<span>Book</span></button>
+      </div>
       <div class="hud-coins"><span class="coin-ico">${Art.coinIcon()}</span><span id="coins">0</span></div>
       <button class="hud-gear" id="gear" aria-label="Settings">${Art.icon('gear')}</button>
     </header>
@@ -109,6 +112,7 @@ function buildShell() {
   $('#name').addEventListener('click', renameDialog);
   $('#poopbook').addEventListener('click', () => { poopBook(); tut('poopbook'); });
   $('#dumpbook').addEventListener('click', () => { dumplingBook(); tut('dumpbook'); });
+  $('#stuffbook').addEventListener('click', () => collectionBook());
   $('#gear').addEventListener('click', () => { sfx.pop(); settings(); });
   $('#coachskip').addEventListener('click', () => { if (!tutStep()) return tipDone(); confirmBox('Skip the tutorial?', () => { state.tutorial = { done: true }; render(); }); });
   $('#coachok').addEventListener('click', () => tipDone());
@@ -1939,7 +1943,9 @@ let swipedAt = 0;
 function flipBook(pane, step) {
   const pages = [...pane.querySelectorAll('.tier')];
   const idx = (pages.findIndex(p => !p.hidden) + step + pages.length) % pages.length;
-  if (pane.dataset.pane === 'dumplings') dbookIdx = idx; else bookPageIdx = idx;
+  if (pane.dataset.pane === 'dumplings') dbookIdx = idx;
+  else if (pane.dataset.pane.startsWith('c-')) cbookIdx[pane.dataset.pane] = idx;
+  else bookPageIdx = idx;
   pages.forEach((p, i) => { p.hidden = i !== idx; p.classList.remove('slide-l', 'slide-r'); });
   void pages[idx].offsetWidth;   // restart the slide animation
   pages[idx].classList.add(step > 0 ? 'slide-l' : 'slide-r');
@@ -1963,6 +1969,8 @@ document.addEventListener('click', (e) => {
   if (Date.now() - swipedAt < 400 && e.target.closest('.book-pane')) return;   // the tap that ended a swipe
   const tileBtn = e.target.closest('.pk[data-key]');
   if (tileBtn) { poopDetail(tileBtn.dataset.key); return; }
+  const cTile = e.target.closest('.pk[data-ckey]');
+  if (cTile) { collectionDetail(cTile.dataset.ckey); return; }
   const dTile = e.target.closest('.pk[data-dkey]');
   if (dTile) { dumplingDetail(dTile.dataset.dkey); return; }
   const arrow = e.target.closest('.pager .arrow');
@@ -2069,6 +2077,86 @@ function dumplingDetail(key) {
   $('.btn', box).onclick = () => { box.remove(); sfx.pop(); };
   document.body.appendChild(box);
   if (n) sfx.ding(); else sfx.pop();
+}
+
+// ---------- Collection Book ----------
+// Every hat, pen toy and maze theme, one tab each. Built from the game's own
+// lists, so anything new added to them shows up here by itself. To add a whole
+// new kind of collectible, add an entry to COLLECTIONS.
+const COLLECTIONS = [
+  { id: 'hats', label: 'Hats', items: () => Object.entries(G.HATS).map(([id, h]) => ({
+      id, name: h.name, art: Art.hatIcon(id), own: !!state.hats[id],
+      cost: h.cost, goal: h.goal, have: h.goal && Math.min(h.have(state), h.need), need: h.need,
+      where: 'Hats tab in the Shop',
+      note: () => { const on = state.piggies.filter(p => p.hat === id).map(p => p.name); return on.length ? `Worn by <b>${on.join(', ')}</b>` : ''; } })) },
+  { id: 'toys', label: 'Toys', items: () => Object.entries(G.TOYS).map(([id, t]) => ({
+      id, name: t.name, art: Art.toyArt(id), own: !!(state.toys[id] || (state.gotToys || {})[id]),
+      cost: t.cost, where: 'Toys tab in the Shop',
+      note: () => state.toys[id] === 'pen' ? 'In the pen' : state.toys[id] === 'box' ? 'In the toy box' : t.chew ? 'All eaten up! Buy more in the Shop.' : '' })) },
+  { id: 'mazes', label: 'Mazes', items: () => Object.entries(Art.MAZE_THEMES).map(([id, t]) => {
+      const u = MAZE_UNLOCKS[id] || {};
+      return { id, name: t.name, art: wallIcon(id), own: ownsTheme(id), cost: u.cost, goal: u.goal,
+        have: u.goal && Math.min(u.have(), u.need), need: u.need, where: 'Mazes tab in the Shop',
+        note: () => mazeTheme() === id ? 'Your maze theme now' : '' };
+    }) },
+];
+const CPAGE = 16;
+const cbookIdx = {};
+let cbookTab = 'hats';
+const cItem = (key) => { const [c, id] = key.split(':'); return COLLECTIONS.find(x => x.id === c).items().find(x => x.id === id); };
+// How to get one she doesn't have yet: its price, or the goal and how close she is.
+const cHow = (it) => it.cost ? `${it.cost} <i class="coin-sm">${Art.coinIcon()}</i>` : `${it.have} / ${it.need}`;
+
+function collectionBook() {
+  const tabs = COLLECTIONS.map(c => ({ c, items: c.items() }));
+  const total = tabs.reduce((n, t) => n + t.items.length, 0);
+  const got = tabs.reduce((n, t) => n + t.items.filter(i => i.own).length, 0);
+  const tile = (c, it) => it.own
+    ? `<button class="pk got" data-ckey="${c.id}:${it.id}">${it.art}<span>${it.name}</span><small class="how yes">Yours!</small></button>`
+    : `<button class="pk unknown ${it.goal ? 'earn' : ''}" data-ckey="${c.id}:${it.id}">${Art.shadow(it.art)}<span>${it.name}</span><small class="how">${cHow(it)}</small></button>`;
+  const panes = tabs.map(({ c, items }) => {
+    const pages = [];
+    for (let i = 0; i < items.length; i += CPAGE) pages.push(items.slice(i, i + CPAGE));
+    const pane = 'c-' + c.id;
+    const at = cbookIdx[pane] = Math.min(cbookIdx[pane] || 0, pages.length - 1);
+    const pad = pages.length > 1 ? CPAGE : 0;
+    const html = pages.map((pg, i) => {
+      const have = pg.filter(x => x.own).length;
+      const arrow = (d, l, ch) => pages.length > 1 ? `<button class="arrow" data-step="${d}" aria-label="${l}">${ch}</button>` : '';
+      return `<div class="tier" data-page="${i}" ${i === at ? '' : 'hidden'}>
+        <div class="pager">${arrow(-1, 'Previous page', '‹')}
+          <h4><span>${c.label}${pages.length > 1 ? ' ' + (i + 1) : ''}</span><b class="${have === pg.length ? 'done' : ''}">${have} / ${pg.length}</b></h4>
+          ${arrow(1, 'Next page', '›')}</div>
+        <div class="pk-grid">${pg.map(it => tile(c, it)).join('')}${'<i class="pk pk-pad"></i>'.repeat(Math.max(0, pad - pg.length))}</div>
+        ${pages.length > 1 ? `<div class="dots">${pages.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}<span>Page ${i + 1} of ${pages.length}</span></div>` : ''}</div>`;
+    }).join('');
+    return `<div class="book-pane ${pages.length > 1 ? 'swipe' : ''}" data-pane="${pane}" ${c.id === cbookTab ? '' : 'hidden'}>${html}</div>`;
+  }).join('');
+  popup('Collection Book', `<div class="book-tabs ctabs">${tabs.map(({ c, items }) => `<button class="${c.id === cbookTab ? 'on' : ''}" data-pane="c-${c.id}">${c.label} <small>${items.filter(i => i.own).length} / ${items.length}</small></button>`).join('')}</div>
+    <div class="book-prize"><span class="next-prize">Collected <b>${got}</b> / ${total}</span></div>
+    <p class="book-hint">Buy them in the Shop or win the gold ones!</p>
+    ${panes}`, 'Close');
+  sfx.pop();
+}
+// Remember which tab was open for next time.
+document.addEventListener('click', (e) => { const b = e.target.closest('.ctabs button'); if (b) cbookTab = b.dataset.pane.slice(2); });
+
+// A closer look at one collectible, shown over the open book.
+function collectionDetail(key) {
+  const it = cItem(key);
+  if (!it) return;
+  const facts = [];
+  if (it.own) { facts.push('<span><b>Yours!</b></span>'); const n = it.note(); if (n) facts.push(`<span>${n}</span>`); }
+  else if (it.cost) facts.push(`<span>Buy it for <b>${it.cost}</b> <i class="coin-sm">${Art.coinIcon()}</i></span>`, `<span>${it.where}</span>`);
+  else facts.push(`<span class="tier-pill">${it.goal}</span>`, `<span><b>${it.have}</b> / ${it.need} so far</span>`);
+  const box = el(`<div class="modal over"><div class="card panel">
+    <div class="ribbon"><span>${it.name}</span></div>
+    <div class="pig-card poop-card stuff-card">${it.own ? it.art : Art.shadow(it.art)}</div>
+    <div class="poop-facts">${facts.join('')}</div>
+    <div class="row center"><button class="btn big">Back</button></div></div></div>`);
+  $('.btn', box).onclick = () => { box.remove(); sfx.pop(); };
+  document.body.appendChild(box);
+  if (it.own) sfx.ding(); else sfx.pop();
 }
 
 // When every kind is on the page: big prize, a celebration, and a fresh page.

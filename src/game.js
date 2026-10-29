@@ -293,6 +293,7 @@ export function buyToy(state, id) {
   if (state.coins < t.cost) return { ok: false, reason: 'coins' };
   state.coins -= t.cost;
   state.toys[id] = toysInPen(state).length < toyLimit(state) ? 'pen' : 'box';
+  state.gotToys = { ...(state.gotToys || {}), [id]: true };   // stays in the Collection Book after a chew is eaten
   delete state.toyWear[id];
   return { ok: true, where: state.toys[id] };
 }
