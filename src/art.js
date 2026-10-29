@@ -849,7 +849,14 @@ export function funTile(theme, kind, px, py) {
   if (kind === 'tunnel') {
     const t = L.tunnel;
     const hole = `<path d="M${px + 14} ${py + 42} V${py + 28} Q${px + 14} ${py + 18} ${cx} ${py + 18} Q${px + 34} ${py + 18} ${px + 34} ${py + 28} V${py + 42}Z" fill="#2A1A14"/>`;
-    if (t === 'wormhole') return `<circle cx="${cx}" cy="${cy}" r="19" fill="#C77DFF" opacity=".35"/><circle cx="${cx}" cy="${cy}" r="15" fill="none" stroke="#C77DFF" stroke-width="4"/><path d="M${cx} ${cy} m-10 0 a10 10 0 1 1 10 10 a6 6 0 1 1 -6 -6 a3 3 0 1 1 3 3" fill="none" stroke="#F3E6FF" stroke-width="3" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="3" fill="#120E36"/>`;
+    if (t === 'wormhole') {
+      // A little spiral galaxy: glowing core and two curling arms full of stars.
+      const arm = (rot, c) => `<path d="M${cx} ${cy} q8 -2 10 6 q2 10 -10 13 q-15 2 -18 -12" transform="rotate(${rot} ${cx} ${cy})" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round" opacity=".9"/>`;
+      return `<circle cx="${cx}" cy="${cy}" r="20" fill="#5B3FC8" opacity=".35"/><circle cx="${cx}" cy="${cy}" r="14" fill="#7A4FE0" opacity=".4"/>
+        ${arm(0, '#FF8FC8')}${arm(180, '#8CC8FF')}
+        <circle cx="${cx}" cy="${cy}" r="6" fill="#FFF3B0"/><circle cx="${cx}" cy="${cy}" r="3" fill="#fff"/>
+        ${star4(px + 9, py + 10, 3, '#fff')}${star4(px + 40, py + 38, 3, '#FFE66B')}<circle cx="${px + 38}" cy="${py + 10}" r="1.5" fill="#fff"/><circle cx="${px + 10}" cy="${py + 37}" r="1.3" fill="#fff"/>`;
+    }
     if (t === 'pumpkin') return `<path d="M${px + 5} ${py + 44} V${py + 22} Q${px + 5} ${py + 8} ${cx} ${py + 8} Q${px + 43} ${py + 8} ${px + 43} ${py + 22} V${py + 44}Z" fill="#FF8A2A" stroke="#B9531A" stroke-width="3"/><path d="M${px + 15} ${py + 11} Q${px + 11} ${py + 26} ${px + 13} ${py + 42} M${px + 33} ${py + 11} Q${px + 37} ${py + 26} ${px + 35} ${py + 42}" stroke="#D96A1C" stroke-width="2" fill="none"/><path d="M${cx - 2} ${py + 8} Q${cx - 2} ${py + 2} ${cx + 3} ${py + 1}" stroke="#4F9A3C" stroke-width="3" fill="none" stroke-linecap="round"/>${hole}`;
     if (t === 'rainbow') return ['#FF8FA8', '#FFC27A', '#FFE66B', '#8EE3A0', '#8CC8FF', '#C5A3FF'].map((c, k) => `<path d="M${px + 4 + k * 3} ${py + 44} V${py + 26} Q${px + 4 + k * 3} ${py + 6 + k * 3} ${cx} ${py + 6 + k * 3} Q${px + 44 - k * 3} ${py + 6 + k * 3} ${px + 44 - k * 3} ${py + 26} V${py + 44}" fill="none" stroke="${c}" stroke-width="3.2"/>`).join('') + hole.replace('#2A1A14', '#6B4A8C');
     if (t === 'igloo') return `<path d="M${px + 4} ${py + 44} Q${px + 4} ${py + 8} ${cx} ${py + 8} Q${px + 44} ${py + 8} ${px + 44} ${py + 44}Z" fill="#FFFFFF" stroke="#7FB9DD" stroke-width="3"/><path d="M${px + 7} ${py + 32} H${px + 41} M${px + 11} ${py + 20} H${px + 37} M${px + 18} ${py + 20} V${py + 32} M${px + 30} ${py + 20} V${py + 32} M${cx} ${py + 9} V${py + 20}" stroke="#BFDDEF" stroke-width="2"/>${hole.replace('#2A1A14', '#3F6E8F')}`;
@@ -857,18 +864,20 @@ export function funTile(theme, kind, px, py) {
     const [c, d] = t;
     return `<path d="M${px + 5} ${py + 44} V${py + 24} Q${px + 5} ${py + 6} ${cx} ${py + 6} Q${px + 43} ${py + 6} ${px + 43} ${py + 24} V${py + 44}Z" fill="${c}" stroke="${d}" stroke-width="3"/>${hole}`;
   }
-  // bridge: drawn over a wall square
-  const b = L.bridge;
-  if (b === 'cloud') return `<g fill="#fff" stroke="#E7B9DA" stroke-width="2.5"><circle cx="${px + 12}" cy="${py + 30}" r="10"/><circle cx="${px + 36}" cy="${py + 30}" r="10"/><circle cx="${cx}" cy="${py + 22}" r="13"/></g><path d="M${px + 4} ${py + 34} H${px + 44}" stroke="#fff" stroke-width="10" stroke-linecap="round"/>${star4(px + 38, py + 12, 4, '#FF8FC8')}`;
-  if (b === 'turtle') return `<ellipse cx="${px + 24}" cy="${py + 38}" rx="5" ry="4" fill="#8ED46A" stroke="#3E7A2C" stroke-width="2"/><ellipse cx="${px + 9}" cy="${py + 34}" rx="4" ry="3" fill="#8ED46A" stroke="#3E7A2C" stroke-width="2"/><ellipse cx="${px + 39}" cy="${py + 34}" rx="4" ry="3" fill="#8ED46A" stroke="#3E7A2C" stroke-width="2"/><circle cx="${px + 24}" cy="${py + 6}" r="6" fill="#8ED46A" stroke="#3E7A2C" stroke-width="2"/><circle cx="${px + 22}" cy="${py + 5}" r="1.2" fill="#2A1A14"/><circle cx="${px + 26}" cy="${py + 5}" r="1.2" fill="#2A1A14"/>
-    <path d="M${px + 5} ${py + 30} Q${px + 5} ${py + 9} ${cx} ${py + 9} Q${px + 43} ${py + 9} ${px + 43} ${py + 30} Q${cx} ${py + 37} ${px + 5} ${py + 30}Z" fill="#5FAE4E" stroke="#3E7A2C" stroke-width="2.5"/>
-    <path d="M${cx} ${py + 12} L${cx - 7} ${py + 20} L${cx} ${py + 28} L${cx + 7} ${py + 20}Z M${cx - 7} ${py + 20} H${px + 9} M${cx + 7} ${py + 20} H${px + 39}" fill="#8ED46A" stroke="#3E7A2C" stroke-width="1.8"/>`;
-  const [c, d] = b;
-  const glow = theme === 'galaxy' ? ` style="filter:drop-shadow(0 0 3px #FFE66B)"` : '';
-  return `<g${glow}><path d="M${px} ${py + 34} Q${cx} ${py + 14} ${px + 48} ${py + 34} V${py + 40} Q${cx} ${py + 22} ${px} ${py + 40}Z" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>
-    ${[8, 16, 24, 32, 40].map(x => `<path d="M${px + x} ${py + 36 - (x < 24 ? x : 48 - x) * .55} v6" stroke="${d}" stroke-width="1.8"/>`).join('')}
-    <path d="M${px + 2} ${py + 24} Q${cx} ${py + 4} ${px + 46} ${py + 24}" stroke="${d}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M${px + 8} ${py + 30} V${py + 19} M${px + 40} ${py + 30} V${py + 19} M${cx} ${py + 24} V${py + 13}" stroke="${d}" stroke-width="2.5" stroke-linecap="round"/></g>`;
+  // Bounce pad: a springy trampoline on the floor; the piggy boings over
+  // the next wall. The mat takes the theme's colour.
+  const [mat, edge] = { hay: ['#FF9A3C', '#B9632A'], pumpkin: ['#FF8A2A', '#B9531A'], galaxy: ['#8F78E8', '#2A1C6E'], unicorn: ['#FF8FC8', '#C96AD6'],
+    kitchen: ['#EE5146', '#B83A30'], snow: ['#8CD3FF', '#2B74AE'], sea: ['#5CC8C0', '#2E8E86'], poop: ['#F2B624', '#A87A10'] }[theme] || ['#FF9A3C', '#B9632A'];
+  const springs = Array.from({ length: 12 }, (_, k) => {
+    const an = k / 12 * Math.PI * 2, c1 = Math.cos(an), s1 = Math.sin(an);
+    return `M${cx + c1 * 13} ${cy + 2 + s1 * 11} L${cx + c1 * 18} ${cy + 2 + s1 * 15}`;
+  }).join(' ');
+  return `<ellipse cx="${cx}" cy="${cy + 4}" rx="21" ry="18" fill="#000" opacity=".12"/>
+    <ellipse cx="${cx}" cy="${cy + 2}" rx="20" ry="17" fill="#E9E4DA" stroke="#7A6A5A" stroke-width="3"/>
+    <path d="${springs}" stroke="#9A9A9A" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="${cx}" cy="${cy + 2}" rx="13" ry="11" fill="${mat}" stroke="${edge}" stroke-width="2.5"/>
+    <ellipse cx="${cx - 4}" cy="${cy - 2}" rx="5" ry="2.5" fill="#fff" opacity=".55"/>
+    <path d="M${cx - 4} ${cy + 5} l4 -5 l4 5" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
 }
 
 // A veggie wall for the maze: a chunky crate in the veggie's color with the
