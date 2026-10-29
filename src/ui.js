@@ -92,7 +92,7 @@ function buildShell() {
       <div class="hud-coins"><span class="coin-ico">${Art.coinIcon()}</span><span id="coins">0</span></div>
       <button class="hud-gear" id="gear" aria-label="Settings">${Art.icon('gear')}</button>
     </header>
-    <div id="coach" class="coach" hidden><span class="coach-pig" id="coachpig"></span><p id="coachtext"></p><button class="coach-skip" id="coachskip" aria-label="Skip tutorial">✕</button></div>
+    <div id="coach" class="coach" hidden><span class="coach-pig" id="coachpig"></span><p id="coachtext"></p><button class="btn coach-ok" id="coachok" hidden>OK!</button><button class="coach-skip" id="coachskip" aria-label="Skip">✕</button></div>
     <main id="view"></main>
     <nav class="tabs">
       <button data-tab="steamer" class="tab" aria-label="Pen"><span class="ico">${Art.icon('pen')}</span>Pen</button>
@@ -105,9 +105,10 @@ function buildShell() {
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); if (tab === 'shop' && b.dataset.tab === 'steamer') tut('home'); tab = b.dataset.tab; sfx.pop(); render(true); }));
   $('#name').addEventListener('click', renameDialog);
   $('#poopbook').addEventListener('click', () => { poopBook(); tut('poopbook'); });
-  $('#dumpbook').addEventListener('click', dumplingBook);
+  $('#dumpbook').addEventListener('click', () => { dumplingBook(); tut('dumpbook'); });
   $('#gear').addEventListener('click', () => { sfx.pop(); settings(); });
-  $('#coachskip').addEventListener('click', () => confirmBox('Skip the tutorial?', () => { state.tutorial = { done: true }; render(); }));
+  $('#coachskip').addEventListener('click', () => { if (!tutStep()) return tipDone(); confirmBox('Skip the tutorial?', () => { state.tutorial = { done: true }; render(); }); });
+  $('#coachok').addEventListener('click', () => tipDone());
 }
 
 // ---------- Tutorial ----------
@@ -140,6 +141,51 @@ let shopLook = 0;   // until when the shop step's arrow points at the coins
 const TAB_NAMES = { steamer: 'Pen', garden: 'Garden', kitchen: 'Kitchen', maze: 'Maze', shop: 'Shop' };
 const TUT_REWARD = 30;
 
+// ---------- Tips ----------
+// One-time tips that show up the first time something new matters, with the
+// same spotlight and arrow as the tutorial. A tip with `on` ends when she does
+// that action; a `look` tip just shows something and ends with OK.
+const hasSpecial = () => Object.keys(state.recipeBook || {}).some(k => k.includes(':'));
+const funTip = (kind, text) => ({ id: 'fun-' + kind, tab: 'maze', look: true, text: () => text,
+  when: () => !run && (state.maze.fun || []).some(f => f.kind === kind), target: `.mfun-tile[data-kind="${kind}"]` });
+const TIPS = [
+  { id: 'harvest', tab: 'garden', on: 'harvest', text: () => 'A veggie is ready! Tap it to pick it.', when: () => !!$('.plot.ready'), target: '.plot.ready' },
+  { id: 'seed', tab: 'garden', on: 'plant', when: () => G.unlockedFillings(state).length > 5 && !!$('.plot.empty'), target: '.plot.empty',
+    text: () => `You got a new seed! Tap Plant to grow ${G.FILLINGS[G.unlockedFillings(state).filter(f => f !== 'hay').pop()].name}.` },
+  { id: 'tools', tab: 'maze', look: true, text: () => 'Tap squares to build hay walls. Eraser takes them away!', when: () => !run, target: '.mtile[data-tile]' },
+  funTip('zoom', 'A zoom pad! Your piggy zooms fast after this.'),
+  funTip('tunnel', 'Tunnels! Your piggy goes in one and pops out the other.'),
+  funTip('bounce', 'A bridge! Your piggy can hop over the wall here.'),
+  { id: 'carrot', tab: 'maze', look: true, text: () => 'Drop a carrot by the treasure! Your piggy runs to it.',
+    when: () => run && !run.done && (state.maze.treasure || []).length > 0, target: '#mtreasure > *' },
+  { id: 'theme', tab: 'maze', on: 'theme', text: () => 'A new maze look! Tap Theme to pick it.',
+    when: () => !run && Object.keys(Art.MAZE_THEMES).filter(ownsTheme).length > 1, target: '.mtheme' },
+  { id: 'toy', tab: 'steamer', on: 'toy', text: () => 'A new toy! Tap it and your piggy comes to play.',
+    when: () => G.toysInPen(state).length > 0, target: () => `.toy[data-toy="${G.toysInPen(state)[0]}"]` },
+  { id: 'hat', tab: 'shop', look: true, text: () => 'Hats fit every piggy! Tap a face, then tap a hat.',
+    when: () => state.shopTab === 'hats' && Object.keys(state.hats).length > 0 && state.piggies.length > 1, target: '.hat-pigs' },
+  { id: 'sleepover', tab: 'shop', on: 'sleepover', text: () => 'Pen full? Extra piggies stay in the Sleepover House!',
+    when: () => (state.shopTab || 'piggies') === 'piggies' && state.piggies.length >= G.capacity(state), target: '#sleepbtn' },
+  { id: 'rare', tab: null, on: 'dumpbook', text: () => 'Rare dumplings go in your Dumpling Book! Tap it to look.', when: hasSpecial, target: '#dumpbook' },
+];
+let tipNow = null;   // the tip showing right now
+
+function tipDone() {
+  if (!tipNow) return;
+  state.tips = { ...(state.tips || {}), [tipNow.id]: true };
+  tipNow = null; tutWait = Date.now() + 600;
+  sfx.pop(); save(state); render();
+}
+
+// The tip to show now, if any: the first unseen one that fits this tab.
+function findTip() {
+  if (tutStep() || $('.modal')) return tipNow;
+  const seen = state.tips || {};
+  if (tipNow && (tipNow.tab && tipNow.tab !== tab || !tipNow.when())) tipNow = null;
+  if (!tipNow) tipNow = TIPS.find(t => !seen[t.id] && (!t.tab || t.tab === tab) && t.when()) || null;
+  return tipNow;
+}
+
 function tutStep() {
   const t = state.tutorial;
   return t && !t.done && TUTORIAL[t.step] ? t.step : 0;
@@ -148,6 +194,7 @@ function tutStep() {
 // Called by the game actions. Advances when the action is the one awaited.
 function tut(action) {
   const i = tutStep();
+  if (!i && tipNow && tipNow.on === action) return tipDone();
   if (!i || TUTORIAL[i].on !== action) return;
   state.tutorial.step += 1;
   tutWait = Date.now() + 1400;
@@ -170,7 +217,8 @@ function updateCoach() {
   const coach = $('#coach');
   const i = tutStep();
   document.querySelectorAll('.hi').forEach(e => e.classList.remove('hi'));
-  if (!i) { coach.hidden = true; document.body.classList.remove('tut-on'); arrowTarget = ''; tutEntered = 0; positionArrow(); return; }
+  if (!i) { tutEntered = 0; return showTip(coach); }
+  $('#coachok').hidden = true;
   const step = TUTORIAL[i];
   coach.hidden = false;
   document.body.classList.add('tut-on');
@@ -193,11 +241,30 @@ function updateCoach() {
   positionArrow();
 }
 
+function showTip(coach) {
+  const t = Date.now() < tutWait ? null : findTip();
+  if (Date.now() < tutWait) setTimeout(updateCoach, tutWait - Date.now() + 20);
+  if (!t) { coach.hidden = true; document.body.classList.remove('tut-on'); arrowTarget = ''; positionArrow(); return; }
+  coach.hidden = false;
+  document.body.classList.add('tut-on');
+  if ($('#coachpig').dataset.id !== String(current().id)) { $('#coachpig').dataset.id = String(current().id); $('#coachpig').innerHTML = Art.piggySide({ coat: current().coat }); }
+  const html = `<small>New!</small>${esc(t.text())}`;
+  if ($('#coachtext').innerHTML !== html) {
+    $('#coachtext').innerHTML = html;
+    coach.classList.remove('pop'); void coach.offsetWidth; coach.classList.add('pop'); sfx.ding();
+  }
+  $('#coachok').hidden = !t.look;
+  const targets = typeof t.target === 'function' ? t.target() : t.target;
+  document.querySelectorAll(targets).forEach(e => e.classList.add('hi'));
+  arrowTarget = targets;
+  positionArrow();
+}
+
 // While the tutorial is on, only the thing she should tap can be tapped
 // (plus popups and the skip button). Everything else is dimmed and ignores taps.
 // While the maze runs she can tap anywhere (cheer, drop carrots) and watch.
 function tutBlock(e) {
-  if (!tutStep() || run || !(e.target instanceof Element)) return;
+  if (!(tutStep() || tipNow) || run || !(e.target instanceof Element)) return;
   if (e.target.closest('.modal, #coach, .hi') && (Date.now() >= tutWait || e.target.closest('.modal, #coach'))) return;
   e.stopPropagation();
   if (e.type === 'click') e.preventDefault();
@@ -370,7 +437,7 @@ function updateSteamer() {
     if (state.toys[id] !== 'pen') { if (d) d.remove(); continue; }
     if (!d) {
       d = el(`<button class="toy" data-toy="${id}" aria-label="${t.name}" style="--x:${t.x};--y:${t.y};z-index:${depth(t.y)}"></button>`);
-      d.addEventListener('click', () => { toyBounce(id); goToToy(current(), id); });
+      d.addEventListener('click', () => { toyBounce(id); goToToy(current(), id); tut('toy'); });
       floor.appendChild(d);
     }
     const left = t.chew ? Math.ceil(G.toyLeft(state, id) * 4) / 4 : 1;   // chews redraw a quarter at a time
@@ -924,7 +991,7 @@ function onPlot(i) {
     if (G.plantProgress(state, i) < 1) { sfx.pop(); toast('Still growing...'); tut('plant'); return; }
     gardenerRun(i, () => {
       const r = G.harvest(state, i);
-      if (r.ok) { sfx.coin(); toast(`+2 ${G.FILLINGS[r.filling].name}`); floatCoin(1); render(); }
+      if (r.ok) { sfx.coin(); toast(`+2 ${G.FILLINGS[r.filling].name}`); floatCoin(1); tut('harvest'); render(); }
     }, () => { const pl = $(`.plot[data-plot="${i}"] .plant`); if (pl) pl.classList.add('pulled'); });
     return;
   }
@@ -1146,7 +1213,7 @@ function updateMaze() {
   const fsig = mazeTheme() + (m.fun || []).map(f => `${f.x},${f.y},${f.kind}`).join('|');
   if (fun.dataset.sig !== fsig) {
     fun.dataset.sig = fsig;
-    fun.innerHTML = (m.fun || []).map(f => Art.funTile(mazeTheme(), f.kind === 'bounce' ? 'bridge' : f.kind, f.x * CELL, f.y * CELL)).join('');
+    fun.innerHTML = (m.fun || []).map(f => `<g class="mfun-tile" data-kind="${f.kind}">${Art.funTile(mazeTheme(), f.kind === 'bounce' ? 'bridge' : f.kind, f.x * CELL, f.y * CELL)}</g>`).join('');
   }
   const tre = $('#mtreasure');
   const tsig = (m.treasure || []).map(t => `${t.x},${t.y},${t.kind},${t.filling || ''}`).join('|');
@@ -1250,7 +1317,7 @@ function updateTray() {
   const tile = (id, icon, label) => `<button class="mtile ${id === mazeTile ? 'on' : ''}" data-tile="${id}"><i>${icon}</i><span>${label}</span></button>`;
   tray.innerHTML = tile(1, wallIcon(style), 'Wall') + tile(0, Art.eraserIcon(), 'Eraser') +
     `<button class="mtile mtheme"><i>${themePreview(style)}</i><span>Theme</span></button>`;
-  $('.mtheme', tray).addEventListener('click', pickMazeStyle);
+  $('.mtheme', tray).addEventListener('click', () => { tut('theme'); pickMazeStyle(); });
   tray.querySelectorAll('.mtile[data-tile]').forEach(b => b.addEventListener('click', () => {
     if (b.classList.contains('locked')) { sfx.nope(); toast('Find more recipes to unlock!'); return; }
     mazeTile = +b.dataset.tile;
@@ -1468,7 +1535,7 @@ function updateShop() {
     const fullNote = `Your pen is full! Pick a new piggy and choose who goes on a sleepover${state.upgrades.pen2 ? '.' : ', or buy a bigger pen in Upgrades.'}`;
     adopt.innerHTML = `<p class="hint">${room ? 'Pick one to join the family. Colors and names are a surprise!' : fullNote}</p><div class="offers"></div>
       <button class="sleep-btn" id="sleepbtn">${Art.toyArt('hut')}<span><b>Sleepover House</b><small>${state.away.length ? `${state.away.length} ${state.away.length === 1 ? 'piggy is' : 'piggies are'} on a sleepover` : 'Nobody is on a sleepover yet'}</small></span></button>`;
-    $('#sleepbtn', adopt).onclick = sleepoverHouse;
+    $('#sleepbtn', adopt).onclick = () => { tut('sleepover'); sleepoverHouse(); };
     const box = $('.offers', adopt);
     offer.forEach((o, i) => {
       const b = el(`<button class="offer"><div class="pig-card">${Art.piggySide({ coat: o.coat })}</div><b>${esc(o.name)}</b><small>${G.BREEDS[o.coat.breed].name}</small><em>${G.BREEDS[o.coat.breed].blurb}</em>

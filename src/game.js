@@ -382,6 +382,7 @@ export function newState(now = Date.now()) {
     pantry: { carrot: 2, cabbage: 1, pea: 1, strawberry: 0, hay: 2 },
     dumplings: { 'carrot+carrot': 1 }, // one dumpling to feed during the tutorial
     tutorial: { step: 1 },          // first-play tutorial progress; { done: true } when finished
+    tips: {},                       // one-time tips already shown (see TIPS in ui.js)
     discovered: [],                 // recipe keys found so far
     recipeBook: {},                 // dumpling key -> how many ever steamed (recipes, shiny, specials)
     dbookPrizes: {},                // Dumpling Book pages whose prize was paid
@@ -404,6 +405,17 @@ export function newState(now = Date.now()) {
 // Older saves had one `piggy`; lift it into the `piggies` list.
 export function migrate(state) {
   if (!state.tutorial) state.tutorial = { done: true };   // saves from before the tutorial existed
+  // Saves from before tips: skip the tips for things she has clearly done already.
+  if (!state.tips) {
+    const t = state.tips = {};
+    const played = (state.discovered || []).length >= 3;
+    if (played) t.harvest = t.seed = true;
+    if ((state.stats || {}).mazes) t.tools = t['fun-zoom'] = t.carrot = true;
+    if (state.mazeStyle && state.mazeStyle !== 'hay') t.theme = true;
+    if (Object.keys(state.toys || {}).length) t.toy = true;
+    if ((state.away || []).length) t.sleepover = true;
+    if (Object.keys(state.recipeBook || {}).some(k => k.includes(':'))) t.rare = true;
+  }
   if (!state.away) state.away = [];                        // piggies on a sleepover
   if (!state.toys) state.toys = {};
   if (!state.toyWear) state.toyWear = {};
