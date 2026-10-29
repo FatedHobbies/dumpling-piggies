@@ -832,7 +832,7 @@ function mazeView() {
   const w = M.COLS * CELL, h = M.ROWS * CELL;
   const v = el(`<section class="maze">
     <div class="maze-bar panel">
-      <p class="maze-hint" id="mhint"></p>
+      <div class="maze-top"><p class="maze-hint" id="mhint"></p><button class="btn btn-grey mstyle" id="mstyle">Style</button></div>
       <div class="maze-btns" id="mbtns"></div>
       <div class="maze-tray" id="mtray"></div>
     </div>
@@ -869,6 +869,7 @@ function mazeView() {
   $('#mfinish', v).innerHTML = `<g transform="translate(-20 -20) scale(.62)">${Art.dumpling('cabbage+carrot', 64)}</g>`;
   $('#mrot', v).innerHTML = Art.piggyTop({ hat: current().hat, coat: current().coat });
   $('#mpig', v).addEventListener('click', onCheer);
+  $('#mstyle', v).addEventListener('click', pickMazeStyle);
   mazeAngle = 0;
   return v;
 }
@@ -880,13 +881,12 @@ function updateMaze() {
   $('.maze-bar').classList.toggle('running', !!run);
   for (const r of document.querySelectorAll('.mcell')) {
     const x = +r.dataset.x, y = +r.dataset.y;
-    const c = m.cells[M.idx(x, y)];
-    r.classList.toggle('wall', c === 1);
-    const vw = r.querySelector('.vwall'), vsig = typeof c === 'string' ? c : '';
+    const wall = M.isWall(m, x, y), style = state.mazeStyle || 'hay';
+    r.classList.toggle('wall', wall && style === 'hay');
+    const vw = r.querySelector('.vwall'), vsig = wall && style !== 'hay' ? style : '';
     if (vw.dataset.sig !== vsig) {
       vw.dataset.sig = vsig;
-      const f = vsig.slice(2);
-      vw.innerHTML = vsig && G.FILLINGS[f] ? Art.veggieWall(f, G.FILLINGS[f].color).replace('<svg ', `<svg width="${CELL - 4}" height="${CELL - 4}" `) : '';
+      vw.innerHTML = vsig && G.FILLINGS[vsig] ? Art.veggieWall(vsig, G.FILLINGS[vsig].color).replace('<svg ', `<svg width="${CELL - 4}" height="${CELL - 4}" `) : '';
     }
     r.classList.toggle('start', x === M.START.x && y === M.START.y);
     r.classList.toggle('seen', !!(run && run.visited[M.idx(x, y)]));
@@ -910,7 +910,7 @@ function updateMaze() {
   const bsig = run ? 'run' : ok ? 'ok' : 'blocked';
   const loot = (m.treasure || []).length;
   if (run) hint.textContent = run.done ? 'Yay!' : loot ? `Drop a carrot by the treasure! (${run.lures} left)` : `Tap a square to drop a carrot (${run.lures} left). Tap ${current().name} to cheer!`;
-  else hint.textContent = ok ? 'Pick a wall, tap squares, then press Go!' : `${current().name} can't reach the dumpling. Open a path!`;
+  else hint.textContent = ok ? 'Tap squares to build walls!' : `${current().name} can't reach the dumpling. Open a path!`;
   updateTray();
   if (btns.dataset.sig === bsig) return;
   btns.dataset.sig = bsig;
@@ -932,32 +932,38 @@ function btn(label, onClick, cls = '') {
   return b;
 }
 
-// The tile tray: hay walls, the eraser, then a wall for every veggie she has
-// unlocked. Locked veggies and the fun tiles still to come show as "?".
+// The tile tray: Wall (in the maze's style), Eraser, then the fun tiles,
+// which show as "?" until they're unlocked. The Style button picks the look.
 let mazeTile = 1;
 const FUN_TILES = 4;
+const wallIcon = (style) => style === 'hay' ? Art.hayWallIcon() : Art.veggieWall(style, G.FILLINGS[style].color);
 function updateTray() {
   const tray = $('#mtray');
-  const have = G.unlockedFillings(state).filter(f => f !== 'hay');
-  const locked = G.FILLING_ORDER.filter(f => f !== 'hay' && !have.includes(f));
-  const sig = run ? 'run' : `${mazeTile}|${have.join()}`;
+  const style = state.mazeStyle || 'hay';
+  const sig = run ? 'run' : `${mazeTile}|${style}`;
   if (tray.dataset.sig === sig) return;
   tray.dataset.sig = sig;
   tray.hidden = !!run;
+  $('#mstyle').hidden = !!run;
   if (run) return;
   const tile = (id, icon, label) => `<button class="mtile ${id === mazeTile ? 'on' : ''}" data-tile="${id}"><i>${icon}</i><span>${label}</span></button>`;
-  const mystery = (why) => `<button class="mtile locked" data-why="${why}"><i>?</i><span>???</span></button>`;
-  tray.innerHTML = tile(1, Art.hayWallIcon(), 'Hay') + tile(0, Art.eraserIcon(), 'Eraser')
-    + have.map(f => tile('w:' + f, Art.veggieWall(f, G.FILLINGS[f].color), G.FILLINGS[f].name)).join('')
-    + locked.map(() => mystery('veggie')).join('') + Array.from({ length: FUN_TILES }, () => mystery('recipes')).join('');
+  tray.innerHTML = tile(1, wallIcon(style), 'Wall') + tile(0, Art.eraserIcon(), 'Eraser')
+    + Array.from({ length: FUN_TILES }, () => `<button class="mtile locked"><i>?</i><span>???</span></button>`).join('');
   tray.querySelectorAll('.mtile').forEach(b => b.addEventListener('click', () => {
-    if (b.classList.contains('locked')) { sfx.nope(); toast(b.dataset.why === 'veggie' ? 'Grow new veggies to unlock!' : 'Find more recipes to unlock!'); return; }
-    const t = b.dataset.tile;
-    mazeTile = t === '1' ? 1 : t === '0' ? 0 : t;
+    if (b.classList.contains('locked')) { sfx.nope(); toast('Find more recipes to unlock!'); return; }
+    mazeTile = +b.dataset.tile;
     sfx.pop(); render();
   }));
-  const on = tray.querySelector('.on');
-  if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+function pickMazeStyle() {
+  const have = G.unlockedFillings(state).filter(f => f !== 'hay');
+  const locked = G.FILLING_ORDER.filter(f => f !== 'hay' && !have.includes(f));
+  picker('Maze style', [
+    { id: 'hay', html: Art.hayWallIcon(), label: 'Hay' },
+    ...have.map(f => ({ id: f, html: wallIcon(f), label: G.FILLINGS[f].name })),
+    ...locked.map(f => ({ id: f, html: '<i class="q">?</i>', label: '???', locked: true })),
+  ], (id) => { state.mazeStyle = id; sfx.pop(); persist(); render(); }, () => toast('Grow new veggies to unlock!'));
 }
 
 let mazeAngle = 0;
@@ -1452,11 +1458,11 @@ function popup(title, html, button = 'OK', onClose = null) {
   document.body.appendChild(box);
 }
 
-function picker(title, options, onPick) {
+function picker(title, options, onPick, onLocked = null) {
   const box = el(`<div class="modal"><div class="card panel"><div class="ribbon"><span>${title}</span></div><div class="opts ${options.length > 6 ? 'many' : ''}"></div><div class="row center"><button class="btn btn-grey">Cancel</button></div></div></div>`);
   for (const o of options) {
-    const b = el(`<button class="opt tile">${o.html}<span>${o.label}</span>${o.count != null ? `<b class="count have">${o.count}</b>` : ''}</button>`);
-    b.onclick = () => { box.remove(); onPick(o.id); };
+    const b = el(`<button class="opt tile ${o.locked ? 'locked' : ''}">${o.html}<span>${o.label}</span>${o.count != null ? `<b class="count have">${o.count}</b>` : ''}</button>`);
+    b.onclick = () => { if (o.locked) { sfx.nope(); if (onLocked) onLocked(o.id); return; } box.remove(); onPick(o.id); };
     $('.opts', box).appendChild(b);
   }
   $('.btn-grey', box).onclick = () => box.remove();

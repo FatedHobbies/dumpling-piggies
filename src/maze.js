@@ -14,15 +14,15 @@ export function newMaze() {
 export const idx = (x, y) => y * COLS + x;
 const inside = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS;
 const same = (a, b) => a.x === b.x && a.y === b.y;
-// A cell is 0 (open), 1 (hay bale) or 'w:<veggie>' (a veggie wall from the tile tray).
 export const isWall = (m, x, y) => !!m.cells[idx(x, y)];
 
-// Paints a square with the picked tile; tapping the same tile again clears it.
+// Paints a square with the picked tile (1 wall, 0 eraser); tapping a wall
+// with the wall tile again clears it.
 export function toggleWall(m, x, y, tile = 1) {
   if (!inside(x, y) || same({ x, y }, START) || same({ x, y }, FINISH) || treasureAt(m, x, y)) return false;
   const i = idx(x, y);
   if (!tile && !m.cells[i]) return false;
-  m.cells[i] = m.cells[i] === tile ? 0 : tile;
+  m.cells[i] = m.cells[i] ? 0 : tile;
   return true;
 }
 
