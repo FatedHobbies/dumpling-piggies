@@ -138,6 +138,7 @@ h2 { font-family: var(--display); font-size: 1.2rem; margin: 18px 0 8px; }
 @keyframes bounce { from { margin-top: -14px; } to { margin-top: 0; } }
 @keyframes bounce-up { from { margin-top: 14px; } to { margin-top: 0; } }
 .tut-text { font-family: var(--display); font-weight: 600; font-size: 1.15rem; color: var(--ink) !important; }
+.tut-go { font-weight: 700; color: var(--blue-dark) !important; }
 .hi { animation: hi .8s ease-in-out infinite alternate; }
 .hi:not(.piggy) { outline: 4px solid #FFD34D; outline-offset: 3px; border-radius: 16px; }
 .piggy.hi .pig-art { filter: drop-shadow(0 0 6px #FFD34D) drop-shadow(0 0 12px #FFD34D); }

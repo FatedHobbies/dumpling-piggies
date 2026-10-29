@@ -104,7 +104,7 @@ function buildShell() {
     <div id="toasts"></div>`;
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); if (tab === 'shop' && b.dataset.tab === 'steamer') tut('home'); tab = b.dataset.tab; sfx.pop(); render(true); }));
   $('#name').addEventListener('click', renameDialog);
-  $('#poopbook').addEventListener('click', poopBook);
+  $('#poopbook').addEventListener('click', () => { poopBook(); tut('poopbook'); });
   $('#dumpbook').addEventListener('click', dumplingBook);
   $('#gear').addEventListener('click', () => { sfx.pop(); settings(); });
   $('#coachskip').addEventListener('click', () => confirmBox('Skip the tutorial?', () => { state.tutorial = { done: true }; render(); }));
@@ -112,24 +112,33 @@ function buildShell() {
 
 // ---------- Tutorial ----------
 // Each step waits for one action. `tab` is where it happens; the coach bar
-// points there first if she is somewhere else.
+// points there first if she is somewhere else. `enter` runs once when the
+// step starts and sets things up so the step can always be done (a hungry
+// piggy to feed, a poop to scoop, veggies to cook).
+const lowNeed = (k) => { const p = current(); if (p[k] >= NEEDY) p[k] = NEEDY - 5; needPig = p.id; };
 const TUTORIAL = [
   null,
-  { tab: 'steamer', on: 'pet',    text: n => `Tap ${n} to pet them!`, target: '.piggy' },
-  { tab: 'steamer', on: 'feed',   text: n => `${n} is hungry! Tap the dumpling to feed them.`, target: '.dump' },
-  { tab: 'steamer', on: 'scoop',  text: n => `Uh oh, a poop! Tap it to scoop it up.`, target: '.poop', enter: () => { if (!state.poops.length) G.addPoop(state); } },
-  { tab: 'garden',  on: 'plant',  text: n => `Poop makes compost! Tap a plot to plant a veggie.`, target: '.plot.empty' },
-  { tab: 'kitchen', on: 'cook',   text: n => `Pick two veggies, then tap Steam it!`, target: () => selected.length < 2 ? '.fill:not(:disabled)' : '#cook' },
-  { tab: 'maze',    on: 'surprise', text: n => `Tap Surprise me to build a maze for ${n}! You can also tap squares to add hay walls.`, target: '.surprise' },
-  { tab: 'maze',    on: 'maze',   text: n => `Tap Go! and watch ${n} run. Tap ${n} to cheer!`, target: () => run ? '#mpig' : '.go' },
-  { tab: null,      on: 'rename', text: n => `You earned ${G.RENAME_COST} coins! Tap ${n}'s name up top to rename them.`, target: '#name' },
+  { tab: 'steamer', on: 'pet',   text: n => `${n} wants a pet! Tap ${n}.`, target: '.piggy', enter: () => lowNeed('fun') },
+  { tab: 'steamer', on: 'feed',  text: n => `${n} is hungry! Tap the dumpling.`, target: '.dump',
+    enter: () => { lowNeed('hunger'); if (!Object.values(state.dumplings).some(c => c > 0)) state.dumplings['carrot+carrot'] = 1; } },
+  { tab: 'steamer', on: 'scoop', text: n => `Uh oh, a poop! Tap it to scoop it up.`, target: '.poop', enter: () => { if (!state.poops.length) G.addPoop(state); } },
+  { tab: null,      on: 'poopbook', text: n => `Every poop goes in your Poop Book! Tap it to look.`, target: '#poopbook' },
+  { tab: 'garden',  on: 'plant', text: n => `Poop helps veggies grow! Tap Plant.`, target: () => $('.plot.empty') ? '.plot.empty' : '.plot',
+    enter: () => { if (state.compost < 1) state.compost = 1; } },
+  { tab: 'kitchen', on: 'cook',  text: n => `Tap two veggies, then tap Steam it!`, target: () => selected.length < 2 ? '.fill:not(:disabled)' : '#cook',
+    enter: () => { if (Object.values(state.pantry).reduce((a, b) => a + b, 0) < 2) state.pantry.carrot = (state.pantry.carrot || 0) + 2; } },
+  { tab: 'steamer', on: 'feed',  text: n => `Yum! Feed your new dumpling to ${n}.`, target: '.dump', enter: () => lowNeed('hunger') },
+  { tab: 'maze',    on: 'maze',  text: n => `Tap Surprise me, then Go! Tap ${n} to cheer.`,
+    target: () => run ? '#mpig' : state.maze.cells.some(c => c) ? '.go' : '.surprise' },
   // The shop is only shown: the arrow rests on her coins, then moves to the
   // Pen tab, and going home ends the tutorial.
-  { tab: 'shop',    on: 'home',   text: n => `This is the Shop! Tap the tabs to find piggies, upgrades, hats and toys. Then tap the Pen to go home.`,
-    enter: () => { shopLook = 0; }, target: () => !shopLook || Date.now() < shopLook ? '.hud-coins' : '.tab[data-tab="steamer"]', ok: () => { shopLook = Date.now() + 2500; setTimeout(render, 2600); } },
+  { tab: 'shop',    on: 'home',  text: n => `Look around the Shop! Then tap Pen to go home.`,
+    enter: () => { shopLook = 0; },
+    target: () => { if (!shopLook && !$('.modal')) { shopLook = Date.now() + 2500; setTimeout(render, 2600); } return !shopLook || Date.now() < shopLook ? '.hud-coins' : '.tab[data-tab="steamer"]'; } },
 ];
 let shopLook = 0;   // until when the shop step's arrow points at the coins
 const TAB_NAMES = { steamer: 'Pen', garden: 'Garden', kitchen: 'Kitchen', maze: 'Maze', shop: 'Shop' };
+const TUT_REWARD = 30;
 
 function tutStep() {
   const t = state.tutorial;
@@ -143,39 +152,44 @@ function tut(action) {
   state.tutorial.step += 1;
   const next = TUTORIAL[state.tutorial.step];
   if (!next) { state.tutorial = { done: true }; save(state); sfx.fanfare(); popup('Piggy pro!', `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div><p>You know everything ${esc(current().name)} needs. Have fun!</p>`, 'Yay!'); return; }
-  if (next.on === 'rename') {
-    state.coins += G.RENAME_COST;
+  if (next.on === 'home') {
+    state.coins += TUT_REWARD;
     sfx.fanfare();
-    popup('You did it!', `<div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${G.RENAME_COST}</span></div><p>Enough coins to give ${esc(current().name)} a new name, or save them for the shop!</p>`, 'Yay!');
+    popup('You did it!', `<div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${TUT_REWARD}</span></div><p>Coins buy new piggies, hats and toys!</p>`, 'Yay!');
   } else sfx.ding();
-  if (next.enter) next.enter();
   save(state);
 }
 
 let tutShown = '';   // which instruction popup has been shown, so it shows once per step
 let arrowTarget = ''; // selector the bouncing arrow points at
+let scrolledTo = '';  // target last scrolled into view
+
+let tutEntered = 0;  // the step whose `enter` has run
 
 function updateCoach() {
   const coach = $('#coach');
   const i = tutStep();
   document.querySelectorAll('.hi').forEach(e => e.classList.remove('hi'));
-  if (!i) { coach.hidden = true; arrowTarget = ''; positionArrow(); return; }
+  if (!i) { coach.hidden = true; arrowTarget = ''; tutEntered = 0; positionArrow(); return; }
   const step = TUTORIAL[i];
+  if (tutEntered !== i) { tutEntered = i; if (step.enter) { step.enter(); save(state); if (tab === 'steamer') updateSteamer(); } }
   const n = esc(current().name);
   coach.hidden = false;
   if ($('#coachpig').dataset.id !== String(current().id)) { $('#coachpig').dataset.id = String(current().id); $('#coachpig').innerHTML = Art.piggySide({ coat: current().coat }); }
-  let text, targets, key;
-  if (step.tab && tab !== step.tab) { text = `Go to the ${TAB_NAMES[step.tab]}!`; targets = `.tab[data-tab="${step.tab}"]`; key = i + ':go'; }
-  else { text = step.text(n); targets = typeof step.target === 'function' ? step.target() : step.target; key = i + ':do'; }
+  const away = step.tab && tab !== step.tab;
+  const go = away ? `Tap ${TAB_NAMES[step.tab]} at the bottom.` : '';
+  const text = away ? go : step.text(n);
+  const targets = away ? `.tab[data-tab="${step.tab}"]` : typeof step.target === 'function' ? step.target() : step.target;
   if ($('#coachtext').textContent !== text) $('#coachtext').textContent = text;
   document.querySelectorAll(targets).forEach(e => e.classList.add('hi'));
   arrowTarget = targets;
   positionArrow();
   // The instruction pops up in the middle of the screen once per step, after
-  // any other popup has been closed.
-  if (tutShown !== key && !$('.modal')) {
-    tutShown = key;
-    popup(`Step ${i} of ${TUTORIAL.length - 1}`, `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div><p class="tut-text">${text}</p>`, 'OK!', key.endsWith(':do') ? step.ok : null);
+  // any other popup has been closed. If she has to go somewhere first, it
+  // says where.
+  if (tutShown !== String(i) && !$('.modal')) {
+    tutShown = String(i);
+    popup(`Step ${i} of ${TUTORIAL.length - 1}`, `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div>${go ? `<p class="tut-go">First, ${go.charAt(0).toLowerCase() + go.slice(1)}</p>` : ''}<p class="tut-text">${step.text(n)}</p>`, 'OK!');
   }
 }
 
@@ -189,8 +203,11 @@ function positionArrow() {
   }
   const t = arrowTarget && !$('.modal') ? $(arrowTarget) : null;
   if (!t) { arrow.hidden = true; return; }
-  const r = t.getBoundingClientRect();
+  let r = t.getBoundingClientRect();
   if (!r.width) { arrow.hidden = true; return; }
+  // Bring the target on screen once per target (short phones hide the tray).
+  const bar = $('.tabs')?.getBoundingClientRect().top || innerHeight;
+  if ((r.bottom > bar || r.top < 0) && scrolledTo !== arrowTarget) { scrolledTo = arrowTarget; t.scrollIntoView({ block: 'center' }); r = t.getBoundingClientRect(); }
   const up = r.top < 90;   // things near the top get an arrow pointing up from below
   arrow.hidden = false;
   arrow.classList.toggle('up', up);
@@ -847,7 +864,7 @@ function onPlot(i) {
   if (plot && plot.classList.contains('busy')) return;
   const g = state.garden[i];
   if (g) {
-    if (G.plantProgress(state, i) < 1) { sfx.pop(); toast('Still growing...'); return; }
+    if (G.plantProgress(state, i) < 1) { sfx.pop(); toast('Still growing...'); tut('plant'); return; }
     gardenerRun(i, () => {
       const r = G.harvest(state, i);
       if (r.ok) { sfx.coin(); toast(`+2 ${G.FILLINGS[r.filling].name}`); floatCoin(1); render(); }
@@ -1056,7 +1073,7 @@ function updateMaze() {
   if (run) {
     btns.appendChild(btn('Stop', () => { stopRun(); render(); }, 'btn-grey'));
   } else {
-    btns.appendChild(btn('Surprise me', () => { M.randomize(m, Math.random, G.unlockedFillings(state)); M.placeFun(m, funKinds()); sfx.pop(); tut('surprise'); render(); }, 'btn-grey surprise'));
+    btns.appendChild(btn('Surprise me', () => { M.randomize(m, Math.random, G.unlockedFillings(state)); M.placeFun(m, funKinds()); sfx.pop(); render(); }, 'btn-grey surprise'));
     btns.appendChild(btn('Clear', () => { M.clear(m); sfx.pop(); render(); }, 'btn-grey'));
     const go = btn('Go!', startRun, 'btn-green go');
     go.disabled = !ok;
@@ -1236,7 +1253,7 @@ function scheduleStep() {
       pig.classList.add('popcorn');
       floatCoin(r.coins);
       toast(r.first ? `New maze finished! +${r.coins} coins` : `Dumpling! +${r.coins} coins`, 'big');
-      setTimeout(() => { stopRun(); tut('surprise'); tut('maze'); render(); }, 2200);
+      setTimeout(() => { stopRun(); tut('maze'); render(); }, 2200);
       return;
     }
     scheduleStep();
@@ -1655,7 +1672,7 @@ function renameDialog() {
   $('#ok', box).onclick = () => {
     const r = G.rename(state, p.id, $('#newname', box).value);
     if (!r.ok) { sfx.nope(); toast(r.reason === 'coins' ? 'Not enough coins yet' : r.reason === 'name' ? 'Try a different name' : 'Type a name first'); return; }
-    sfx.fanfare(); box.remove(); tut('rename'); render(); toast(`Hello, ${esc(p.name)}!`, 'big');
+    sfx.fanfare(); box.remove(); render(); toast(`Hello, ${esc(p.name)}!`, 'big');
   };
   setTimeout(() => $('#newname', box).focus(), 50);
 }
@@ -1766,8 +1783,7 @@ function settings() {
   $('#replay', box).onclick = () => {
     box.remove();
     state.tutorial = { step: 1 };
-    if (!(state.dumplings['carrot+carrot'] > 0)) state.dumplings['carrot+carrot'] = 1;
-    if (state.compost < 1) state.compost = 1;
+    tutShown = '';
     tab = 'steamer'; sfx.ding(); render(true);
   };
   $('#sclose', box).onclick = () => { box.remove(); sfx.pop(); updateCoach(); };
