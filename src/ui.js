@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 34;
+const VERSION = 35;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -428,7 +428,7 @@ function toyBounce(id) {
   const d = $(`.toy[data-toy="${id}"]`);
   if (!d) return;
   d.classList.remove('play'); void d.offsetWidth; d.classList.add('play');
-  setTimeout(() => d.classList.remove('play'), 900);
+  setTimeout(() => d.classList.remove('play'), 1300);
 }
 
 function toyGone(id) {

@@ -456,9 +456,9 @@ button.pk:active { transform: scale(.95); }
 .toy .toy-move { transform-box: fill-box; transform-origin: 50% 100%; }
 .toy.play .toy-move { animation: toy-jiggle .45s ease-in-out 2; }
 .toy[data-toy="ball"] .toy-move { transform-origin: 50% 50%; }
-.toy[data-toy="ball"].play .toy-move { animation: toy-roll .9s ease-in-out; }
+.toy[data-toy="ball"].play .toy-move { animation: toy-roll 1.2s ease-in-out; }
 @keyframes toy-jiggle { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(1.1, .88); } 65% { transform: scale(.94, 1.08) translateY(-4%); } }
-@keyframes toy-roll { 0%, 100% { transform: translateX(0) rotate(0); } 40% { transform: translateX(9%) rotate(30deg); } 75% { transform: translateX(-3%) rotate(-10deg); } }
+@keyframes toy-roll { 0%, 100% { transform: translateX(0) rotate(0); } 40% { transform: translateX(28%) rotate(100deg); } 75% { transform: translateX(-5%) rotate(-18deg); } }
 .toy-count { text-align: center; font-family: var(--display); font-size: 1rem; color: var(--ink); }
 .toy-count b { color: var(--blue-dark); font-size: 1.2rem; }
 .toy-tile.box { border-color: var(--line); background: linear-gradient(#FFFFFF, #F1EBDF); }
