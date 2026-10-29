@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 84;
+const VERSION = 85;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -191,6 +191,11 @@ function positionArrow() {
 
 function render(force = false) {
   const p = current();
+  // Earned hats show up with a popup, but never in the middle of a maze run.
+  if (!run) for (const id of G.earnHats(state)) {
+    persist(); sfx.fanfare();
+    popup('New hat!', `<div class="pig-card big">${Art.piggySide({ coat: p.coat, hat: id })}</div><p>You earned the <b>${G.HATS[id].name}</b>! Find it in the Shop under Hats.</p>`, 'Yay!');
+  }
   $('#coins').textContent = state.coins;
   $('#dumpbook').hidden = tab === 'kitchen';   // the kitchen has its own on the counter
   $('#pigname').textContent = p.name;
@@ -1268,7 +1273,7 @@ function updateShop() {
         ${others.length ? `<div class="hat-pigs ${state.piggies.length > 4 ? 'three' : state.piggies.length > 2 ? 'two' : ''}">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div>` : ''}
         <div class="hat-model">${Art.piggySide({ coat: p.coat, hat: showing })}</div>
         <div class="hat-who"><small>Hats for</small><b>${esc(p.name)}</b>
-          ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}. Tap it again to buy!</em>` : others.length ? '<em>Tap a face to switch</em>' : ''}</div>
+          ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}. ${G.HATS[tryHat.id].goal ? `${G.HATS[tryHat.id].goal} to earn it!` : 'Tap it again to buy!'}</em>` : others.length ? '<em>Tap a face to switch</em>' : ''}</div>
       </div></div>
       <p class="hint small">Tap a hat to try it on. Hats you own fit every piggy.</p><div class="hat-grid"></div>`;
     hats.querySelectorAll('.hat-pigs .face').forEach(f => f.addEventListener('click', () => { selectedPig = +f.dataset.id; tryHat = null; sfx.pop(); render(); }));
@@ -1277,9 +1282,11 @@ function updateShop() {
       const owned = !!state.hats[id];
       const wearing = p.hat === id;
       const trying = tryHat && tryHat.id === id;
-      const b = el(`<button class="hat tile ${owned ? 'owned' : ''} ${wearing ? 'wearing' : ''} ${trying ? 'trying' : ''}">${Art.hatIcon(id)}<span>${h.name}</span>
-        ${wearing ? '<span class="price can">Wearing</span>' : owned ? '<span class="price">Wear</span>' : trying ? `<span class="price buy">Buy ${h.cost} <i class="coin-sm">${Art.coinIcon()}</i></span>` : price(h.cost)}</button>`);
+      const locked = h.goal && !owned;
+      const b = el(`<button class="hat tile ${owned ? 'owned' : ''} ${wearing ? 'wearing' : ''} ${trying ? 'trying' : ''} ${locked ? 'earn' : ''}">${Art.hatIcon(id)}<span>${h.name}</span>
+        ${locked ? `<span class="price goal">${Math.min(h.have(state), h.need)} / ${h.need}</span>` : wearing ? '<span class="price can">Wearing</span>' : owned ? '<span class="price">Wear</span>' : trying ? `<span class="price buy">Buy ${h.cost} <i class="coin-sm">${Art.coinIcon()}</i></span>` : price(h.cost)}</button>`);
       b.addEventListener('click', () => {
+        if (locked && trying) { sfx.pop(); toast(`${h.goal} to earn it!`); return; }
         if (!state.hats[id]) {
           if (!trying) { tryHat = { id, pig: p.id }; sfx.pop(); render(); return; }
           const r = G.buyHat(state, id);

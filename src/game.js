@@ -180,26 +180,62 @@ export const UPGRADES = {
 
 // Hats are bought once and any piggy can wear one. Each piggy has `hat`.
 export const HATS = {
+  hay:        { name: 'Hay hat',         cost: 30 },
   bow:        { name: 'Pink bow',        cost: 40 },
+  bee:        { name: 'Bee buzzers',     cost: 40 },
+  carrot:     { name: 'Carrot hat',      cost: 45 },
   poop:       { name: 'Poop hat',        cost: 50 },
+  kitty:      { name: 'Kitty ears',      cost: 50 },
+  cap:        { name: 'Ball cap',        cost: 55 },
   strawberry: { name: 'Strawberry hat',  cost: 60 },
   flower:     { name: 'Daisy',           cost: 60 },
+  bunny:      { name: 'Bunny ears',      cost: 60 },
+  mushroom:   { name: 'Mushroom cap',    cost: 65 },
   party:      { name: 'Party hat',       cost: 70 },
+  flowers:    { name: 'Flower crown',    cost: 70 },
+  icecream:   { name: 'Ice cream hat',   cost: 80 },
+  cowboy:     { name: 'Cowboy hat',      cost: 85 },
   beanie:     { name: 'Cozy beanie',     cost: 90 },
   sunhat:     { name: 'Sun hat',         cost: 90 },
+  pumpkin:    { name: 'Pumpkin hat',     cost: 90 },
+  frog:       { name: 'Froggy hat',      cost: 95 },
   chef:       { name: 'Chef hat',        cost: 100 },
+  santa:      { name: 'Santa hat',       cost: 100 },
+  cupcake:    { name: 'Cupcake hat',     cost: 110 },
   dumpling:   { name: 'Dumpling hat',    cost: 120 },
+  propeller:  { name: 'Propeller hat',   cost: 120 },
+  steamer:    { name: 'Steamer hat',     cost: 130 },
+  dino:       { name: 'Dino spikes',     cost: 140 },
+  topper:     { name: 'Top hat',         cost: 150 },
+  viking:     { name: 'Viking helmet',   cost: 160 },
+  grad:       { name: 'Smarty cap',      cost: 170 },
   crown:      { name: 'Royal crown',     cost: 180 },
+  halo:       { name: 'Halo',            cost: 190 },
+  tiara:      { name: 'Tiara',           cost: 200 },
   wizard:     { name: 'Wizard hat',      cost: 220 },
+  unicorn:    { name: 'Unicorn horn',    cost: 240 },
+  rainbow:    { name: 'Rainbow cloud',   cost: 260 },
+  // Earned, never bought: they turn up once she reaches the goal.
+  laurel:     { name: 'Champ wreath',    goal: 'Finish 10 mazes',     need: 10, have: s => s.stats.mazes || 0 },
+  planet:     { name: 'Planet hat',      goal: 'Find the Galaxy Bao', need: 1,  have: s => ((s.recipeBook || {})['sp:galaxy'] ? 1 : 0) },
 };
 
 export function buyHat(state, id) {
   const h = HATS[id];
-  if (!h || state.hats[id]) return { ok: false };
+  if (!h || !h.cost || state.hats[id]) return { ok: false };
   if (state.coins < h.cost) return { ok: false, reason: 'coins' };
   state.coins -= h.cost;
   state.hats[id] = true;
   return { ok: true };
+}
+
+// Gives any earned hats whose goal is reached; returns their ids.
+export function earnHats(state) {
+  const got = [];
+  for (const [id, h] of Object.entries(HATS)) {
+    if (h.goal && !state.hats[id] && h.have(state) >= h.need) { state.hats[id] = true; got.push(id); }
+  }
+  return got;
 }
 
 export function wearHat(state, piggyId, id) {

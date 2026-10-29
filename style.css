@@ -702,3 +702,5 @@ button.pk:active { transform: scale(.95); }
 /* The picker stands on the pen's hay floor so light coats show up. */
 .hat-pin .hat-for { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='18'%3E%3Cpath d='M2 14 L12 4 M14 16 L24 8 M6 17 L10 10' stroke='%23D9A84E' stroke-width='2' stroke-linecap='round' opacity='.55'/%3E%3C/svg%3E"), linear-gradient(#F6DFAE, #E8C27A); border-color: var(--wood-dark); box-shadow: inset 0 0 0 3px var(--wood); }
 .hat-pin .hat-who small, .hat-pin .hat-who em { color: #6A4524; }
+.hat.earn { border-style: dashed; border-color: #E0A81C; background: #FFFBEA; }
+.hat .price.goal { color: #B07A10; font-size: .66rem; }
