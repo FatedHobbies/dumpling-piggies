@@ -818,6 +818,59 @@ export const MAZE_THEMES = {
   },
 };
 
+
+// Fun tiles that drop into the maze on Go, drawn in each theme. Zoom pads
+// speed the piggy up, puddles make it splash, tunnels come in pairs, and a
+// bridge lets the piggy hop over one wall. Drawn in cell coordinates.
+export const FUN_LOOK = {
+  hay:     { zoom: '#FF9A3C', puddle: ['#7EC8F0', '#3F86B5'], tunnel: ['#E6B566', '#9C6A3A'], bridge: ['#C98F4B', '#7A4E2C'] },
+  pumpkin: { zoom: '#5FAE4E', puddle: ['#9C6A3A', '#6B4423'], tunnel: 'pumpkin', bridge: ['#A86E3C', '#5A3A22'] },
+  galaxy:  { zoom: '#3FD6C2', puddle: ['#120E36', '#8C74E0'], tunnel: 'wormhole', bridge: ['#FFE66B', '#C9A21A'] },
+  unicorn: { zoom: '#FF8FC8', puddle: ['#D9C4FF', '#B38CF0'], tunnel: 'rainbow', bridge: 'cloud' },
+  kitchen: { zoom: '#EE5146', puddle: ['#6B3A1E', '#3E200F'], tunnel: ['#FF8A7A', '#B83A30'], bridge: ['#E8B060', '#9C6A3A'] },
+  snow:    { zoom: '#4AA8E8', puddle: ['#D4EEFB', '#7FB9DD'], tunnel: 'igloo', bridge: ['#A9DDF7', '#3F86B5'] },
+  sea:     { zoom: '#2C98CF', puddle: ['#5CC8C0', '#2E8E86'], tunnel: 'castle', bridge: 'turtle' },
+  poop:    { zoom: '#F2B624', puddle: ['#7A4E2C', '#4A2C16'], tunnel: ['#9C6A3A', '#5A3A22'], bridge: ['#C98F4B', '#7A4E2C'] },
+};
+export function funTile(theme, kind, px, py) {
+  const L = FUN_LOOK[theme] || FUN_LOOK.hay, cx = px + 24, cy = py + 24;
+  if (kind === 'zoom') {
+    const c = L.zoom;
+    return `<rect x="${px + 6}" y="${py + 6}" width="36" height="36" rx="10" fill="${c}" stroke="#fff" stroke-width="3"/>
+      <path d="M${cx - 9} ${cy + 2} L${cx} ${cy - 7} L${cx + 9} ${cy + 2} M${cx - 9} ${cy + 11} L${cx} ${cy + 2} L${cx + 9} ${cy + 11}" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      ${star4(px + 37, py + 10, 4, '#FFF3B0')}`;
+  }
+  if (kind === 'puddle') {
+    const [c, d] = L.puddle;
+    return `<path d="M${px + 8} ${cy} Q${px + 6} ${py + 10} ${cx - 2} ${py + 11} Q${px + 36} ${py + 6} ${px + 41} ${py + 18} Q${px + 46} ${py + 30} ${px + 36} ${py + 38} Q${cx} ${py + 44} ${px + 14} ${py + 38} Q${px + 6} ${py + 34} ${px + 8} ${cy}Z" fill="${c}" stroke="${d}" stroke-width="2.5"/>
+      <ellipse cx="${px + 18}" cy="${py + 18}" rx="6" ry="2.5" fill="#fff" opacity=".6" transform="rotate(-20 ${px + 18} ${py + 18})"/>
+      ${theme === 'galaxy' ? star4(px + 30, py + 28, 3, '#fff') : theme === 'unicorn' ? star4(px + 30, py + 27, 4, '#fff') + star4(px + 15, py + 31, 2.5, '#FF8FC8') : `<circle cx="${px + 31}" cy="${py + 29}" r="2" fill="#fff" opacity=".5"/>`}`;
+  }
+  if (kind === 'tunnel') {
+    const t = L.tunnel;
+    const hole = `<path d="M${px + 14} ${py + 42} V${py + 28} Q${px + 14} ${py + 18} ${cx} ${py + 18} Q${px + 34} ${py + 18} ${px + 34} ${py + 28} V${py + 42}Z" fill="#2A1A14"/>`;
+    if (t === 'wormhole') return `<circle cx="${cx}" cy="${cy}" r="19" fill="#C77DFF" opacity=".35"/><circle cx="${cx}" cy="${cy}" r="15" fill="none" stroke="#C77DFF" stroke-width="4"/><path d="M${cx} ${cy} m-10 0 a10 10 0 1 1 10 10 a6 6 0 1 1 -6 -6 a3 3 0 1 1 3 3" fill="none" stroke="#F3E6FF" stroke-width="3" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="3" fill="#120E36"/>`;
+    if (t === 'pumpkin') return `<path d="M${px + 5} ${py + 44} V${py + 22} Q${px + 5} ${py + 8} ${cx} ${py + 8} Q${px + 43} ${py + 8} ${px + 43} ${py + 22} V${py + 44}Z" fill="#FF8A2A" stroke="#B9531A" stroke-width="3"/><path d="M${px + 15} ${py + 11} Q${px + 11} ${py + 26} ${px + 13} ${py + 42} M${px + 33} ${py + 11} Q${px + 37} ${py + 26} ${px + 35} ${py + 42}" stroke="#D96A1C" stroke-width="2" fill="none"/><path d="M${cx - 2} ${py + 8} Q${cx - 2} ${py + 2} ${cx + 3} ${py + 1}" stroke="#4F9A3C" stroke-width="3" fill="none" stroke-linecap="round"/>${hole}`;
+    if (t === 'rainbow') return ['#FF8FA8', '#FFC27A', '#FFE66B', '#8EE3A0', '#8CC8FF', '#C5A3FF'].map((c, k) => `<path d="M${px + 4 + k * 3} ${py + 44} V${py + 26} Q${px + 4 + k * 3} ${py + 6 + k * 3} ${cx} ${py + 6 + k * 3} Q${px + 44 - k * 3} ${py + 6 + k * 3} ${px + 44 - k * 3} ${py + 26} V${py + 44}" fill="none" stroke="${c}" stroke-width="3.2"/>`).join('') + hole.replace('#2A1A14', '#6B4A8C');
+    if (t === 'igloo') return `<path d="M${px + 4} ${py + 44} Q${px + 4} ${py + 8} ${cx} ${py + 8} Q${px + 44} ${py + 8} ${px + 44} ${py + 44}Z" fill="#FFFFFF" stroke="#7FB9DD" stroke-width="3"/><path d="M${px + 7} ${py + 32} H${px + 41} M${px + 11} ${py + 20} H${px + 37} M${px + 18} ${py + 20} V${py + 32} M${px + 30} ${py + 20} V${py + 32} M${cx} ${py + 9} V${py + 20}" stroke="#BFDDEF" stroke-width="2"/>${hole.replace('#2A1A14', '#3F6E8F')}`;
+    if (t === 'castle') return `<path d="M${px + 6} ${py + 44} V${py + 14} H${px + 12} V${py + 8} H${px + 18} V${py + 14} H${px + 21} V${py + 8} H${px + 27} V${py + 14} H${px + 30} V${py + 8} H${px + 36} V${py + 14} H${px + 42} V${py + 44}Z" fill="#E8C27A" stroke="#B5823F" stroke-width="3" stroke-linejoin="round"/><path d="M${cx} ${py + 8} V${py - 2} L${cx + 8} ${py + 1} L${cx} ${py + 4}" fill="#FF7FA0" stroke="#B5823F" stroke-width="1.5"/>${hole.replace('#2A1A14', '#6B4A2A')}`;
+    const [c, d] = t;
+    return `<path d="M${px + 5} ${py + 44} V${py + 24} Q${px + 5} ${py + 6} ${cx} ${py + 6} Q${px + 43} ${py + 6} ${px + 43} ${py + 24} V${py + 44}Z" fill="${c}" stroke="${d}" stroke-width="3"/>${hole}`;
+  }
+  // bridge: drawn over a wall square
+  const b = L.bridge;
+  if (b === 'cloud') return `<g fill="#fff" stroke="#E7B9DA" stroke-width="2.5"><circle cx="${px + 12}" cy="${py + 30}" r="10"/><circle cx="${px + 36}" cy="${py + 30}" r="10"/><circle cx="${cx}" cy="${py + 22}" r="13"/></g><path d="M${px + 4} ${py + 34} H${px + 44}" stroke="#fff" stroke-width="10" stroke-linecap="round"/>${star4(px + 38, py + 12, 4, '#FF8FC8')}`;
+  if (b === 'turtle') return `<ellipse cx="${px + 24}" cy="${py + 38}" rx="5" ry="4" fill="#8ED46A" stroke="#3E7A2C" stroke-width="2"/><ellipse cx="${px + 9}" cy="${py + 34}" rx="4" ry="3" fill="#8ED46A" stroke="#3E7A2C" stroke-width="2"/><ellipse cx="${px + 39}" cy="${py + 34}" rx="4" ry="3" fill="#8ED46A" stroke="#3E7A2C" stroke-width="2"/><circle cx="${px + 24}" cy="${py + 6}" r="6" fill="#8ED46A" stroke="#3E7A2C" stroke-width="2"/><circle cx="${px + 22}" cy="${py + 5}" r="1.2" fill="#2A1A14"/><circle cx="${px + 26}" cy="${py + 5}" r="1.2" fill="#2A1A14"/>
+    <path d="M${px + 5} ${py + 30} Q${px + 5} ${py + 9} ${cx} ${py + 9} Q${px + 43} ${py + 9} ${px + 43} ${py + 30} Q${cx} ${py + 37} ${px + 5} ${py + 30}Z" fill="#5FAE4E" stroke="#3E7A2C" stroke-width="2.5"/>
+    <path d="M${cx} ${py + 12} L${cx - 7} ${py + 20} L${cx} ${py + 28} L${cx + 7} ${py + 20}Z M${cx - 7} ${py + 20} H${px + 9} M${cx + 7} ${py + 20} H${px + 39}" fill="#8ED46A" stroke="#3E7A2C" stroke-width="1.8"/>`;
+  const [c, d] = b;
+  const glow = theme === 'galaxy' ? ` style="filter:drop-shadow(0 0 3px #FFE66B)"` : '';
+  return `<g${glow}><path d="M${px} ${py + 34} Q${cx} ${py + 14} ${px + 48} ${py + 34} V${py + 40} Q${cx} ${py + 22} ${px} ${py + 40}Z" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>
+    ${[8, 16, 24, 32, 40].map(x => `<path d="M${px + x} ${py + 36 - (x < 24 ? x : 48 - x) * .55} v6" stroke="${d}" stroke-width="1.8"/>`).join('')}
+    <path d="M${px + 2} ${py + 24} Q${cx} ${py + 4} ${px + 46} ${py + 24}" stroke="${d}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M${px + 8} ${py + 30} V${py + 19} M${px + 40} ${py + 30} V${py + 19} M${cx} ${py + 24} V${py + 13}" stroke="${d}" stroke-width="2.5" stroke-linecap="round"/></g>`;
+}
+
 // A veggie wall for the maze: a chunky crate in the veggie's color with the
 // veggie sitting on top, drawn in a 64 box.
 export function veggieWall(filling, color) {
