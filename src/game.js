@@ -248,18 +248,31 @@ export function wearHat(state, piggyId, id) {
   return { ok: true };
 }
 
-// Pen toys sit in the pen at a fixed spot (x, y as fractions of the pen
-// floor) and piggies wander over to play. `state.toys[id]` is 'pen' or 'box'
+// Pen toys sit on the pen floor (see toySpot) and piggies wander over to play. `state.toys[id]` is 'pen' or 'box'
 // (owned but put away); only TOY_LIMIT fit in the pen at once. Chews get
 // nibbled away (`state.toyWear`, 0 to 100) and must be bought again.
 export const TOYS = {
   ball:   { name: 'Bouncy ball',  desc: 'Piggies love to nose it around.',  cost: 30,  x: 0.50, y: 0.58 },
-  chew:   { name: 'Chew sticks',  desc: 'A crunchy bundle to nibble on. Gets eaten up!', cost: 25, x: 0.22, y: 0.84, chew: true },
-  carrot: { name: 'Carrot chew',  desc: 'A wooden carrot to gnaw. Gets eaten up!',      cost: 20, x: 0.50, y: 0.80, chew: true },
+  chew:   { name: 'Chew sticks',  desc: 'A crunchy bundle to nibble on. Gets eaten up!', cost: 25, chew: true },
+  carrot: { name: 'Carrot chew',  desc: 'A wooden carrot to gnaw. Gets eaten up!',      cost: 20, chew: true },
   tunnel: { name: 'Fuzzy tunnel', desc: 'Run in one end and out the other!', cost: 80,  x: 0.76, y: 0.86 },
-  hut:    { name: 'Dumpling hut', desc: 'A cozy hidey house shaped like a dumpling.', cost: 120, x: 0.22, y: 0.58 },
-  slide:  { name: 'Tiny slide',   desc: 'Wheee! Down the slide.',            cost: 160, x: 0.78, y: 0.58 },
+  hut:    { name: 'Dumpling hut', desc: 'A cozy hidey house shaped like a dumpling.', cost: 120 },
+  slide:  { name: 'Tiny slide',   desc: 'Wheee! Down the slide.',            cost: 160 },
 };
+
+// The ball always sits in the middle of the floor; the other toys in the pen
+// spread over the four corners around it, tall ones at the back, so no side
+// gets crowded whichever toys are out. Spots are fractions of the pen floor.
+const BALL_SPOT = { x: 0.50, y: 0.71 };
+const CORNERS = { bl: { x: 0.21, y: 0.86 }, br: { x: 0.79, y: 0.86 }, tl: { x: 0.21, y: 0.56 }, tr: { x: 0.79, y: 0.56 } };
+const CORNER_FILL = [[], ['tr'], ['tr', 'bl'], ['tr', 'bl', 'br'], ['tl', 'tr', 'bl', 'br']];
+const BACK_FIRST = ['slide', 'hut', 'tunnel', 'chew', 'carrot'];
+export function toySpot(state, id) {
+  if (id === 'ball') return BALL_SPOT;
+  const rest = BACK_FIRST.filter(t => t === id || state.toys[t] === 'pen');
+  const fill = CORNER_FILL[Math.min(4, rest.length)];
+  return CORNERS[fill[rest.indexOf(id)] || 'br'];
+}
 const CHEW_BITE = 2.5;            // wear per nibble
 const CHEW_DAY = 100 / 86400;     // a chew in the pen also wears out over one day
 

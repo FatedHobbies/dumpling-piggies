@@ -467,10 +467,12 @@ function updateSteamer() {
     let d = $(`.toy[data-toy="${id}"]`, floor);
     if (state.toys[id] !== 'pen') { if (d) d.remove(); continue; }
     if (!d) {
-      d = el(`<button class="toy" data-toy="${id}" aria-label="${t.name}" style="--x:${t.x};--y:${t.y};z-index:${depth(t.y)}"></button>`);
+      d = el(`<button class="toy" data-toy="${id}" aria-label="${t.name}"></button>`);
       d.addEventListener('click', () => { toyBounce(id); goToToy(current(), id); tut('toy'); });
       floor.appendChild(d);
     }
+    const at = toySpot(id);   // spots shift as toys go in and out
+    d.style.setProperty('--x', at.x); d.style.setProperty('--y', at.y); d.style.zIndex = depth(at.y);
     const left = t.chew ? Math.ceil(G.toyLeft(state, id) * 4) / 4 : 1;   // chews redraw a quarter at a time
     if (d.dataset.left !== String(left)) { d.dataset.left = left; d.innerHTML = Art.toyArt(id, left); }
   }
@@ -678,7 +680,7 @@ const HIDES = { house: { door: 60, doorW: 0.5 }, hut: { door: 60, doorW: 0.3 }, 
 
 function toySpot(id) {
   if (id === 'house') { const f = Art.PEN_FIXTURES.house; return { x: f.x / 400, y: fixtureY(f) }; }
-  return G.TOYS[id];
+  return G.toySpot(state, id);
 }
 
 // Floor x of a point in a toy picture, from the toy's drawn size.
@@ -825,13 +827,13 @@ function startAct(kind, a, b) {
     // Meet halfway, nose to nose.
     const mx = Math.min(0.72, Math.max(0.28, (a.x + b.x) / 2));
     let my = Math.min(0.8, Math.max(0.3, (a.y + b.y) / 2));
-    const ball = G.TOYS.ball;   // not right on top of the ball
+    const ball = toySpot('ball');   // not right on top of the ball
     if (state.toys.ball === 'pen' && Math.abs(my - ball.y) < 0.14) my = my < ball.y ? ball.y - 0.16 : ball.y + 0.16;
     const gap = noseGap(my) + 0.022;   // a little space so the noses just touch
     const left = a.x <= b.x ? a : b;
     act.spots = { [left.id]: [mx - gap, my, 1], [(left === a ? b : a).id]: [mx + gap, my, -1] };
   } else if (kind === 'ball') {
-    const t = G.TOYS.ball, gap = noseGap(t.y) + ballR() + ROLL;
+    const t = toySpot('ball'), gap = noseGap(t.y) + ballR() + ROLL;
     const left = a.x <= b.x ? a : b;
     act.spots = { [left.id]: [t.x - gap, t.y + 0.01, 1], [(left === a ? b : a).id]: [t.x + gap, t.y + 0.01, -1] };
     act.left = left.id;
@@ -1024,7 +1026,7 @@ function playAt(pig, id, d) {
   if (id === 'slide' && d && w) return rideSlide(pig, w, d);
   if (d) {
     const w = wander.get(pig.id);
-    if (w) { w.face = G.TOYS[id].x > pig.x ? 1 : -1; placePig(d, pig, w); }
+    if (w) { w.face = toySpot(id).x > pig.x ? 1 : -1; placePig(d, pig, w); }
     d.classList.remove('hop'); void d.offsetWidth; d.classList.add('hop');
     setTimeout(() => d.classList.remove('hop'), 600);
     bubble(d, G.TOYS[id].chew ? 'Nom nom!' : ['Wheee!', 'Fun!', '♥', 'Wheek!'][Math.floor(Math.random() * 4)]);
@@ -1079,7 +1081,7 @@ function rideSlide(pig, w, d) {
   // same left/top placement as walking (no extra transforms to fight with).
   const fw = floor.offsetWidth, fh = floor.offsetHeight;
   const tw = toy.offsetWidth, th = toy.offsetHeight;
-  const tl = G.TOYS.slide.x * fw - tw / 2, tt = G.TOYS.slide.y * fh - th * 0.94;
+  const spot = toySpot('slide'), tl = spot.x * fw - tw / 2, tt = spot.y * fh - th * 0.94;
   const at = (px, py) => [(tl + px / 120 * tw) / fw, (tt + py / 100 * th) / fh];
   const ride = Math.min(0.8, tw / d.offsetWidth * 0.85);
   const path = SLIDE_PATH.map(([t, px, py, rot]) => [t, ...at(px, py), rot]);
@@ -1100,9 +1102,9 @@ function rideSlide(pig, w, d) {
     if (cur) {
       cur.classList.add('riding');
       cur.style.setProperty('--x', x.toFixed(4)); cur.style.setProperty('--y', y.toFixed(4));
-      cur.style.setProperty('--s', ((0.62 + G.TOYS.slide.y * 0.38) * grow).toFixed(3));
+      cur.style.setProperty('--s', ((0.62 + toySpot('slide').y * 0.38) * grow).toFixed(3));
       cur.style.setProperty('--f', -1); cur.style.setProperty('--r', r.toFixed(1) + 'deg');
-      cur.style.zIndex = depth(G.TOYS.slide.y) + 1;
+      cur.style.zIndex = depth(toySpot('slide').y) + 1;
     }
     if (k < 1) { requestAnimationFrame(step); return; }
     pig.x = Math.max(0.05, x); pig.y = Math.min(1, Math.max(pig.y, y));
