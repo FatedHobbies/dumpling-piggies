@@ -810,8 +810,10 @@ export const MAZE_THEMES = {
   },
   poop: {
     side: '#7A4E2C', ui: { p: ['#FBF1E2', '#EBD7BC', '#A8794E'], hint: '#5A3A22', b: ['#E2B07A', '#B97C47', '#6E4223', '#FFFFFF'], g: 'linear-gradient(#FFE07A, #F2B624)', ge: '#A87A10', t: ['#FBF1E2', '#D8B78E', '#8A5634'] },
-    name: 'Poop party', board: '#C9A27A', floor: '#F5E6CF', seen: '#EAD3B1', start: '#BFE8A0', startEdge: '#6DB24A', post: '#8A5634', postEdge: '#5A3A22',
-    wall: (px, py, i) => placeSvg(poop({ shape: 'swirl', color: i % 7 === 0 ? 'gold' : 'brown' }), px + 1, py, 46),
+    name: 'Poop party', board: '#C9A27A', floor: '#FFF8EC', seen: '#F6E7CF', start: '#BFE8A0', startEdge: '#6DB24A', post: '#8A5634', postEdge: '#5A3A22',
+    // Big swirly poops, no base, on a light floor so they stand out.
+    cube: true,
+    wall: (px, py, i) => placeSvg(poop({ shape: 'swirl', color: i % 7 === 0 ? 'gold' : 'brown' }), px - 5, py - 9, 58),
     deco: (px, py, i) => i % 4 ? '' : `<circle cx="${px + 12 + jit(i, 1) * 24}" cy="${py + 14 + jit(i, 2) * 20}" r="2" fill="#E2C49A"/>`,
   },
 };
