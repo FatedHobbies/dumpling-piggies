@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 58;
+const VERSION = 59;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -695,15 +695,19 @@ function updateGarden() {
       pantry.appendChild(el(`<div class="pitem tile">${Art.veggie(f, 44)}<b class="count">${state.pantry[f] || 0}</b><span>${G.FILLINGS[f].name}</span></div>`));
       continue;
     }
-    const b = el(`<button class="pitem tile locked">${Art.veggieShadow(f, 44)}<b class="count">?</b><span>???</span></button>`);
-    b.addEventListener('click', () => {
-      const next = G.nextSeed(state);
-      sfx.pop();
-      toast(next ? `Find ${next.need} more ${next.need === 1 ? 'recipe' : 'recipes'} in the Kitchen for a new seed!` : 'Keep cooking!');
-    });
-    pantry.appendChild(b);
+    pantry.appendChild(lockedCrop(f));
   }
-  for (let i = G.FILLING_ORDER.length; i % 4; i++) pantry.appendChild(el('<i class="pitem pk-pad"></i>'));
+}
+
+// A crop whose seed isn't unlocked yet: a ? mystery card, like the books.
+function lockedCrop(f) {
+  const b = el(`<button class="pitem tile locked">${Art.veggieShadow(f, 44)}<b class="count">?</b><span>???</span></button>`);
+  b.addEventListener('click', () => {
+    const next = G.nextSeed(state);
+    sfx.pop();
+    toast(next ? `Find ${next.need} more ${next.need === 1 ? 'recipe' : 'recipes'} for a new seed!` : 'Keep cooking!');
+  });
+  return b;
 }
 
 function onPlot(i) {
@@ -762,11 +766,13 @@ function updateKitchen() {
   slots.forEach((s, i) => { s.innerHTML = selected[i] ? Art.veggie(selected[i], 48) : ''; s.classList.toggle('filled', !!selected[i]); });
   $('#cook').disabled = selected.length < 2;
   const fl = $('#fillings');
-  const fsig = JSON.stringify([state.pantry, selected]);
+  const fsig = JSON.stringify([state.pantry, selected, state.discovered.length]);
   if (fl.dataset.sig !== fsig) {
     fl.dataset.sig = fsig;
     fl.innerHTML = '';
-    for (const f of G.unlockedFillings(state)) {
+    const open = G.unlockedFillings(state);
+    for (const f of G.FILLING_ORDER) {
+      if (!open.includes(f)) { fl.appendChild(lockedCrop(f)); continue; }
       const have = (state.pantry[f] || 0) - selected.filter(x => x === f).length;
       const b = el(`<button class="fill pitem tile" ${have < 1 ? 'disabled' : ''}>${Art.veggie(f, 44)}<b class="count">${Math.max(0, have)}</b><span>${G.FILLINGS[f].name}</span></button>`);
       b.addEventListener('click', () => { if (selected.length < 2) { selected.push(f); sfx.pop(); render(); } });
