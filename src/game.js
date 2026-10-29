@@ -174,8 +174,7 @@ export const UPGRADES = {
   sunlamp:  { name: 'Sun lamp',           desc: 'Veggies grow twice as fast.',                    cost: 90,  icon: 'sun' },
   autoscoop:{ name: 'Robo-scooper',       desc: 'A tiny robot scoops poop while you are away.',   cost: 150, icon: 'robot' },
   bigbowl:  { name: 'Big bowl',           desc: 'Your piggies stay full for longer.',             cost: 120, icon: 'bowl' },
-  pen2:     { name: 'Bigger pen',         desc: 'Room for two more piggies.',                     cost: 300, icon: 'pen' },
-  pen3:     { name: 'Huge pen',           desc: 'Room for two more piggies after that.',          cost: 800, icon: 'pen', needs: 'pen2' },
+  pen2:     { name: 'Bigger pen',         desc: 'Room for two more piggies and one more toy.',   cost: 300, icon: 'pen' },
 };
 
 // Hats are bought once and any piggy can wear one. Each piggy has `hat`.
@@ -261,7 +260,7 @@ const CHEW_BITE = 2.5;            // wear per nibble
 const CHEW_DAY = 100 / 86400;     // a chew in the pen also wears out over one day
 
 export function toyLimit(state) {
-  return 3 + (state.upgrades.pen2 ? 1 : 0) + (state.upgrades.pen3 ? 1 : 0);
+  return state.upgrades.pen2 ? 4 : 3;
 }
 export function toysInPen(state) {
   return Object.keys(TOYS).filter(id => state.toys[id] === 'pen');
@@ -317,6 +316,8 @@ export const RENAME_COST = 30;
 export { NAME_MAX };
 export const ADOPT_COST = [0, 80, 200, 400, 700, 1000];
 export const MAX_PIGGIES = 6;
+export const PEN_MAX = 4;          // more than this and the pen gets too busy to follow
+const HUGE_PEN_COST = 800;         // the old Huge pen upgrade, refunded in version 94
 
 // Real guinea pig breeds, which decide hair length and texture. Colors are
 // picked separately so two piggies of one breed still look different.
@@ -406,6 +407,20 @@ export function migrate(state) {
   if (!state.away) state.away = [];                        // piggies on a sleepover
   if (!state.toys) state.toys = {};
   if (!state.toyWear) state.toyWear = {};
+  // Version 94 capped the pen at 4 piggies: the Huge pen is refunded, extra
+  // piggies go on a sleepover and extra toys go in the toy box.
+  if (state.upgrades && state.upgrades.pen3) {
+    delete state.upgrades.pen3;
+    state.coins += HUGE_PEN_COST;
+    state.penNews = { refund: HUGE_PEN_COST, away: [] };
+  }
+  if (state.piggies && state.piggies.length > capacity(state)) {
+    const extra = state.piggies.splice(capacity(state));
+    for (const p of extra) { p.effect = null; state.away.push(p); }
+    state.penNews = { refund: 0, ...state.penNews, away: extra.map(p => p.name) };
+  }
+  let inPen = 0;
+  for (const id of Object.keys(state.toys)) if (state.toys[id] === 'pen' && ++inPen > toyLimit(state)) state.toys[id] = 'box';
   let room = toyLimit(state);                               // toys from v21 were just `true`
   for (const id of Object.keys(state.toys)) if (state.toys[id] === true) state.toys[id] = room-- > 0 ? 'pen' : 'box';
   if (!state.hats) {                                        // the old single strawberry-hat upgrade
@@ -460,7 +475,7 @@ export function growTime(state) {
 }
 
 export function capacity(state) {
-  return state.upgrades.pen3 ? 6 : state.upgrades.pen2 ? 4 : 2;
+  return state.upgrades.pen2 ? PEN_MAX : 2;
 }
 
 export function adoptCost(state) {

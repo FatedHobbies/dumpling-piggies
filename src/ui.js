@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 92;
+const VERSION = 94;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -46,6 +46,14 @@ export function start() {
     popup('Welcome back!', `<p class="reward-time">You were away <b>${when}</b></p>
       <div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${welcome.coins}</span>
       ${welcome.scooped ? `<span class="reward-item">${Art.compostIcon()} +${welcome.scooped}</span>` : ''}</div>`, 'Claim');
+  }
+  if (state.penNews) {
+    const n = state.penNews, names = n.away.map(esc);
+    const who = names.length ? `<b>${names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]}</b>` : '';
+    popup('Cozy pen!', `<div class="toy-card">${Art.toyArt('hut')}</div>
+      <p>The pen now fits <b>4 piggies</b>, so it's easier to see everyone.${who ? ` ${who} went on a sleepover. Tap the <b>Sleepover House</b> in the Shop to swap piggies any time!` : ''}</p>
+      ${n.refund ? `<div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${n.refund}</span></div><p class="hint small">Coins back for the Huge pen.</p>` : ''}`, 'OK!');
+    delete state.penNews;
   }
   render();
   setInterval(loop, 1000);
@@ -1288,7 +1296,7 @@ function updateShop() {
     toys.dataset.sig = tsig;
     const inPen = G.toysInPen(state).length, limit = G.toyLimit(state);
     toys.innerHTML = `<div class="toy-count"><b>${inPen} / ${limit}</b> toys in the pen</div>
-      <p class="hint">Tap a toy you have to put it in the pen or take it out.${state.upgrades.pen3 ? '' : ' A bigger pen fits more toys!'}</p><div class="toy-grid"></div>`;
+      <p class="hint">Tap a toy you have to put it in the pen or take it out.${state.upgrades.pen2 ? '' : ' A bigger pen fits one more toy!'}</p><div class="toy-grid"></div>`;
     const grid = $('.toy-grid', toys);
     for (const [id, t] of Object.entries(G.TOYS)) {
       const at = state.toys[id];
@@ -1319,7 +1327,7 @@ function updateShop() {
   const asig = JSON.stringify([offer, cost, state.coins, room, state.piggies.length, state.away.length]);
   if (adopt.dataset.sig !== asig) {
     adopt.dataset.sig = asig;
-    const fullNote = `Your pen is full! Pick a new piggy and choose who goes on a sleepover${state.upgrades.pen3 ? '.' : ', or buy a bigger pen in Upgrades.'}`;
+    const fullNote = `Your pen is full! Pick a new piggy and choose who goes on a sleepover${state.upgrades.pen2 ? '.' : ', or buy a bigger pen in Upgrades.'}`;
     adopt.innerHTML = `<p class="hint">${room ? 'Pick one to join the family. Colors and names are a surprise!' : fullNote}</p><div class="offers"></div>
       <button class="sleep-btn" id="sleepbtn">${Art.toyArt('hut')}<span><b>Sleepover House</b><small>${state.away.length ? `${state.away.length} ${state.away.length === 1 ? 'piggy is' : 'piggies are'} on a sleepover` : 'Nobody is on a sleepover yet'}</small></span></button>`;
     $('#sleepbtn', adopt).onclick = sleepoverHouse;
@@ -1353,7 +1361,7 @@ function updateShop() {
     // Its name on the left, the piggy being dressed in the middle, every piggy's face on the right.
     const others = state.piggies.filter(q => q.id !== p.id);
     hats.innerHTML = `<div class="hat-pin"><div class="hat-for">
-        ${others.length ? `<div class="hat-pigs ${state.piggies.length > 4 ? 'three' : state.piggies.length > 2 ? 'two' : ''}">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div>` : ''}
+        ${others.length ? `<div class="hat-pigs ${state.piggies.length > 2 ? 'two' : ''}">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div>` : ''}
         <div class="hat-model">${Art.piggySide({ coat: p.coat, hat: showing })}</div>
         <div class="hat-who"><small>Hats for</small><b>${esc(p.name)}</b>
           ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}. ${G.HATS[tryHat.id].goal ? `${G.HATS[tryHat.id].goal} to earn it!` : 'Tap it again to buy!'}</em>` : others.length ? '<em>Tap a face to switch</em>' : ''}</div>
