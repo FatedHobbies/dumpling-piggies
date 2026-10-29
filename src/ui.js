@@ -563,8 +563,17 @@ function dropFromPiggy(poop, b) {
   const f = w.face < 0 ? -1 : 1;   // piggies face right, so the rear is on the left
   const rearX = f > 0 ? ar.left + ar.width * 0.13 : ar.right - ar.width * 0.13;
   const rearY = ar.top + ar.height * 0.7;
-  const x = Math.min(0.95, Math.max(0.05, (rearX - f * ar.width * 0.05 - fr.left) / fr.width));
-  const y = Math.min(0.99, pig.y + 0.01);
+  // If another poop already sits there, scoot this one over a bit so both
+  // stick out (they may still overlap a little).
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const x0 = (rearX - f * ar.width * 0.05 - fr.left) / fr.width, y0 = pig.y + 0.01;
+  const others = state.poops.filter(o => o !== poop && o.seen);
+  const nudges = [[0, 0], [-f * 24, 6], [-f * 10, -14], [-f * 34, -8], [-f * 4, 16], [-f * 46, 4], [-f * 20, -24], [-f * 56, -14]];
+  let x = x0, y = y0;
+  for (const [dx, dy] of nudges) {
+    x = clamp(x0 + dx / fr.width, 0.05, 0.95); y = clamp(y0 + dy / fr.height, 0.05, 0.99);
+    if (!others.some(o => Math.abs((o.x - x) * fr.width) < 22 && Math.abs((o.y - y) * fr.height) < 14)) break;
+  }
   poop.x = x; poop.y = y;
   b.style.setProperty('--x', x.toFixed(3));
   b.style.setProperty('--y', y.toFixed(3));
