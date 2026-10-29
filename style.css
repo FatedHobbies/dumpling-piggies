@@ -236,7 +236,7 @@ button.pk:active { transform: scale(.95); }
 @keyframes steam { 0% { transform: translateY(20px) scale(.8); opacity: 0; } 30% { opacity: .5; } 100% { transform: translateY(-40px) scale(1.4); opacity: 0; } }
 
 .piggy {
-  position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 34%; max-width: 150px;
+  position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 27%; max-width: 120px;
   transform: translate(-50%, -92%) scale(var(--s)); transform-origin: 50% 92%; cursor: pointer;
 }
 .pig-art { transform: scaleX(var(--f)); }

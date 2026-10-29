@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 54;
+const VERSION = 55;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -434,8 +434,8 @@ function aimAtToy(w, id) {
 // The food bowl and water bottle are drawn in the pen scene. Piggies walk up,
 // munch or sip for a few seconds, then wander off. One piggy at a time each.
 const SPOTS = {
-  bowl:   { x: 0.5, y: 0.93, side: 0.13, dy: -0.03, cls: 'eating',   say: ['Nom nom!', 'Crunch!', 'Yum!'] },
-  bottle: { x: 0.93, y: 0.40, side: -0.13, dy: 0.13, cls: 'drinking', say: ['Slurp!', 'Sip sip!', 'Ahh!'] },
+  bowl:   { x: 0.5, y: 0.93, side: 0.105, dy: -0.03, cls: 'eating',   say: ['Nom nom!', 'Crunch!', 'Yum!'] },
+  bottle: { x: 0.93, y: 0.40, side: -0.105, dy: 0.13, cls: 'drinking', say: ['Slurp!', 'Sip sip!', 'Ahh!'] },
 };
 
 function spotTaken(id, pigId) {
