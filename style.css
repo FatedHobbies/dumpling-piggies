@@ -782,9 +782,11 @@ button.pk:active { transform: scale(.95); }
 .hat-pin .hat-title b { font-size: 1.2rem; }
 .hat-pin .hat-who { display: contents; }
 .hat-pin .hat-title { grid-area: who; justify-self: center; }
-.hat-pin .hat-for { grid-template-areas: "who who" "model pigs" "try try"; grid-template-rows: auto auto auto; }
+.hat-pin .hat-for { position: relative; grid-template-areas: "who who" "model pigs"; padding-bottom: 14px; }
+.hat-pin { padding-bottom: 16px; }
 .hat-pin .hat-side { align-self: center; }
-.hat-pin .hat-who em { grid-area: try; justify-self: center; max-width: 100%; text-align: center; font-size: .78rem; line-height: 1.2; padding: 3px 12px; border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The try-on note sits on the box's bottom border, so the box never changes size. */
+.hat-pin .hat-who em { position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 50%); z-index: 2; max-width: calc(100% - 16px); text-align: center; font-size: .78rem; line-height: 1.2; padding: 3px 12px; border-radius: 999px; border-color: var(--wood-dark); background: #FFF8EC; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hat-pin .hat-model { align-self: end; width: 128px; margin-top: -12px; }
 .hat.earn { border-style: dashed; border-color: #E0A81C; background: #FFFBEA; }
 .hat .price.goal { color: #B07A10; font-size: .66rem; }
