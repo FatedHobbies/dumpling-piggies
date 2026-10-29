@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 118;
+const VERSION = 119;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -826,7 +826,7 @@ function startAct(kind, a, b) {
     let my = Math.min(0.8, Math.max(0.3, (a.y + b.y) / 2));
     const ball = G.TOYS.ball;   // not right on top of the ball
     if (state.toys.ball === 'pen' && Math.abs(my - ball.y) < 0.14) my = my < ball.y ? ball.y - 0.16 : ball.y + 0.16;
-    const gap = noseGap(my);
+    const gap = noseGap(my) + 0.035;   // a little space so the noses just touch
     const left = a.x <= b.x ? a : b;
     act.spots = { [left.id]: [mx - gap, my, 1], [(left === a ? b : a).id]: [mx + gap, my, -1] };
   } else if (kind === 'ball') {
