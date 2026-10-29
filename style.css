@@ -306,7 +306,11 @@ button.pk:active { transform: scale(.95); }
 .compost-eq svg:nth-child(2) { width: 16px; height: 16px; }
 .compost small { margin-left: auto; line-height: 1.15; color: var(--soft); font-size: .72rem; text-align: right; font-family: var(--body); }
 .plots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
-.garden .scene-top .scene { height: 110px; }
+.garden .scene-top .scene { display: block; }
+.garden .scene .drop { animation: gdrip 1.2s ease-in infinite; }
+.garden .scene .drop.d1 { animation-delay: .4s; }
+.garden .scene .drop.d2 { animation-delay: .8s; }
+@keyframes gdrip { from { transform: translate(0, 0); opacity: 1; } to { transform: translate(4px, 14px); opacity: 0; } }
 .garden .ribbon { margin-top: 4px; margin-bottom: 4px; }
 .garden .scene-top { margin-bottom: 8px; }
 .garden .pantry { gap: 8px; }
