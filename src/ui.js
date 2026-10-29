@@ -5,7 +5,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 153;
+const VERSION = 154;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -161,7 +161,10 @@ const TIPS = [
   { id: 'harvest', tab: 'garden', on: 'harvest', text: () => 'A veggie is ready! Tap it to pick it.', when: () => !!$('.plot.ready'), target: '.plot.ready' },
   { id: 'seed', tab: 'garden', on: 'plant', when: () => G.unlockedFillings(state).length > 5 && !!$('.plot.empty'), target: '.plot.empty',
     text: () => `You got a new seed! Tap Plant to grow ${G.FILLINGS[G.unlockedFillings(state).filter(f => f !== 'hay').pop()].name}.` },
-  { id: 'tools', tab: 'maze', look: true, text: () => 'Tap squares to build hay walls. Eraser takes them away!', when: () => !run, target: '.mtile[data-tile]' },
+  // Maze tools: build one wall, then pick Eraser and take one away.
+  { id: 'tools', tab: 'maze', on: 'tools', when: () => !run,
+    text: () => !toolsBuilt ? 'Tap a square to build a hay wall!' : mazeTile !== 0 ? 'Now tap Eraser.' : 'Tap a wall to take it away!',
+    target: () => !toolsBuilt || mazeTile === 0 ? '#mcells' : '.mtile[data-tile="0"]' },
   funTip('zoom', 'A zoom pad! Your piggy zooms fast after this.'),
   funTip('tunnel', 'Tunnels! Your piggy goes in one and pops out the other.'),
   funTip('bounce', 'A trampoline! Your piggy boings over the wall here.'),
@@ -178,6 +181,7 @@ const TIPS = [
   { id: 'rare', tab: null, on: 'dumpbook', text: () => 'Rare dumplings go in your Dumpling Book! Tap it to look.', when: hasSpecial, target: '#dumpbook' },
 ];
 let tipNow = null;   // the tip showing right now
+let toolsBuilt = false;   // the maze tools tip: she has built a wall, now the eraser
 
 function tipDone() {
   if (!tipNow) return;
@@ -323,9 +327,12 @@ function positionArrow() {
   // Things in the top bar get an arrow from the side, so it never covers the
   // instruction under the bar.
   const side = r.top < 90;
+  // Maze tray tiles sit right under the big buttons, so their arrow comes up from below.
+  const up = !side && !!t.closest('.maze-tray');
   arrow.hidden = false;
   arrow.classList.toggle('side', side);
-  const x = side ? r.left - 8 : r.left + r.width / 2, y = side ? r.top + r.height / 2 : r.top - 10;
+  arrow.classList.toggle('up', up);
+  const x = side ? r.left - 8 : r.left + r.width / 2, y = side ? r.top + r.height / 2 : up ? r.bottom + 6 : r.top - 10;
   if (arrow.dataset.pos !== `${Math.round(x)},${Math.round(y)}`) { arrow.dataset.pos = `${Math.round(x)},${Math.round(y)}`; arrow.style.left = x + 'px'; arrow.style.top = y + 'px'; }
 }
 
@@ -1698,7 +1705,15 @@ function onCell(x, y) {
     else sfx.nope();
     return;
   }
-  if (M.toggleWall(state.maze, x, y, mazeTile)) { sfx.pop(); render(); }
+  const was = M.isWall(state.maze, x, y);
+  if (M.toggleWall(state.maze, x, y, mazeTile)) {
+    sfx.pop();
+    if (tipNow && tipNow.id === 'tools') {
+      if (!toolsBuilt && !was) { toolsBuilt = true; mazeTile = 1; }
+      else if (toolsBuilt && mazeTile === 0) tut('tools');
+    }
+    render();
+  }
 }
 
 function onCheer() {
