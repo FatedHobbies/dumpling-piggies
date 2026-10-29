@@ -430,7 +430,7 @@ function aimAtToy(w, id) {
 // munch or sip for a few seconds, then wander off. One piggy at a time each.
 const SPOTS = {
   bowl:   { x: 0.5, y: 0.93, side: 0.105, dy: -0.03, cls: 'eating',   say: ['Nom nom!', 'Crunch!', 'Yum!'] },
-  bottle: { x: 0.93, y: 0.40, side: -0.105, dy: 0.13, cls: 'drinking', say: ['Slurp!', 'Sip sip!', 'Ahh!'] },
+  bottle: { x: 0.93, y: 0.13, side: -0.105, dy: 0.13, cls: 'drinking', say: ['Slurp!', 'Sip sip!', 'Ahh!'] },
 };
 
 function spotTaken(id, pigId) {
