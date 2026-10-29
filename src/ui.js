@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 55;
+const VERSION = 56;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -655,7 +655,6 @@ function gardenView() {
     <div class="scene-top">${Art.gardenScene({ coat: current().coat })}</div>
     <div class="compost panel"><span class="ico compost-eq" aria-label="Poop makes compost">${Art.poop({ color: 'brown', shape: 'swirl' })}${Art.icon('arrow')}${Art.compostIcon()}</span><span>Compost: <b id="compost">0</b></span><small>Scoop poop to get more</small></div>
     <div class="plots" id="plots"></div>
-    <div class="ribbon"><span>Pantry</span></div>
     <div class="pantry" id="pantry"></div>
   </section>`);
 }
@@ -754,10 +753,9 @@ function updateKitchen() {
   if (fl.dataset.sig !== fsig) {
     fl.dataset.sig = fsig;
     fl.innerHTML = '';
-    fl.classList.toggle('many', G.unlockedFillings(state).length > 8);
     for (const f of G.unlockedFillings(state)) {
       const have = (state.pantry[f] || 0) - selected.filter(x => x === f).length;
-      const b = el(`<button class="fill tile" ${have < 1 ? 'disabled' : ''}>${Art.veggie(f, 44)}<b class="count">${Math.max(0, have)}</b></button>`);
+      const b = el(`<button class="fill pitem tile" ${have < 1 ? 'disabled' : ''}>${Art.veggie(f, 44)}<b class="count">${Math.max(0, have)}</b><span>${G.FILLINGS[f].name}</span></button>`);
       b.addEventListener('click', () => { if (selected.length < 2) { selected.push(f); sfx.pop(); render(); } });
       fl.appendChild(b);
     }
@@ -1266,6 +1264,9 @@ function dumplingBook() {
     return `<button class="pk unknown" data-dkey="${k}">${Art.dumplingShadow(k, 44)}<span>???</span><b class="count">?</b></button>`;
   };
   let recipePage = 0;
+  // Every page gets the same number of spots (blank ones fill short pages) so
+  // the book keeps one size as pages turn and dumplings are found.
+  const pad = Math.max(...pages.map(p => p.keys.length));
   const html = pages.map((p, i) => {
     const have = p.keys.filter(k => book[k]).length;
     const isRecipes = p.label === 'Recipes';
@@ -1276,7 +1277,7 @@ function dumplingBook() {
         <h4><span>${label}</span><b class="${have === p.keys.length ? 'done' : ''}">${have} / ${p.keys.length}</b></h4>
         <button class="arrow" data-step="1" aria-label="Next page">›</button></div>
       <small class="tier-odds">${sub}</small>
-      <div class="pk-grid">${p.keys.map(tile).join('')}</div>
+      <div class="pk-grid">${p.keys.map(tile).join('')}${'<i class="pk pk-pad"></i>'.repeat(pad - p.keys.length)}</div>
       <div class="dots">${pages.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}</div></div>`;
   }).join('');
   popup('Dumpling Book', `<div class="book-prize"><span class="next-prize">Found <b>${G.dumplingsFound(state)}</b> / ${G.dumplingTotal()}</span>
