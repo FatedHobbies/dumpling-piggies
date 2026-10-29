@@ -124,6 +124,7 @@ export function piggySide(opts = {}) {
       ${fringe}
       ${hatSvg}
       ${eye}
+      <path class="eye-shut" d="M152 102 Q160 109 168 102" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>
       <ellipse cx="164" cy="122" rx="8" ry="4.5" fill="#FF8FA8" opacity=".7"/>
       <circle cx="186" cy="114" r="4" fill="#E86A86"/>
       ${mouth}

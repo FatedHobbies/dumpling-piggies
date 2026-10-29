@@ -820,3 +820,30 @@ button.pk:active { transform: scale(.95); }
 .opts .opt .cost svg { width: 15px; height: 15px; }
 .opt.locked .cost { background: #E9E2D6; border-color: #B3A68F; }
 .pitem.locked svg { position: relative; top: 8px; }
+
+/* Pen shows: nose-to-nose boops, ball pushing, popcorning and flop naps */
+.piggy-svg .eye-shut { display: none; }
+.piggy.flop .blink { display: none; }
+.piggy.flop .eye-shut { display: inline; }
+.piggy.flop .pose.side { transform-origin: 50% 88%; animation: flop-down .8s ease-in forwards; }
+.piggy.flop .body { animation: snooze 3.2s ease-in-out infinite; }
+.piggy.flop .legA { transform: translate(-14px, -10px); } .piggy.flop .legB { transform: translate(14px, -10px); }
+.piggy.flop::after { content: "z"; position: absolute; top: 0; right: 4%; font-family: var(--display); font-weight: 700; font-size: 1.4rem; color: #5B7BD5; text-shadow: 0 0 3px #fff, 0 0 3px #fff; animation: zzz 2s ease-out infinite; pointer-events: none; }
+@keyframes flop-down { 0% { transform: none; } 35% { transform: translateY(-6%) rotate(-8deg); } 70% { transform: translateY(12%) scale(1.12, .78) rotate(5deg); } 85% { transform: translateY(10%) scale(1.1, .82) rotate(3deg); } 100% { transform: translateY(12%) scale(1.12, .78) rotate(4deg); } }
+@keyframes snooze { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 1.05); } }
+@keyframes zzz { 0% { transform: translate(0, 10px) scale(.6); opacity: 0; } 25% { opacity: 1; } 100% { transform: translate(18px, -26px) scale(1.3); opacity: 0; } }
+.piggy.stretch .pig-art { animation: stretch .9s ease-in-out; transform-origin: 50% 90%; }
+@keyframes stretch { 0% { transform: scaleX(var(--f)); } 35% { transform: scaleX(calc(var(--f) * 1.18)) scaleY(.86); } 60% { transform: scaleX(var(--f)) translateY(-14%); } 80% { transform: scaleX(var(--f)) scaleY(.92); } 100% { transform: scaleX(var(--f)); } }
+.piggy.popcorn .pig-art { animation: popcorn 1.5s ease-out; }
+@keyframes popcorn {
+  0%, 100% { transform: scaleX(var(--f)); }
+  12% { transform: scaleX(var(--f)) translateY(-34%) rotate(-16deg); } 24% { transform: scaleX(var(--f)) scaleY(.88); }
+  40% { transform: scaleX(calc(var(--f) * -1)) translateY(-40%) rotate(14deg); } 52% { transform: scaleX(calc(var(--f) * -1)) scaleY(.88); }
+  70% { transform: scaleX(var(--f)) translateY(-30%) rotate(-12deg); } 84% { transform: scaleX(var(--f)) scaleY(.9); }
+}
+.piggy.nudge .pig-art { animation: nudge .45s ease-out; }
+@keyframes nudge { 0%, 100% { transform: scaleX(var(--f)); } 40% { transform: scaleX(var(--f)) translateX(calc(var(--f) * 9%)) rotate(calc(var(--f) * 5deg)); } }
+.toy[data-toy="ball"] svg { transition: transform .75s cubic-bezier(.25, .7, .4, 1); transform: translateX(var(--bx, 0)); }
+.toy[data-toy="ball"] .toy-move { transition: transform .75s cubic-bezier(.25, .7, .4, 1); transform: rotate(var(--br, 0deg)); transform-origin: 50% 50%; }
+.boop-heart { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); color: #FF5C7A; font-size: 1.6rem; text-shadow: 0 0 3px #fff, 0 0 3px #fff; pointer-events: none; animation: boop-heart 1.4s ease-out forwards; }
+@keyframes boop-heart { 0% { transform: translate(-50%, -40px) scale(.2); opacity: 0; } 20% { transform: translate(-50%, -52px) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -90px) scale(1); opacity: 0; } }

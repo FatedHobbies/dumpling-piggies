@@ -522,7 +522,7 @@ let poopsShown = false;
 function dropFromPiggy(poop, b) {
   const floor = $('#floor');
   if (tab !== 'steamer' || !floor.offsetWidth) return false;
-  const free = state.piggies.filter(p => { const w = wander.get(p.id); return w && !w.inside && !w.peek && !w.riding && !w.using; });
+  const free = state.piggies.filter(p => { const w = wander.get(p.id); return w && !w.inside && !w.peek && !w.riding && !w.using && !w.act && !w.flop; });
   const pig = free.find(p => p.id === poop.by) || free[Math.floor(Math.random() * free.length)];
   const d = pig && $(`.piggy[data-id="${pig.id}"]`, floor);
   if (!d) return false;
@@ -574,6 +574,7 @@ function syncPose(d, w) {
   d.classList.toggle('front', !!w.front && !w.inside && !w.peek && !w.riding);
   d.classList.toggle('inside', !!w.inside);
   d.classList.toggle('peek', !!w.peek);
+  d.classList.toggle('flop', !!w.flop);
   if (w.peekW) d.style.setProperty('--pw', w.peekW);
 }
 
@@ -611,6 +612,8 @@ function wanderTick() {
     if (held != null && !w.inside && !w.hide && !w.peek && !w.riding) {
       const d = $(`.piggy[data-id="${pig.id}"]`);
       if (w.using) stopSpot(w, d);
+      if (w.act || w.nap) stopAct(pig.id);
+      if (w.flop) { w.flop = false; if (d) syncPose(d, w); }
       w.toy = w.spot = null;
       const near = Math.abs(pig.x - 0.42) < 0.2 && Math.abs(pig.y - 0.55) < 0.3;
       if (near) { w.tx = pig.x < 0.42 ? 0.1 : 0.8; w.ty = pig.y; } else { w.tx = pig.x; w.ty = pig.y; }
@@ -625,7 +628,18 @@ function wanderTick() {
     const sleepy = pig.effect === 'sleepy';
     const zoom = pig.effect === 'zoom';
     const d = $(`.piggy[data-id="${pig.id}"]`);
-    if (sleepy || now < w.pause) { if (d) { d.classList.remove('walking'); syncPose(d, w); } continue; }
+    // A sleepy piggy (or one taking a little nap) flops over until it wakes
+    // up, then has a big stretch.
+    const napping = sleepy || now < (w.nap || 0);
+    if (napping !== !!w.flop) {
+      w.flop = napping;
+      if (napping) { w.front = false; if (w.act) endAct(w.act); }
+      else { w.nap = 0; w.pause = now + 900; }
+      if (d) { d.classList.toggle('flop', napping); syncPose(d, w); if (!napping) hopPig(d, 'Yawn!', 'stretch', 900); }
+    }
+    if (napping) { if (d) d.classList.remove('walking'); continue; }
+    if (w.act) { actTick(pig, w, d, now); continue; }
+    if (now < w.pause) { if (d) { d.classList.remove('walking'); syncPose(d, w); } continue; }
     if (w.using) stopSpot(w, d);
     const dx = w.tx - pig.x, dy = w.ty - pig.y;
     const dist = Math.hypot(dx, dy);
@@ -637,7 +651,8 @@ function wanderTick() {
       if (w.toy) { const id = w.toy; w.toy = null; playAt(pig, id, d); continue; }
       if (w.spot) { useSpot(pig, w, d, now); continue; }
       w.front = Math.random() < 0.45;   // a resting piggy often turns to look at you
-      const owned = G.toysInPen(state);
+      if (maybeAct(pig, w, now)) continue;
+      const owned = G.toysInPen(state).filter(id => id !== 'ball' || !ballBusy());
       const r = Math.random(), eat = pig.hunger < 50 ? 0.3 : 0.1;   // hungry piggies check the bowl more
       if (r < eat && !spotTaken('bowl', pig.id)) aimAtSpot(w, 'bowl');
       else if (r < eat + 0.1 && !spotTaken('bottle', pig.id)) aimAtSpot(w, 'bottle');
@@ -729,6 +744,7 @@ function stopSpot(w, d) {
 function goToSpot(pig, id) {
   const w = wander.get(pig.id);
   if (!w || spotTaken(id, pig.id)) return;
+  stopAct(pig.id);
   if (w.using) stopSpot(w, $(`.piggy[data-id="${pig.id}"]`));
   w.toy = null;
   aimAtSpot(w, id);
@@ -738,6 +754,8 @@ function goToSpot(pig, id) {
 function goToToy(pig, id) {
   const w = wander.get(pig.id);
   if (!w || w.hide || w.riding) return;
+  if (id === 'ball' && ballBusy() && !(w.act && w.act.kind === 'ball')) return;
+  stopAct(pig.id);
   if (w.using) stopSpot(w, $(`.piggy[data-id="${pig.id}"]`));
   w.spot = null;
   aimAtToy(w, id);
@@ -754,6 +772,216 @@ function toyBounce(id) {
 function toyGone(id) {
   sfx.pop();
   toast(`The ${G.TOYS[id].name} got all eaten up! Get more in the Shop.`, 'big');
+}
+
+// Little shows the piggies put on by themselves while you watch: two meet
+// nose to nose and hop for each other, two push the ball back and forth, one
+// follows another in a choo-choo train, one popcorns with joy, one flops over
+// for a nap. They are only for watching: any tap, feed or tutorial step on a
+// piggy ends its show straight away.
+let nextAct = Date.now() + 5000;
+
+function actFree(pig) {
+  const w = wander.get(pig.id);
+  return !!w && !w.held && !w.act && !w.inside && !w.peek && !w.hide && !w.riding && !w.using && !w.spot && !w.toy && !w.flop && !pig.effect;
+}
+
+function ballBusy() {
+  for (const [, w] of wander) if (w.act && w.act.kind === 'ball' && !w.act.done) return true;
+  return false;
+}
+
+function hopPig(d, say, cls = 'hop', ms = 600) {
+  if (!d) return;
+  d.classList.remove(cls); void d.offsetWidth; d.classList.add(cls);
+  setTimeout(() => d.classList.remove(cls), ms);
+  if (say) bubble(d, say);
+}
+
+// Called when a resting piggy picks what to do next. Returns true if it starts a show.
+function maybeAct(pig, w, now) {
+  if (now < nextAct || tutStep() || pig.effect || Math.random() < 0.4) return false;
+  const pals = state.piggies.filter(p => p.id !== pig.id && actFree(p));
+  const pal = pals[Math.floor(Math.random() * pals.length)];
+  const ballFree = state.toys.ball === 'pen' && !ballBusy() && !hideTaken('ball', pig.id) && !hideTaken('ball', pal?.id);
+  const kinds = ['popcorn', 'nap'];
+  if (pal) kinds.push('boop', 'boop', 'train');
+  if (pal && ballFree) kinds.push('ball', 'ball');
+  startAct(kinds[Math.floor(Math.random() * kinds.length)], pig, pal);
+  nextAct = now + 9000 + Math.random() * 9000;
+  return true;
+}
+
+function startAct(kind, a, b) {
+  const now = Date.now();
+  const wa = wander.get(a.id), wb = b && wander.get(b.id);
+  if (!wa || (b && !wb)) return;
+  if (kind === 'nap') { wa.nap = now + 6000 + Math.random() * 3000; wa.pause = 0; return; }
+  const act = { kind, a: a.id, b: b?.id, phase: 'walk', t: now };
+  wa.act = act; if (wb) wb.act = act;
+  wa.toy = wa.spot = null; if (wb) wb.toy = wb.spot = null;
+  if (kind === 'boop') {
+    // Meet halfway, nose to nose.
+    const mx = Math.min(0.72, Math.max(0.28, (a.x + b.x) / 2));
+    let my = Math.min(0.8, Math.max(0.3, (a.y + b.y) / 2));
+    const ball = G.TOYS.ball;   // not right on top of the ball
+    if (state.toys.ball === 'pen' && Math.abs(my - ball.y) < 0.14) my = my < ball.y ? ball.y - 0.16 : ball.y + 0.16;
+    const gap = noseGap(my);
+    const left = a.x <= b.x ? a : b;
+    act.spots = { [left.id]: [mx - gap, my, 1], [(left === a ? b : a).id]: [mx + gap, my, -1] };
+  } else if (kind === 'ball') {
+    const t = G.TOYS.ball, gap = noseGap(t.y) + ballR() + ROLL;
+    const left = a.x <= b.x ? a : b;
+    act.spots = { [left.id]: [t.x - gap, t.y + 0.01, 1], [(left === a ? b : a).id]: [t.x + gap, t.y + 0.01, -1] };
+    act.left = left.id;
+  } else if (kind === 'train') {
+    act.stops = [0, 1, 2].map(() => [0.15 + Math.random() * 0.7, 0.15 + Math.random() * 0.75]);
+    act.phase = 'go';
+    bubble($(`.piggy[data-id="${a.id}"]`), 'Choo choo!');
+  } else if (kind === 'popcorn') {
+    act.phase = 'pop';
+  }
+}
+
+// How far a piggy's middle sits from its nose, as a share of the floor width.
+function noseGap(y) {
+  const fw = $('#floor')?.offsetWidth || 375;
+  return Math.min(fw * 0.27, 120) * (0.62 + y * 0.38) * 0.42 / fw;
+}
+const ROLL = 0.1;   // how far the ball rolls each way from the middle
+function ballR() {
+  const fw = $('#floor')?.offsetWidth || 375;
+  return Math.min(fw * 0.24, 110) * 0.22 / fw;
+}
+
+function rollBall(to) {
+  const b = $('.toy[data-toy="ball"]'), fw = $('#floor')?.offsetWidth;
+  if (!b || !fw) return;
+  b.classList.add('rolling');
+  b.style.setProperty('--bx', (to * fw).toFixed(0) + 'px');
+  b.style.setProperty('--br', (to / ballR() * 57).toFixed(0) + 'deg');
+}
+
+function endAct(act) {
+  if (!act || act.done) return;
+  act.done = true;
+  for (const id of [act.a, act.b]) {
+    const w = wander.get(id);
+    if (w && w.act === act) { w.act = null; w.pause = Date.now() + 1200 + Math.random() * 1500; }
+    $(`.piggy[data-id="${id}"]`)?.classList.remove('nudge', 'popcorn');
+  }
+  if (act.kind === 'ball') rollBall(0);
+}
+
+// Stop whatever show this piggy is in (it was tapped, fed, or called over).
+function stopAct(id) {
+  const w = wander.get(id);
+  if (!w) return;
+  if (w.act) endAct(w.act);
+  if (w.nap) w.nap = 0;
+}
+
+// Walk a step toward a spot. Returns true once there.
+function stepTo(pig, w, d, x, y, speed = 0.018) {
+  const dx = x - pig.x, dy = y - pig.y, dist = Math.hypot(dx, dy);
+  if (dist < speed) {
+    pig.x = x; pig.y = y;
+    if (d) { d.classList.remove('walking'); syncPose(d, w); placePig(d, pig, w); }
+    return true;
+  }
+  pig.x += dx / dist * speed; pig.y += dy / dist * speed;
+  if (Math.abs(dx) > 0.01) w.face = dx > 0 ? 1 : -1;
+  w.front = dy > 0 && dy > Math.abs(dx) * 2;
+  if (d) { d.classList.add('walking'); syncPose(d, w); placePig(d, pig, w); }
+  return false;
+}
+
+function actTick(pig, w, d, now) {
+  const act = w.act;
+  const other = act.b != null && G.piggy(state, act.a === pig.id ? act.b : act.a);
+  const ow = other && wander.get(other.id);
+  if (act.b != null && (!ow || ow.act !== act)) return endAct(act);
+  const lead = act.a === pig.id;
+  if (act.kind === 'popcorn') {
+    if (act.phase === 'pop') {
+      act.phase = 'popping'; act.t = now;
+      w.front = false; syncPose(d, w);
+      hopPig(d, 'Wheek!', 'popcorn', 1500); sfx.wheek();
+    } else if (now - act.t > 1600) endAct(act);
+    return;
+  }
+  if (act.kind === 'train') {
+    if (lead) {
+      const stop = act.stops[0];
+      if (!stop) return endAct(act);
+      if (stepTo(pig, w, d, stop[0], stop[1], 0.014)) act.stops.shift();
+    } else {
+      // Follow along just behind the leader.
+      const tx = other.x - (ow.face || 1) * 0.15, ty = other.y - 0.02;
+      if (Math.hypot(tx - pig.x, ty - pig.y) > 0.03) stepTo(pig, w, d, tx, ty, 0.016);
+      else if (d) d.classList.remove('walking');
+    }
+    if (now - act.t > 20000) endAct(act);
+    return;
+  }
+  // Boop and ball: both walk to their spot, turn to face each other, then play.
+  const [sx, sy, face] = act.spots[pig.id];
+  if (act.phase === 'walk') {
+    if (stepTo(pig, w, d, sx, sy)) {
+      w.face = face; w.front = false;
+      if (d) placePig(d, pig, w);
+      w.there = true;
+      if (ow.there) { act.phase = 'play'; act.t = now; act.step = 0; w.there = ow.there = false; }
+    }
+    if (now - act.t > 9000) endAct(act);
+    return;
+  }
+  if (!lead) return;   // the leader runs the show for both
+  const da = d, db = $(`.piggy[data-id="${other.id}"]`);
+  const t = now - act.t;
+  if (act.kind === 'boop') {
+    // Noses touch with a little heart, one hops, the other hops back.
+    const beats = [
+      [300, () => { heartAt(pig, other); sfx.pop(); }],
+      [1300, () => hopPig(da, 'Wheek!')],
+      [2200, () => hopPig(db, 'Wheek!')],
+      [3100, () => hopPig(da)],
+      [3500, () => hopPig(db)],
+      [4300, () => endAct(act)],
+    ];
+    while (act.step < beats.length && t >= beats[act.step][0]) beats[act.step++][1]();
+    return;
+  }
+  if (act.kind === 'ball') {
+    // Each push sends the ball rolling over to the other piggy, four times,
+    // then the ball rolls back to the middle.
+    const leftD = act.left === pig.id ? da : db, rightD = act.left === pig.id ? db : da;
+    // The ball rolls over to the left piggy, then each push sends it to the
+    // other one, four times, and it rolls back to the middle.
+    const step = Math.floor(t / 1000);
+    if (step >= act.step) {
+      act.step = step + 1;
+      if (step === 0) rollBall(-ROLL);
+      else if (step < 5) {
+        const fromLeft = step % 2 === 1;
+        hopPig(fromLeft ? leftD : rightD, step === 1 ? 'Wheek!' : null, 'nudge', 450);
+        setTimeout(() => { if (!act.done) { rollBall(fromLeft ? ROLL : -ROLL); sfx.pop(); } }, 180);
+      } else {
+        if (G.playToy(state, act.a, 'ball').gone) toyGone('ball');
+        G.playToy(state, act.b, 'ball');
+        bubble(da, '♥');
+        endAct(act);
+      }
+    }
+  }
+}
+
+function heartAt(a, b) {
+  const floor = $('#floor');
+  const x = (a.x + b.x) / 2, y = Math.min(a.y, b.y);
+  const h = el(`<span class="boop-heart" style="--x:${x.toFixed(3)};--y:${y.toFixed(3)};z-index:${depth(y) + 1}">♥</span>`);
+  floor.appendChild(h);
+  setTimeout(() => h.remove(), 1400);
 }
 
 function playAt(pig, id, d) {
@@ -863,6 +1091,7 @@ function pickPig(id) {
 
 function onPet(id) {
   selectedPig = id;
+  stopAct(id);
   const r = G.pet(state, id);
   const d = $(`.piggy[data-id="${id}"]`);
   if (d) { d.classList.remove('hop'); void d.offsetWidth; d.classList.add('hop'); bubble(d, 'wheek!'); }
@@ -878,6 +1107,7 @@ function onFeed(key, btn) {
   const asking = G.piggy(state, needPig);
   if (stillAsking(asking) === 'hunger' && current().hunger >= NEEDY) selectedPig = asking.id;
   const target = current();
+  stopAct(target.id);
   const r = G.feed(state, key, target.id);
   if (!r.ok) {
     sfx.nope();
