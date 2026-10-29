@@ -299,7 +299,7 @@ button.pk:active { transform: scale(.95); }
 .poop { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 46px; height: 46px; transform: translate(-50%, -100%); transition: transform .25s, opacity .25s; z-index: 500; }  /* above toys, houses and piggies so a poop can always be tapped */
 .poop svg { width: 100%; height: 100%; }
 .poop.gone { transform: translate(-50%, -200%) scale(.3); opacity: 0; }
-.poop.rainbow, .poop.gold, .poop.crystal { width: 54px; height: 54px; animation: glow 1s infinite alternate; }
+.poop.rainbow, .poop.gold, .poop.crystal, .poop.unicorn, .poop.royal, .poop.moon, .poop.champ, .poop.hay, .poop.mystery, .poop.robo { width: 54px; height: 54px; animation: glow 1s infinite alternate; }
 .poop.crystal { animation-name: glow-ice; }
 @keyframes glow-ice { from { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #7FD4FF); } to { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px #9FB8FF); } }
 @keyframes glow { from { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #FFD166); } to { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px #FFD166); } }
