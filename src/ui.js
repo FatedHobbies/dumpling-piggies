@@ -4,13 +4,14 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 94;
+const VERSION = 95;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
 let tab = 'steamer';
 let selected = [];          // fillings chosen in the kitchen
-let selectedPig = null;     // id of the piggy whose name is in the HUD
+let selectedPig = null;
+const NEEDY = 30;            // Food or Fun below this shows a need bubble     // id of the piggy whose name is in the HUD
 let lastTick = Date.now();
 let run = null;             // the maze run in progress, or null while building
 let runTimer = null;
@@ -268,7 +269,7 @@ function updateSteamer() {
   for (const slot of faces.querySelectorAll('.face-slot')) {
     const pig = state.piggies.find(g => g.id === +slot.dataset.id);
     if (!pig) continue;
-    const needs = [pig.hunger < 30 && 'hunger', pig.fun < 30 && 'fun', dirty && 'clean'].filter(Boolean);
+    const needs = [pig.hunger < NEEDY && 'hunger', pig.fun < NEEDY && 'fun', dirty && 'clean'].filter(Boolean);
     const box = $('.face-needs', slot), nsig = needs.join(',');
     if (box.dataset.sig !== nsig) { box.dataset.sig = nsig; box.innerHTML = needs.map(n => `<i>${Art.icon(n)}</i>`).join(''); }
   }
@@ -292,9 +293,12 @@ function updateSteamer() {
       $('.peek-face', d).innerHTML = Art.piggyFace({ coat: pig.coat, hat: pig.hat });
     }
     $('.tag', d).textContent = pig.name;
-    const need = pig.hunger < 25 ? 'hunger' : pig.fun < 25 ? 'fun' : '';
+    // A big thought bubble over a piggy that needs something: a dumpling
+    // when hungry, a heart when it wants petting.
+    const need = pig.hunger < NEEDY ? 'hunger' : pig.fun < NEEDY ? 'fun' : '';
     const bub = $('.need-bubble', d);
-    if (bub.dataset.need !== need) { bub.dataset.need = need; bub.innerHTML = need ? Art.icon(need) : ''; }
+    if (bub.dataset.need !== need) { bub.dataset.need = need; bub.innerHTML = need === 'hunger' ? Art.dumpling('carrot+carrot', 44) : need ? Art.icon('pet') : ''; }
+    d.classList.toggle('needy', !!need);
     const w = wander.get(pig.id);
     d.classList.toggle('mood-' + m, true);
     for (const c of [...d.classList]) if (c.startsWith('mood-') && c !== 'mood-' + m) d.classList.remove(c);
@@ -331,8 +335,9 @@ function updateSteamer() {
   }
   for (const [, c] of poops) c.remove();
   poopsShown = true;
-  // Dumpling tray
+  // Dumpling tray, glowing while somebody is hungry
   const tray = $('#tray');
+  tray.classList.toggle('hungry', state.piggies.some(g => g.hunger < NEEDY));
   // Surprise dumplings sit at the front of the tray.
   const rank = k => ({ secret: 0, super: 1, rare: 2, shiny: 3 }[G.dumplingInfo(k)?.tier] ?? 4);
   const keys = Object.keys(state.dumplings).filter(k => state.dumplings[k] > 0 && G.dumplingInfo(k)).sort((a, b) => rank(a) - rank(b));
@@ -676,6 +681,10 @@ function onPet(id) {
 }
 
 function onFeed(key, btn) {
+  // A dumpling goes to the piggy with the hungry bubble, so nobody has to be
+  // picked first. The picked piggy gets it if it is hungry or nobody is.
+  const hungry = state.piggies.filter(g => g.hunger < NEEDY).sort((a, b) => a.hunger - b.hunger);
+  if (hungry.length && current().hunger >= NEEDY) selectedPig = hungry[0].id;
   const target = current();
   const r = G.feed(state, key, target.id);
   if (!r.ok) {
