@@ -8,7 +8,7 @@ export const FINISH = { x: COLS - 1, y: 0 };
 export const LURES_PER_RUN = 3;
 
 export function newMaze() {
-  return { cells: new Array(COLS * ROWS).fill(0), finished: {} };
+  return { cells: new Array(COLS * ROWS).fill(0), finished: {}, treasure: [] };
 }
 
 export const idx = (x, y) => y * COLS + x;
@@ -17,7 +17,7 @@ const same = (a, b) => a.x === b.x && a.y === b.y;
 export const isWall = (m, x, y) => m.cells[idx(x, y)] === 1;
 
 export function toggleWall(m, x, y) {
-  if (!inside(x, y) || same({ x, y }, START) || same({ x, y }, FINISH)) return false;
+  if (!inside(x, y) || same({ x, y }, START) || same({ x, y }, FINISH) || treasureAt(m, x, y)) return false;
   m.cells[idx(x, y)] = m.cells[idx(x, y)] ? 0 : 1;
   return true;
 }
@@ -61,7 +61,7 @@ export function hash(m) { return m.cells.join(''); }
 
 // A random maze with a guaranteed route, carved with a recursive backtracker
 // on the odd cells, then a few extra openings so it isn't one long corridor.
-export function randomize(m, rng = Math.random) {
+export function randomize(m, rng = Math.random, fillings = ['carrot']) {
   m.cells.fill(1);
   const carve = (x, y) => {
     m.cells[idx(x, y)] = 0;
@@ -81,7 +81,43 @@ export function randomize(m, rng = Math.random) {
   }
   m.cells[idx(START.x, START.y)] = 0;
   m.cells[idx(FINISH.x, FINISH.y)] = 0;
-  if (!solvable(m)) randomize(m, rng);
+  if (!solvable(m)) return randomize(m, rng, fillings);
+  hideTreasure(m, rng, fillings);
+}
+
+// Treasure: Surprise mazes hide a couple of goodies, best of all down the side
+// branches so a lure is the way to get them. Whatever the piggy runs over is
+// hers; anything missed stays put for the next run.
+export const TREASURE_COINS = 10;
+export const TREASURE_VEGGIES = 2;
+export const treasureAt = (m, x, y) => (m.treasure || []).find(t => t.x === x && t.y === y);
+
+function hideTreasure(m, rng, fillings) {
+  const main = new Set((path(m, START, FINISH) || []).map(c => idx(c.x, c.y)));
+  const spots = [], ends = [];
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+    if (isWall(m, x, y) || same({ x, y }, START) || same({ x, y }, FINISH) || main.has(idx(x, y))) continue;
+    (neighbors(m, x, y).length === 1 ? ends : spots).push({ x, y });
+  }
+  const shuffle = (a) => a.sort(() => rng() - 0.5);
+  const picks = [...shuffle(ends), ...shuffle(spots)].slice(0, 2);
+  const kinds = shuffle(['coins', 'veggie', 'box']);
+  m.treasure = picks.map((c, i) => {
+    const t = { ...c, kind: kinds[i] };
+    if (t.kind === 'veggie') t.filling = fillings[Math.floor(rng() * fillings.length)] || 'carrot';
+    return t;
+  });
+}
+
+// Gives the treasure to the player. A mystery box holds one dumpling of a
+// recipe she has already found (carrot if none yet).
+export function claim(state, t, rng = Math.random) {
+  if (t.kind === 'coins') { state.coins += TREASURE_COINS; return { ...t, coins: TREASURE_COINS }; }
+  if (t.kind === 'veggie') { state.pantry[t.filling] = (state.pantry[t.filling] || 0) + TREASURE_VEGGIES; return { ...t, count: TREASURE_VEGGIES }; }
+  const found = state.discovered || [];
+  const key = found.length ? found[Math.floor(rng() * found.length)] : 'carrot+carrot';
+  state.dumplings[key] = (state.dumplings[key] || 0) + 1;
+  return { ...t, key };
 }
 
 export function newRun() {
@@ -89,7 +125,7 @@ export function newRun() {
 }
 
 // One sniffing step. Returns an event name for the UI: 'move', 'deadend',
-// 'ate' (reached a lure) or 'finish'.
+// 'ate' (reached a lure), 'treasure' (run.found) or 'finish'.
 export function step(m, run, rng = Math.random, now = Date.now()) {
   if (run.done) return 'finish';
   const { x, y } = run.pos;
@@ -100,6 +136,11 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
     const p = path(m, run.pos, run.lure);
     if (p && p.length) next = p[0];
     else run.lure = null;
+  }
+  if (!next && (m.treasure || []).length && rng() < 0.7) {
+    // Treasure close by smells good too.
+    const near = m.treasure.map(t => path(m, run.pos, t)).filter(p => p && p.length && p.length <= 3).sort((a, b) => a.length - b.length)[0];
+    if (near) next = near[0];
   }
   if (!next) {
     // After wandering for a while the piggy "smells" the dumpling and heads straight there.
@@ -121,6 +162,8 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
 
   // Finishing always wins, even if a carrot was dropped on the dumpling square.
   if (same(run.pos, FINISH)) { run.done = true; run.lure = null; return 'finish'; }
+  const t = treasureAt(m, run.pos.x, run.pos.y);
+  if (t) { m.treasure = m.treasure.filter(o => o !== t); run.found = t; if (run.lure && same(run.pos, run.lure)) run.lure = null; return 'treasure'; }
   if (run.lure && same(run.pos, run.lure)) { run.lure = null; return 'ate'; }
   return deadEnd ? 'deadend' : 'move';
 }

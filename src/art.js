@@ -686,6 +686,30 @@ export function coinIcon() {
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="#F5B32B"/><circle cx="32" cy="32" r="22" fill="#FFD34D" stroke="#E0941C" stroke-width="3"/><path d="M32 16 l5 10 11 1.5 -8 7.5 2 11 -10 -5.5 -10 5.5 2 -11 -8 -7.5 11 -1.5z" fill="#FFF3B0" stroke="#E0941C" stroke-width="2" stroke-linejoin="round"/></svg>`;
 }
 
+// Maze treasure, drawn in a 64 box: a little pile of coins, a basket with a
+// veggie peeking out, or a pink mystery box with a bow.
+export function treasure(t) {
+  const glow = `<ellipse cx="32" cy="54" rx="24" ry="7" fill="#FFF3B0" opacity=".75"/>`;
+  if (t.kind === 'coins') {
+    const coin = (x, y) => `<g transform="translate(${x} ${y}) scale(.42)"><circle cx="32" cy="32" r="28" fill="#F5B32B" stroke="#C98216" stroke-width="3"/><circle cx="32" cy="32" r="19" fill="#FFD34D" stroke="#E0941C" stroke-width="3"/><path d="M32 20 l4 8 8 1 -6 6 1.5 8 -7.5 -4 -7.5 4 1.5 -8 -6 -6 8 -1z" fill="#FFF3B0"/></g>`;
+    return `<svg viewBox="0 0 64 64" aria-hidden="true">${glow}${coin(6, 30)}${coin(32, 30)}${coin(19, 26)}${coin(12, 12)}${coin(27, 8)}</svg>`;
+  }
+  if (t.kind === 'veggie') {
+    return `<svg viewBox="0 0 64 64" aria-hidden="true">${glow}
+      <g transform="translate(12 0) scale(.62)">${veggie(t.filling, 64).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g>
+      <path d="M8 34 H56 L51 56 Q50 60 46 60 H18 Q14 60 13 56Z" fill="#D9A15E" stroke="#8A5634" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M12 42 H52 M14 50 H50" stroke="#B57A3E" stroke-width="2.5"/><path d="M22 36 V58 M32 36 V58 M42 36 V58" stroke="#B57A3E" stroke-width="2"/>
+      <rect x="6" y="31" width="52" height="7" rx="3.5" fill="#E8B878" stroke="#8A5634" stroke-width="3"/></svg>`;
+  }
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${glow}
+    <rect x="10" y="26" width="44" height="32" rx="6" fill="#FF8FB1" stroke="#C2456E" stroke-width="3"/>
+    <rect x="7" y="19" width="50" height="11" rx="4" fill="#FFB3CA" stroke="#C2456E" stroke-width="3"/>
+    <rect x="28" y="19" width="8" height="39" fill="#FFD34D" stroke="#E0941C" stroke-width="2"/>
+    <path d="M32 19 Q20 4 15 12 Q12 19 32 19 Q44 19 49 12 Q44 4 32 19Z" fill="#FFD34D" stroke="#E0941C" stroke-width="2.5" stroke-linejoin="round"/>
+    <text x="20" y="50" font-size="16" font-weight="900" fill="#fff" font-family="system-ui,sans-serif" text-anchor="middle">?</text>
+    <text x="45" y="50" font-size="16" font-weight="900" fill="#fff" font-family="system-ui,sans-serif" text-anchor="middle">?</text></svg>`;
+}
+
 export function upgradeIcon(kind) {
   const inner = {
     plot: `<rect x="10" y="30" width="44" height="22" rx="6" fill="#B9824A"/><path d="M32 30 V14 M24 22 Q32 14 40 22" stroke="#5FAE4E" stroke-width="5" fill="none" stroke-linecap="round"/>`,

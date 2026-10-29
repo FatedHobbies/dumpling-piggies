@@ -840,6 +840,7 @@ function mazeView() {
         <rect x="-10" y="-10" width="${w + 20}" height="${h + 20}" rx="18" fill="#A7DB8C"/>
         <g id="mcells"></g>
         <g id="mfence"></g>
+        <g id="mtreasure"></g>
         <g id="mlure"></g>
         <g id="mfinish" transform="translate(${M.FINISH.x * CELL + CELL / 2} ${M.FINISH.y * CELL + CELL / 2})"></g>
         <g id="mpig" class="mpig"><g id="mrot" class="mpig-rot"></g></g>
@@ -880,6 +881,12 @@ function updateMaze() {
     r.classList.toggle('start', x === M.START.x && y === M.START.y);
     r.classList.toggle('seen', !!(run && run.visited[M.idx(x, y)]));
   }
+  const tre = $('#mtreasure');
+  const tsig = (m.treasure || []).map(t => `${t.x},${t.y},${t.kind},${t.filling || ''}`).join('|');
+  if (tre.dataset.sig !== tsig) {
+    tre.dataset.sig = tsig;
+    tre.innerHTML = (m.treasure || []).map(t => `<g transform="translate(${t.x * CELL + 4} ${t.y * CELL + 4})"><g class="mtreasure">${Art.treasure(t).replace('<svg ', `<svg width="${CELL - 8}" height="${CELL - 8}" `)}</g></g>`).join('');
+  }
   const lure = $('#mlure');
   const lsig = run && run.lure ? `${run.lure.x},${run.lure.y}` : '';
   if (lure.dataset.sig !== lsig) {
@@ -891,7 +898,8 @@ function updateMaze() {
   const hint = $('#mhint'), btns = $('#mbtns');
   const name = esc(current().name);
   const bsig = run ? 'run' : ok ? 'ok' : 'blocked';
-  if (run) hint.textContent = run.done ? 'Yay!' : `Tap a square to drop a carrot (${run.lures} left). Tap ${current().name} to cheer!`;
+  const loot = (m.treasure || []).length;
+  if (run) hint.textContent = run.done ? 'Yay!' : loot ? `Drop a carrot by the treasure to lead ${current().name} there! (${run.lures} left)` : `Tap a square to drop a carrot (${run.lures} left). Tap ${current().name} to cheer!`;
   else hint.textContent = ok ? 'Tap squares to build hay walls, then press Go!' : `${current().name} can't reach the dumpling. Open a path!`;
   if (btns.dataset.sig === bsig) return;
   btns.dataset.sig = bsig;
@@ -899,7 +907,7 @@ function updateMaze() {
   if (run) {
     btns.appendChild(btn('Stop', () => { stopRun(); render(); }, 'btn-grey'));
   } else {
-    btns.appendChild(btn('Surprise me', () => { M.randomize(m); sfx.pop(); tut('surprise'); render(); }, 'btn-grey surprise'));
+    btns.appendChild(btn('Surprise me', () => { M.randomize(m, Math.random, G.unlockedFillings(state)); sfx.pop(); tut('surprise'); render(); }, 'btn-grey surprise'));
     btns.appendChild(btn('Clear', () => { M.clear(m); sfx.pop(); render(); }, 'btn-grey'));
     const go = btn('Go!', startRun, 'btn-green go');
     go.disabled = !ok;
@@ -973,6 +981,14 @@ function scheduleStep() {
     render();
     const pig = $('#mpig');
     if (ev === 'deadend') { sfx.wheek(); svgBubble('wheek?'); }
+    if (ev === 'treasure') {
+      const t = M.claim(state, run.found);
+      sfx.coin(); svgBubble('ooh!');
+      if (t.coins) { floatCoin(t.coins); toast(`Found ${t.coins} coins!`); }
+      else if (t.count) toast(`<i class="toast-ico">${Art.veggie(t.filling, 32)}</i> Found +${t.count} ${G.FILLINGS[t.filling].name}!`);
+      else toast(`<i class="toast-ico">${Art.dumpling(t.key, 36)}</i> Surprise! ${G.RECIPES[t.key] ? G.RECIPES[t.key].name : 'A dumpling'}!`);
+      persist();
+    }
     if (ev === 'ate') { sfx.munch(); svgBubble('nom!'); const p = current(); p.fun = Math.min(100, p.fun + 5); }
     if (ev === 'finish') {
       const r = M.reward(state, state.maze, run);
