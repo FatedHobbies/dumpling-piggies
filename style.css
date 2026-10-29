@@ -456,3 +456,23 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .price.box { color: var(--blue-dark); }
 .chew-meter { width: 70%; height: 10px; border-radius: 5px; background: rgba(0,0,0,.15); overflow: hidden; margin-top: 2px; }
 .chew-meter i { display: block; height: 100%; background: #FF9A3C; border-radius: 5px; }
+
+/* Food bowl and water bottle visits */
+.piggy.eating .body { animation: nibble .32s ease-in-out infinite; }
+@keyframes nibble { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(6deg) translateY(3px); } }
+.piggy.drinking .pig-art { transform: scaleX(var(--f)) rotate(-9deg); transform-origin: 30% 90%; transition: transform .3s; }
+.piggy.drinking .body { animation: squish .5s ease-in-out infinite; }
+.pen-bowl, .pen-bottle { transform-box: fill-box; transform-origin: 50% 100%; }
+.stage.eating .pen-bowl { animation: bowl-wiggle .4s ease-in-out infinite; }
+@keyframes bowl-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
+.stage.eating .kibble { transform-box: fill-box; transform-origin: center; animation: kibble .32s ease-in-out infinite; }
+@keyframes kibble { 50% { transform: translateY(-3px); } }
+.pen-bottle .drip { opacity: 0; }
+.stage.drinking .pen-bottle { animation: bottle-sway .6s ease-in-out infinite; transform-origin: 50% 0; }
+@keyframes bottle-sway { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(2deg); } }
+.stage.drinking .drip { animation: drip .7s ease-in infinite; }
+@keyframes drip { 0% { opacity: 0; transform: translateY(-4px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(16px); } }
+.stage.drinking .bubble-up { animation: bubble-up 1.1s ease-out infinite; }
+@keyframes bubble-up { 0% { opacity: 0; transform: translateY(8px); } 30% { opacity: .9; } 100% { opacity: 0; transform: translateY(-36px); } }
+.spot-hit { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 20%; height: 16%; transform: translate(-50%, -70%); background: none; border: 0; padding: 0; z-index: 2; }
+.spot-hit[data-spot="bottle"] { width: 12%; height: 45%; transform: translate(-50%, -85%); }

@@ -220,12 +220,16 @@ function steamerView() {
     </div>
     <div class="stage" id="stage">
       ${Art.penScene()}
-      <div class="floor" id="floor"></div>
+      <div class="floor" id="floor">
+        <button class="spot-hit" data-spot="bowl" aria-label="Food bowl" style="--x:${SPOTS.bowl.x};--y:${SPOTS.bowl.y}"></button>
+        <button class="spot-hit" data-spot="bottle" aria-label="Water bottle" style="--x:${SPOTS.bottle.x};--y:${SPOTS.bottle.y}"></button>
+      </div>
       <div class="faces" id="faces"></div>
       <span class="pen-count" id="pencount"></span>
     </div>
     <div class="tray panel" id="tray"></div>
   </section>`);
+  for (const b of v.querySelectorAll('.spot-hit')) b.addEventListener('click', () => goToSpot(current(), b.dataset.spot));
   return v;
 }
 
@@ -333,6 +337,7 @@ function wanderTick() {
     const zoom = pig.effect === 'zoom';
     const d = $(`.piggy[data-id="${pig.id}"]`);
     if (sleepy || now < w.pause) { if (d) d.classList.remove('walking'); continue; }
+    if (w.using) stopSpot(w, d);
     const dx = w.tx - pig.x, dy = w.ty - pig.y;
     const dist = Math.hypot(dx, dy);
     const speed = zoom ? 0.09 : 0.018;
@@ -340,8 +345,12 @@ function wanderTick() {
       pig.x = w.tx; pig.y = w.ty;
       w.pause = now + 1500 + Math.random() * (zoom ? 500 : 4000);
       if (w.toy) { playAt(pig, w.toy, d); w.toy = null; }
+      if (w.spot) { useSpot(pig, w, d, now); continue; }
       const owned = G.toysInPen(state);
-      if (owned.length && Math.random() < 0.35) aimAtToy(w, owned[Math.floor(Math.random() * owned.length)]);
+      const r = Math.random(), eat = pig.hunger < 50 ? 0.3 : 0.1;   // hungry piggies check the bowl more
+      if (r < eat && !spotTaken('bowl', pig.id)) aimAtSpot(w, 'bowl');
+      else if (r < eat + 0.1 && !spotTaken('bottle', pig.id)) aimAtSpot(w, 'bottle');
+      else if (owned.length && Math.random() < 0.35) aimAtToy(w, owned[Math.floor(Math.random() * owned.length)]);
       else { w.tx = 0.08 + Math.random() * 0.84; w.ty = Math.random(); }
       if (d) d.classList.remove('walking');
       continue;
@@ -360,9 +369,57 @@ function aimAtToy(w, id) {
   w.ty = Math.min(1, t.y + 0.02);
 }
 
+// The food bowl and water bottle are drawn in the pen scene. Piggies walk up,
+// munch or sip for a few seconds, then wander off. One piggy at a time each.
+const SPOTS = {
+  bowl:   { x: 0.5, y: 0.93, side: 0.13, dy: -0.03, cls: 'eating',   say: ['Nom nom!', 'Crunch!', 'Yum!'] },
+  bottle: { x: 0.93, y: 0.40, side: -0.13, dy: 0.13, cls: 'drinking', say: ['Slurp!', 'Sip sip!', 'Ahh!'] },
+};
+
+function spotTaken(id, pigId) {
+  for (const [k, w] of wander) if (k !== pigId && (w.spot === id || w.using === id)) return true;
+  return false;
+}
+
+function aimAtSpot(w, id) {
+  const s = SPOTS[id];
+  const side = id === 'bowl' && Math.random() < 0.5 ? -s.side : s.side;
+  w.spot = id;
+  w.tx = s.x + side; w.ty = s.y + s.dy;
+}
+
+function useSpot(pig, w, d, now) {
+  const s = SPOTS[w.spot];
+  w.using = w.spot; w.spot = null;
+  w.face = s.x > pig.x ? 1 : -1;
+  w.pause = now + 2600 + Math.random() * 1600;
+  $('#stage')?.classList.add(s.cls);
+  if (d) { placePig(d, pig, w); d.classList.remove('walking'); d.classList.add(s.cls); bubble(d, s.say[Math.floor(Math.random() * s.say.length)]); }
+}
+
+function stopSpot(w, d) {
+  const cls = SPOTS[w.using].cls;
+  w.using = null;
+  $('#stage')?.classList.remove(cls);
+  if (d) d.classList.remove(cls);
+  w.pause = 0;
+}
+
+// Tapping the bowl or bottle sends the picked piggy over for a snack or a sip.
+function goToSpot(pig, id) {
+  const w = wander.get(pig.id);
+  if (!w || spotTaken(id, pig.id)) return;
+  if (w.using) stopSpot(w, $(`.piggy[data-id="${pig.id}"]`));
+  w.toy = null;
+  aimAtSpot(w, id);
+  w.pause = 0;
+}
+
 function goToToy(pig, id) {
   const w = wander.get(pig.id);
   if (!w) return;
+  if (w.using) stopSpot(w, $(`.piggy[data-id="${pig.id}"]`));
+  w.spot = null;
   aimAtToy(w, id);
   w.pause = 0;
 }
