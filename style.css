@@ -744,15 +744,14 @@ button.pk:active { transform: scale(.95); }
 .pitem.locked span { color: var(--soft); }
 .pitem.locked .count { background: var(--line); color: var(--soft); }
 .pantry .pk-pad { visibility: hidden; }
-/* Counter bar: the two filling slots and Steam it!, centered on the counter. */
-.counter-bar { position: absolute; left: 3%; right: 3%; bottom: 7%; display: flex; align-items: center; justify-content: center; gap: 10px; }
-.counter-bar .slots { margin-left: 0; }
-/* Keep the counter-bar squares below the countertop's top edge. */
-.counter-bar { bottom: 3.5%; }
-.counter-bar .slot { width: 60px; height: 60px; }
-.counter-bar .slot svg { width: 50px; height: 50px; }
-.counter-bar #cook { font-size: 1.25rem; height: 60px; padding: 0 20px; }
-.counter-bar { bottom: 1.5%; }
+/* Counter bar: the two filling slots and Steam it!, centered on the brown counter front.
+   The front starts under the countertop lip (y 159.5 of the 230-tall kitchen scene); the 4px
+   bottom padding makes room for the button shadow so the brown gap is even above and below. */
+.counter-bar { position: absolute; left: 3%; right: 3%; top: calc(159.5% / 2.3); bottom: 0; padding-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.counter-bar .slots { margin-left: 0; height: 100%; }
+.counter-bar .slot { width: auto; height: min(60px, 100% - 10px); aspect-ratio: 1; }
+.counter-bar .slot svg { width: 84%; height: 84%; }
+.counter-bar #cook { font-size: 1.25rem; height: min(60px, 100% - 10px); padding: 0 20px; }
 .opt .count.have { background: var(--mint); color: #0E2E25; }
 
 .hat-pin { position: sticky; top: calc(var(--headh, 120px) - 12px); z-index: 4; margin: -10px -10px 8px; padding: 6px 10px; background: var(--panel); border-radius: 16px 16px 0 0; box-shadow: 0 6px 6px -4px rgba(0,0,0,.15); }
