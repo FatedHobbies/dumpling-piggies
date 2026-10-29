@@ -214,12 +214,12 @@ export function wearHat(state, piggyId, id) {
 // (owned but put away); only TOY_LIMIT fit in the pen at once. Chews get
 // nibbled away (`state.toyWear`, 0 to 100) and must be bought again.
 export const TOYS = {
-  ball:   { name: 'Bouncy ball',  desc: 'Piggies love to nose it around.',  cost: 30,  x: 0.80, y: 0.58 },
-  chew:   { name: 'Chew sticks',  desc: 'A crunchy bundle to nibble on. Gets eaten up!', cost: 25, x: 0.32, y: 0.80, chew: true },
-  carrot: { name: 'Carrot chew',  desc: 'A wooden carrot to gnaw. Gets eaten up!',      cost: 20, x: 0.56, y: 0.68, chew: true },
-  tunnel: { name: 'Fuzzy tunnel', desc: 'Run in one end and out the other!', cost: 80,  x: 0.80, y: 0.95 },
-  hut:    { name: 'Dumpling hut', desc: 'A cozy hidey house shaped like a dumpling.', cost: 120, x: 0.17, y: 0.62 },
-  slide:  { name: 'Tiny slide',   desc: 'Wheee! Down the slide.',            cost: 160, x: 0.52, y: 0.34 },
+  ball:   { name: 'Bouncy ball',  desc: 'Piggies love to nose it around.',  cost: 30,  x: 0.50, y: 0.58 },
+  chew:   { name: 'Chew sticks',  desc: 'A crunchy bundle to nibble on. Gets eaten up!', cost: 25, x: 0.22, y: 0.84, chew: true },
+  carrot: { name: 'Carrot chew',  desc: 'A wooden carrot to gnaw. Gets eaten up!',      cost: 20, x: 0.50, y: 0.80, chew: true },
+  tunnel: { name: 'Fuzzy tunnel', desc: 'Run in one end and out the other!', cost: 80,  x: 0.76, y: 0.86 },
+  hut:    { name: 'Dumpling hut', desc: 'A cozy hidey house shaped like a dumpling.', cost: 120, x: 0.22, y: 0.58 },
+  slide:  { name: 'Tiny slide',   desc: 'Wheee! Down the slide.',            cost: 160, x: 0.78, y: 0.58 },
 };
 const CHEW_BITE = 2.5;            // wear per nibble
 const CHEW_DAY = 100 / 86400;     // a chew in the pen also wears out over one day
