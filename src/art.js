@@ -148,27 +148,29 @@ export function dumpling(key, size = 64, opts = {}) {
     <path d="M9 44 Q9 60 32 60 Q55 60 55 44Z" fill="#E6B566" stroke="#9C6A3A" stroke-width="2.5"/>
     <path d="M14 50 H50 M16 55 H48" stroke="#C98F4B" stroke-width="2" stroke-linecap="round" opacity=".7"/>
     <ellipse cx="32" cy="44" rx="23" ry="5" fill="#F2CE7E" stroke="#9C6A3A" stroke-width="2.5"/>`;
-  const sparkle = r.glitter ? `<g fill="#fff" opacity=".9"><circle cx="20" cy="22" r="1.4"/><circle cx="42" cy="18" r="1.2"/><circle cx="46" cy="30" r="1.5"/><circle cx="18" cy="33" r="1.1"/><circle cx="36" cy="12" r="1"/><circle cx="26" cy="38" r="1.2"/></g>
-    <path d="M50 8 l1.5 3 3 1.5 -3 1.5 -1.5 3 -1.5 -3 -3 -1.5 3 -1.5z" fill="#fff"/><path d="M12 14 l1 2 2 1 -2 1 -1 2 -1 -2 -2 -1 2 -1z" fill="#fff"/>` : '';
+  const sparkle = r.glitter ? `<g fill="#fff" opacity=".9"><circle cx="14" cy="28" r="1.4"/><circle cx="44" cy="22" r="1.2"/><circle cx="50" cy="32" r="1.5"/><circle cx="22" cy="26" r="1.1"/><circle cx="36" cy="20" r="1"/><circle cx="30" cy="30" r="1.1"/></g>
+    <path d="M54 12 l1.5 3 3 1.5 -3 1.5 -1.5 3 -1.5 -3 -3 -1.5 3 -1.5z" fill="#fff"/><path d="M9 16 l1 2 2 1 -2 1 -1 2 -1 -2 -2 -1 2 -1z" fill="#fff"/>` : '';
   const eyes = r.sleepy
-    ? `<path d="M22 32 Q25 35 28 32 M36 32 Q39 35 42 32" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/><text x="46" y="24" font-size="9" font-weight="700" fill="#4C7FD9" font-family="sans-serif">z</text>`
+    ? `<path d="M21 35 Q24 38 27 35 M37 35 Q40 38 43 35" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/><text x="48" y="22" font-size="9" font-weight="700" fill="#4C7FD9" font-family="sans-serif">z</text>`
     : r.wink
-      ? `<path d="M22 31 Q25 28 28 31 M36 31 Q39 28 42 31" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
-      : `<circle cx="25" cy="32" r="2.4" fill="${INK}"/><circle cx="39" cy="32" r="2.4" fill="${INK}"/><circle cx="26" cy="31" r=".8" fill="#fff"/><circle cx="40" cy="31" r=".8" fill="#fff"/>`;
+      ? `<path d="M21 35 Q24 31 27 35 M37 35 Q40 31 43 35" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+      : `<circle cx="24" cy="35" r="2.6" fill="${INK}"/><circle cx="40" cy="35" r="2.6" fill="${INK}"/><circle cx="25" cy="34" r=".9" fill="#fff"/><circle cx="41" cy="34" r=".9" fill="#fff"/>`;
   const mouth = r.sleepy
-    ? `<ellipse cx="32" cy="37" rx="1.6" ry="1.2" fill="${INK}"/>`
-    : `<path d="M28 36 Q32 41 36 36Z" fill="${INK}"/><path d="M30 38.5 Q32 40 34 38.5" fill="#FF8FA8"/>`;
-  const hat = r.hat ? `<path d="M22 12 Q32 -2 44 10 Q36 8 30 12 Q26 14 22 12Z" fill="#FF5C7A"/><circle cx="27" cy="9" r="1.4" fill="#FFF3B0"/><circle cx="35" cy="5" r="1.4" fill="#FFF3B0"/>` : '';
-  const stripes = r.stripes ? `<path d="M13 24 Q32 17 51 24" stroke="${r.stripes}" stroke-width="3" fill="none" opacity=".6"/>` : '';
+    ? `<ellipse cx="32" cy="41" rx="1.6" ry="1.2" fill="${INK}"/>`
+    : `<path d="M28 40 Q32 45 36 40Z" fill="${INK}"/><path d="M30 42.5 Q32 44 34 42.5" fill="#FF8FA8"/>`;
+  const hat = r.hat ? `<path d="M22 16 Q32 2 44 14 Q36 12 30 16 Q26 18 22 16Z" fill="#FF5C7A"/><circle cx="27" cy="13" r="1.4" fill="#FFF3B0"/><circle cx="35" cy="9" r="1.4" fill="#FFF3B0"/>` : '';
+  const stripes = r.stripes ? `<path d="M10 30 Q32 22 54 30" stroke="${r.stripes}" stroke-width="3" fill="none" opacity=".6"/>` : '';
+  // A wide squishy bun: flat bottom, pleats gathered to a little twist on top,
+  // the face low on the front.
   return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">
     ${basket}
-    <circle cx="32" cy="27" r="21" fill="${fill}" stroke="${dark}" stroke-width="2.5"/>
+    <path d="M8 46 C3 30 16 15 32 15 C48 15 61 30 56 46 Q32 51 8 46Z" fill="${fill}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>
     ${stripes}
-    <path d="M32 7 Q22 14 20 24 M32 7 Q30 16 27 24 M32 7 Q34 16 37 24 M32 7 Q42 14 44 24 M32 7 Q18 10 13 22 M32 7 Q46 10 51 22" stroke="${dark}" stroke-width="2" fill="none" stroke-linecap="round" opacity=".55"/>
-    <circle cx="32" cy="7.5" r="3" fill="${dark}" opacity=".6"/>
-    <ellipse cx="22" cy="15" rx="6" ry="3.5" transform="rotate(-30 22 15)" fill="#fff" opacity=".55"/>
+    <path d="M32 17 Q22 24 15 38 M32 17 Q27 26 24 42 M32 17 Q32 30 32 44 M32 17 Q37 26 40 42 M32 17 Q42 24 49 38 M32 17 Q18 20 9 30 M32 17 Q46 20 55 30" stroke="${dark}" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".5"/>
+    <path d="M27 16 Q32 10 37 16 Q32 20 27 16Z" fill="${dark}" opacity=".55"/>
+    <ellipse cx="19" cy="24" rx="6" ry="3" transform="rotate(-25 19 24)" fill="#fff" opacity=".55"/>
     ${sparkle}
-    <ellipse cx="20" cy="36" rx="4" ry="2.3" fill="#FF8FA8" opacity=".75"/><ellipse cx="44" cy="36" rx="4" ry="2.3" fill="#FF8FA8" opacity=".75"/>
+    <g stroke="#FF6F8E" stroke-width="2" stroke-linecap="round" opacity=".8"><path d="M14 36 l2 4 M18 35 l2 4 M46 35 l2 4 M50 36 l2 4"/></g>
     ${eyes}${mouth}${hat}
   </svg>`;
 }
@@ -326,7 +328,7 @@ export function penScene() {
 export function gardenScene(opts = {}) {
   const sunhat = `<g class="hat"><ellipse cx="140" cy="72" rx="52" ry="12" fill="#F2CE7E" stroke="#C98F4B" stroke-width="3"/><path d="M110 72 Q116 36 140 36 Q164 36 170 72Z" fill="#F2CE7E" stroke="#C98F4B" stroke-width="3"/><path d="M112 64 Q140 52 168 64" stroke="#FF5C7A" stroke-width="6" fill="none"/></g>`;
   const pig = piggySide({ coat: opts.coat }).replace('<svg viewBox="0 0 200 200"', '<svg viewBox="0 0 200 200" width="200" height="200"').replace('</g>\n  </svg>', sunhat + '</g></svg>');
-  return `<svg viewBox="0 0 400 160" class="scene" preserveAspectRatio="none" aria-hidden="true">
+  return `<svg viewBox="0 0 400 160" class="scene" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
     <defs><linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FDBFF"/><stop offset="1" stop-color="#E9F8FF"/></linearGradient></defs>
     <rect width="400" height="160" fill="url(#gSky)"/>
     <circle cx="60" cy="40" r="24" fill="#FFE27A"/>

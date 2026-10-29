@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 11;
+const VERSION = 12;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -18,6 +18,7 @@ const wander = new Map();   // piggy id -> { tx, ty, pause, face }
 
 const $ = (s, el = document) => el.querySelector(s);
 const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const price = (cost) => `<span class="price ${state.coins >= cost ? 'can' : 'cant'}">${cost} <i class="coin-sm">${Art.coinIcon()}</i></span>`;
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export function start() {
@@ -628,7 +629,8 @@ function scheduleStep() {
   const zoom = Date.now() < run.zoomUntil;
   runTimer = setTimeout(() => {
     if (!run) return;
-    const ev = M.step(state.maze, run);
+    let ev;
+    try { ev = M.step(state.maze, run); } catch (e) { ev = 'finish'; run.done = true; run.pos = { ...M.FINISH }; }
     render();
     const pig = $('#mpig');
     if (ev === 'deadend') { sfx.wheek(); svgBubble('wheek?'); }
@@ -694,7 +696,7 @@ function updateShop() {
       const box = $('.offers', adopt);
       offer.forEach((o, i) => {
         const b = el(`<button class="offer"><div class="pig-card">${Art.piggySide({ coat: o.coat })}</div><b>${esc(o.name)}</b><small>${G.BREEDS[o.coat.breed].name}</small><em>${G.BREEDS[o.coat.breed].blurb}</em>
-          <span class="price">${cost === 0 ? 'Free!' : `${cost} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></button>`);
+          ${cost === 0 ? '<span class="price can">Free!</span>' : price(cost)}</button>`);
         b.addEventListener('click', () => {
           const r = G.adopt(state, i);
           if (!r.ok) { sfx.nope(); toast(r.reason === 'coins' ? `Need ${cost - state.coins} more coins` : 'No room in the pen'); return; }
@@ -717,7 +719,7 @@ function updateShop() {
       const owned = !!state.hats[id];
       const wearing = p.hat === id;
       const b = el(`<button class="hat tile ${owned ? 'owned' : ''} ${wearing ? 'wearing' : ''}">${Art.hatIcon(id)}<span>${h.name}</span>
-        <span class="price">${wearing ? 'Wearing' : owned ? 'Wear' : `${h.cost} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></button>`);
+        ${wearing ? '<span class="price can">Wearing</span>' : owned ? '<span class="price">Wear</span>' : price(h.cost)}</button>`);
       b.addEventListener('click', () => {
         if (!state.hats[id]) {
           const r = G.buyHat(state, id);
@@ -744,7 +746,7 @@ function updateShop() {
     const b = el(`<button class="item panel ${owned ? 'owned' : ''}" ${owned ? 'disabled' : ''}>
       <span class="tile-purple">${Art.upgradeIcon(u.icon)}</span>
       <span class="txt"><b>${u.name}</b><small>${u.desc}</small></span>
-      <span class="price">${owned ? 'Got it!' : `${u.cost} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></button>`);
+      ${owned ? '<span class="price can">Got it!</span>' : price(u.cost)}</button>`);
     b.addEventListener('click', () => {
       const r = G.buy(state, id);
       if (!r.ok) { sfx.nope(); toast(`Need ${u.cost - state.coins} more coins`); return; }

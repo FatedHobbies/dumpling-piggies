@@ -107,7 +107,7 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
     const p = path(m, run.pos, FINISH);
     const fresh = open.filter(n => !run.visited[idx(n.x, n.y)]);
     const notBack = open.filter(n => !(run.lastDir && n.x === x - run.lastDir.x && n.y === y - run.lastDir.y));
-    if (p && rng() < smell) next = p[0];
+    if (p && p.length && rng() < smell) next = p[0];
     else if (fresh.length) next = fresh[Math.floor(rng() * fresh.length)];
     else if (notBack.length) next = notBack[Math.floor(rng() * notBack.length)];
     else next = open[0] || run.pos;
@@ -119,13 +119,14 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
   run.visited[idx(next.x, next.y)] = (run.visited[idx(next.x, next.y)] || 0) + 1;
   run.steps += 1;
 
+  // Finishing always wins, even if a carrot was dropped on the dumpling square.
+  if (same(run.pos, FINISH)) { run.done = true; run.lure = null; return 'finish'; }
   if (run.lure && same(run.pos, run.lure)) { run.lure = null; return 'ate'; }
-  if (same(run.pos, FINISH)) { run.done = true; return 'finish'; }
   return deadEnd ? 'deadend' : 'move';
 }
 
 export function dropLure(m, run, x, y) {
-  if (run.done || run.lures < 1 || !inside(x, y) || isWall(m, x, y) || same({ x, y }, run.pos)) return false;
+  if (run.done || run.lures < 1 || !inside(x, y) || isWall(m, x, y) || same({ x, y }, run.pos) || same({ x, y }, FINISH)) return false;
   if (!path(m, run.pos, { x, y })) return false;
   run.lure = { x, y };
   run.lures -= 1;
