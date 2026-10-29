@@ -623,6 +623,7 @@ button.pk:active { transform: scale(.95); }
 .toy-card svg { width: 150px; height: 125px; margin: 0 auto; }
 .toy { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 24%; max-width: 110px; transform: translate(-50%, -94%); transform-origin: 50% 94%; }
 .toy svg { width: 100%; height: auto; overflow: visible; }
+.toy.flip svg { transform: scaleX(-1); }
 .toy .toy-move { transform-box: fill-box; transform-origin: 50% 100%; }
 .toy.play .toy-move { animation: toy-jiggle .45s ease-in-out 2; }
 .toy[data-toy="ball"] .toy-move { transform-origin: 50% 50%; }

@@ -5,7 +5,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 142;
+const VERSION = 143;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -479,6 +479,7 @@ function updateSteamer() {
     }
     const at = toySpot(id);   // spots shift as toys go in and out
     d.style.setProperty('--x', at.x); d.style.setProperty('--y', at.y); d.style.zIndex = depth(at.y);
+    d.classList.toggle('flip', id === 'slide' && slideFlip());
     const left = t.chew ? Math.ceil(G.toyLeft(state, id) * 4) / 4 : 1;   // chews redraw a quarter at a time
     if (d.dataset.left !== String(left)) { d.dataset.left = left; d.innerHTML = Art.toyArt(id, left); }
   }
@@ -698,6 +699,10 @@ function wanderTick() {
 // from the ladder. The pen's own house counts as a hidey place too.
 const HIDES = { house: { door: 60, doorW: 0.5 }, hut: { door: 60, doorW: 0.3 }, tunnel: { door: 22, exit: 118, doorW: 0.28 } };
 
+// The slide is drawn with its chute going left; in a left corner it flips so
+// the chute always points at the middle of the pen.
+const slideFlip = () => toySpot('slide').x < 0.5;
+
 function toySpot(id) {
   if (id === 'house') return { x: Art.PEN_FIXTURES.house.x / 400, y: houseY() };
   return G.toySpot(state, id);
@@ -722,7 +727,7 @@ function aimAtToy(w, id) {
   const t = toySpot(id);
   w.toy = id;
   if (HIDES[id]) { w.tx = toyX(id, id === 'house' ? 44 : HIDES[id].door); w.ty = Math.min(1, t.y + 0.01); return; }
-  if (id === 'slide') { w.tx = toyX(id, 100); w.ty = Math.min(1, t.y + 0.005); return; }
+  if (id === 'slide') { w.tx = toyX(id, slideFlip() ? 20 : 100); w.ty = Math.min(1, t.y + 0.005); return; }
   w.tx = Math.min(0.92, Math.max(0.08, t.x + (Math.random() < 0.5 ? -0.13 : 0.13)));
   w.ty = Math.min(1, t.y + 0.02);
 }
@@ -1089,7 +1094,8 @@ function hideIn(pig, id, w) {
 
 // Wobble up the ladder, whoosh down the slide, land with a bounce. Points are
 // in the slide picture (120 x 100); the piggy rides along at a smaller size.
-// The slide faces left, so the ladder is on the right and the ride goes left.
+// The slide faces left, so the ladder is on the right and the ride goes left;
+// in a left corner it is flipped and everything mirrors (see slideFlip).
 const SLIDE_PATH = [
   [0, 100, 94, 0], [0.1, 98, 76, 9], [0.2, 97, 60, -9], [0.3, 96, 44, 9], [0.4, 94, 28, -7], [0.5, 90, 18, 0],
   [0.58, 78, 18, 0], [0.7, 54, 46, -36], [0.8, 28, 80, -26], [0.88, 10, 88, 0], [0.94, 0, 82, 0], [1, -6, 94, 0],
@@ -1104,9 +1110,10 @@ function rideSlide(pig, w, d) {
   const spot = toySpot('slide'), tl = spot.x * fw - tw / 2, tt = spot.y * fh - th * 0.94;
   const at = (px, py) => [(tl + px / 120 * tw) / fw, (tt + py / 100 * th) / fh];
   const ride = Math.min(0.8, tw / d.offsetWidth * 0.85);
-  const path = SLIDE_PATH.map(([t, px, py, rot]) => [t, ...at(px, py), rot]);
+  const flip = slideFlip(), face = flip ? 1 : -1;
+  const path = SLIDE_PATH.map(([t, px, py, rot]) => [t, ...at(flip ? 120 - px : px, py), flip ? -rot : rot]);
   const dur = 3400, start = performance.now();
-  w.riding = true; w.front = false; w.face = -1;
+  w.riding = true; w.front = false; w.face = face;
   w.pause = Date.now() + dur + 900;
   d.classList.remove('walking'); syncPose(d, w);
   setTimeout(() => bubble(d, 'Wheee!'), dur * 0.58);
@@ -1123,11 +1130,11 @@ function rideSlide(pig, w, d) {
       cur.classList.add('riding');
       cur.style.setProperty('--x', x.toFixed(4)); cur.style.setProperty('--y', y.toFixed(4));
       cur.style.setProperty('--s', ((0.62 + toySpot('slide').y * 0.38) * grow).toFixed(3));
-      cur.style.setProperty('--f', -1); cur.style.setProperty('--r', r.toFixed(1) + 'deg');
+      cur.style.setProperty('--f', face); cur.style.setProperty('--r', r.toFixed(1) + 'deg');
       cur.style.zIndex = depth(toySpot('slide').y) + 1;
     }
     if (k < 1) { requestAnimationFrame(step); return; }
-    pig.x = Math.max(0.05, x); pig.y = Math.min(1, Math.max(pig.y, y));
+    pig.x = Math.min(0.95, Math.max(0.05, x)); pig.y = Math.min(1, Math.max(pig.y, y));
     w.tx = pig.x; w.ty = pig.y; w.riding = false;
     if (cur) { cur.classList.remove('riding'); cur.style.removeProperty('--r'); syncPose(cur, w); placePig(cur, pig, w); }
   };
