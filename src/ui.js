@@ -1256,7 +1256,7 @@ function onScoop(id, btn) {
 function gardenView() {
   return el(`<section class="garden">
     <div class="scene-top">${Art.gardenScene({ coat: current().coat })}</div>
-    <div class="compost panel"><span class="ico compost-eq" aria-label="Poop makes compost">${Art.poop({ color: 'brown', shape: 'swirl' })}${Art.icon('arrow')}${Art.compostIcon()}</span><span>Compost: <b id="compost">0</b></span><small>Scoop poop to get more</small></div>
+    <div class="compost panel"><span class="ico compost-eq" aria-label="Poop makes compost">${Art.poop({ color: 'brown', shape: 'swirl' })}${Art.icon('arrow')}${Art.compostIcon()}</span><span>Compost: <b id="compost">0</b></span></div>
     <div class="plots" id="plots"></div>
     <div class="pantry" id="pantry"></div>
   </section>`);

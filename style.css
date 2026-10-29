@@ -401,7 +401,7 @@ button.pk:active { transform: scale(.95); }
 /* ---- Garden ---- */
 .scene-top { border-radius: 18px; overflow: hidden; border: 3px solid var(--wood-dark); box-shadow: 0 4px 0 #6A4524; margin-bottom: 12px; }
 .scene-top .scene { position: static; width: 100%; height: auto; }
-.compost { display: flex; align-items: center; gap: 10px; padding: 4px 12px; font-family: var(--display); }
+.compost { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 4px 12px; font-family: var(--display); }
 .compost .ico svg { width: 30px; height: 30px; }
 .compost-eq { display: flex; align-items: center; gap: 1px; flex: none; }
 .compost-eq svg:first-child { width: 24px; height: 24px; }
