@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 63;
+const VERSION = 64;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -729,7 +729,7 @@ function onPlot(i) {
     return;
   }
   if (state.compost < 1) { sfx.nope(); toast('You need compost. Scoop some poop first!'); return; }
-  picker('What should we plant?', G.unlockedFillings(state).map(f => ({ id: f, html: Art.veggie(f, 48), label: G.FILLINGS[f].name })), (f) => {
+  picker('What should we plant?', G.unlockedFillings(state).map(f => ({ id: f, html: Art.veggie(f, 48), label: G.FILLINGS[f].name, count: state.pantry[f] || 0 })), (f) => {
     gardenerRun(i, () => {
       const r = G.plant(state, i, f);
       if (r.ok) { sfx.pop(); tut('plant'); render(); }
@@ -1403,7 +1403,7 @@ function popup(title, html, button = 'OK', onClose = null) {
 function picker(title, options, onPick) {
   const box = el(`<div class="modal"><div class="card panel"><div class="ribbon"><span>${title}</span></div><div class="opts ${options.length > 6 ? 'many' : ''}"></div><div class="row center"><button class="btn btn-grey">Cancel</button></div></div></div>`);
   for (const o of options) {
-    const b = el(`<button class="opt tile">${o.html}<span>${o.label}</span></button>`);
+    const b = el(`<button class="opt tile">${o.html}<span>${o.label}</span>${o.count != null ? `<b class="count have">${o.count}</b>` : ''}</button>`);
     b.onclick = () => { box.remove(); onPick(o.id); };
     $('.opts', box).appendChild(b);
   }
