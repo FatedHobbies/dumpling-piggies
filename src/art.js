@@ -727,12 +727,20 @@ export const MAZE_THEMES = {
     side: '#3A2A8C', name: 'Galaxy', board: '#17123A', floor: '#2A2468', seen: '#3D368F', start: '#3FBFB0', startEdge: '#9FFFF2', post: '#FFD84D', postEdge: '#B8901A',
     // A space-rock cube: lit top face, darker front face with its own craters.
     cube: true,
-    wall: (px, py, i) => `<path d="M${px + 3} ${py + 30} V${py + 45} Q${px + 3} ${py + 49} ${px + 7} ${py + 49} H${px + 41} Q${px + 45} ${py + 49} ${px + 45} ${py + 45} V${py + 30}Z" fill="#3A2A8C" stroke="#1E145A" stroke-width="3" stroke-linejoin="round"/>
-      <circle cx="${px + 14}" cy="${py + 41}" r="3" fill="#2A1C6E"/><circle cx="${px + 32}" cy="${py + 43}" r="2.2" fill="#2A1C6E"/>
-      <rect x="${px + 3}" y="${py + 3}" width="${C - 6}" height="${C - 18}" rx="6" fill="#7A60D8" stroke="#1E145A" stroke-width="3"/>
-      <path d="M${px + 7} ${py + 9} Q${px + 7} ${py + 6} ${px + 10} ${py + 6} H${px + 38}" stroke="#B9A8FF" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <circle cx="${px + 15}" cy="${py + 18}" r="5" fill="#5C45B8"/><circle cx="${px + 31}" cy="${py + 23}" r="4" fill="#5C45B8"/><circle cx="${px + 33}" cy="${py + 12}" r="2" fill="#5C45B8"/>
-      ${i % 3 === 0 ? star4(px + 40, py + 2, 5, '#FFE66B') : ''}`,
+    wall: (px, py, i) => {
+      // Oblique cube: a square front face, a lit top face slanting back to the
+      // right, and a shaded right side, so every edge reads as a real box.
+      const d = 8, l = px + 3, r = px + 45 - d, t = py + 3 + d, b = py + 49;
+      const top = `M${l} ${t} L${l + d} ${t - d} H${r + d} L${r} ${t}Z`;
+      const side = `M${r} ${t} L${r + d} ${t - d} V${b - d} L${r} ${b}Z`;
+      return `<path d="${side}" fill="#2E2178" stroke="#1E145A" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="${l}" y="${t}" width="${r - l}" height="${b - t}" rx="3" fill="#5B44B8" stroke="#1E145A" stroke-width="2.5"/>
+        <path d="${top}" fill="#8F78E8" stroke="#1E145A" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="${l + 10}" cy="${t + 10}" r="4.5" fill="#4A35A0"/><circle cx="${l + 24}" cy="${t + 22}" r="5.5" fill="#4A35A0"/><circle cx="${l + 9}" cy="${t + 28}" r="2.5" fill="#4A35A0"/>
+        <path d="M${l + 3} ${t + 4} V${b - 4}" stroke="#7A60D8" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="${r + d / 2}" cy="${t + 12}" r="2" fill="#1E145A"/>
+        ${i % 3 === 0 ? star4(px + 42, py + 2, 5, '#FFE66B') : ''}`;
+    },
     deco: (px, py, i) => star4(px + 8 + jit(i, 1) * 30, py + 8 + jit(i, 2) * 30, 2.6, '#fff') + `<circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1" fill="#C9C2FF"/>`,
   },
   unicorn: {
