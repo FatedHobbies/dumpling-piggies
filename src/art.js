@@ -1009,28 +1009,29 @@ function tuft(x, y, s = 1, c = '#5FAE4E') {
   return `<path d="M${x} ${y} q-2 -10 -8 -14 M${x} ${y} q0 -12 2 -18 M${x} ${y} q3 -10 9 -13" transform="translate(${x} ${y}) scale(${s}) translate(${-x} ${-y})" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
 }
 
-// One garden plot: a raised wooden bed heaped with dark soil in three
-// furrowed rows, sitting on grass. Drawn at the plot's own short shape so it
-// isn't squashed; the label sits on the front board.
+// One garden plot: a wooden box bed seen from a little above, so planks show
+// on all four sides around the soil, plus the front face of the front plank.
+// Drawn at the plot's own short shape so it isn't squashed; the label sits on
+// the front face.
 export function plotArt() {
-  const ridge = (y, w) => `<path d="M${150 - w} ${y} Q150 ${y - 7} ${150 + w} ${y}" stroke="#5A3A1E" stroke-width="7" fill="none" stroke-linecap="round" opacity=".55"/>
-    <path d="M${150 - w} ${y - 3} Q150 ${y - 10} ${150 + w} ${y - 3}" stroke="#B07A4C" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/>`;
-  const clods = [[52, 46], [104, 40], [196, 41], [244, 47], [80, 62], [150, 56], [222, 63]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="3" fill="#5A3A1E" opacity=".45"/>`).join('');
-  const nails = [26, 274].map(x => `<circle cx="${x}" cy="94" r="2.6" fill="#7A4E2A"/><circle cx="${x}" cy="110" r="2.6" fill="#7A4E2A"/>`).join('');
-  return `<svg viewBox="0 16 300 112" class="scene" preserveAspectRatio="none" aria-hidden="true">
-    <rect width="300" height="130" fill="#A7DB8C"/>
-    ${tuft(10, 30, .8)}${tuft(288, 26, .8)}${tuft(150, 14, .6, '#7DC768')}${tuft(70, 16, .6, '#7DC768')}${tuft(232, 16, .6, '#7DC768')}
-    <ellipse cx="150" cy="124" rx="140" ry="8" fill="#3E8E2A" opacity=".3"/>
-    <path d="M18 86 C18 40 40 26 80 24 H220 C260 26 282 40 282 86 Z" fill="#7A4F2E" stroke="#5A3A1E" stroke-width="4" stroke-linejoin="round"/>
-    <path d="M34 60 C38 38 56 32 84 31 H216 C244 32 262 38 266 60" stroke="#A06C42" stroke-width="5" fill="none" stroke-linecap="round" opacity=".6"/>
-    ${ridge(48, 108)}${ridge(64, 118)}${ridge(80, 126)}
+  const furrow = y => `<path d="M40 ${y} H260" stroke="#5A3A1E" stroke-width="6" stroke-linecap="round" opacity=".5"/><path d="M40 ${y - 4} H260" stroke="#A8744A" stroke-width="3" stroke-linecap="round" opacity=".7"/>`;
+  const clods = [[60, 37], [118, 34], [190, 36], [238, 35], [86, 52], [160, 50], [224, 53]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="4.5" ry="2.6" fill="#5A3A1E" opacity=".45"/>`).join('');
+  const grain = (x1, y1, x2, y2) => `<path d="M${x1} ${y1} H${x2}" stroke="#C48A52" stroke-width="2" stroke-linecap="round" opacity=".7"/>`;
+  return `<svg viewBox="0 0 300 112" class="scene" preserveAspectRatio="none" aria-hidden="true">
+    <rect width="300" height="112" fill="#A7DB8C"/>
+    ${tuft(8, 20, .7)}${tuft(292, 18, .7)}${tuft(8, 100, .7)}${tuft(292, 102, .7)}
+    <ellipse cx="150" cy="106" rx="140" ry="6" fill="#3E8E2A" opacity=".35"/>
+    <rect x="14" y="62" width="272" height="42" rx="6" fill="#C98A4E" stroke="#7A4E2A" stroke-width="4"/>
+    <path d="M18 83 H282" stroke="#A8703C" stroke-width="2.5"/>
+    <rect x="14" y="8" width="272" height="62" rx="7" fill="#E8B57A" stroke="#7A4E2A" stroke-width="4"/>
+    <path d="M16 10 L34 22 M284 10 L266 22 M16 68 L34 58 M284 68 L266 58" stroke="#B57D45" stroke-width="2.5" stroke-linecap="round"/>
+    ${grain(60, 14, 120)}${grain(180, 15, 250)}${grain(70, 64, 140)}${grain(190, 64, 236)}
+    <path d="M22 28 V50 M278 28 V50" stroke="#C48A52" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+    <rect x="32" y="21" width="236" height="38" rx="3" fill="#7A4F2E" stroke="#5A3A1E" stroke-width="3"/>
+    <rect x="34" y="23" width="232" height="6" fill="#4E321A" opacity=".45"/>
+    ${furrow(36)}${furrow(47)}${furrow(57)}
     ${clods}
-    <rect x="12" y="80" width="276" height="42" rx="9" fill="#D9A066" stroke="#7A4E2A" stroke-width="4"/>
-    <path d="M16 101 H284" stroke="#B57D45" stroke-width="3"/>
-    <path d="M16 84 H284" stroke="#F0C48E" stroke-width="3" stroke-linecap="round" opacity=".8"/>
-    <rect x="12" y="76" width="26" height="48" rx="7" fill="#C08347" stroke="#7A4E2A" stroke-width="4"/>
-    <rect x="262" y="76" width="26" height="48" rx="7" fill="#C08347" stroke="#7A4E2A" stroke-width="4"/>
-    ${nails}
+    <g fill="#7A4E2A"><circle cx="26" cy="74" r="2.4"/><circle cx="26" cy="94" r="2.4"/><circle cx="274" cy="74" r="2.4"/><circle cx="274" cy="94" r="2.4"/></g>
   </svg>`;
 }
 
