@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 56;
+const VERSION = 57;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -684,13 +684,26 @@ function updateGarden() {
     b.classList.toggle('empty', !g);
   }
   const pantry = $('#pantry');
-  const psig = JSON.stringify(state.pantry);
+  const open = G.unlockedFillings(state);
+  const psig = JSON.stringify([state.pantry, open.length]);
   if (pantry.dataset.sig === psig) return;
   pantry.dataset.sig = psig;
   pantry.innerHTML = '';
-  for (const f of G.unlockedFillings(state)) {
-    pantry.appendChild(el(`<div class="pitem tile">${Art.veggie(f, 44)}<b class="count">${state.pantry[f] || 0}</b><span>${G.FILLINGS[f].name}</span></div>`));
+  // Every crop has a spot. Locked ones are mystery cards until their seed unlocks.
+  for (const f of G.FILLING_ORDER) {
+    if (open.includes(f)) {
+      pantry.appendChild(el(`<div class="pitem tile">${Art.veggie(f, 44)}<b class="count">${state.pantry[f] || 0}</b><span>${G.FILLINGS[f].name}</span></div>`));
+      continue;
+    }
+    const b = el(`<button class="pitem tile locked">${Art.veggieShadow(f, 44)}<b class="count">?</b><span>???</span></button>`);
+    b.addEventListener('click', () => {
+      const next = G.nextSeed(state);
+      sfx.pop();
+      toast(next ? `Find ${next.need} more ${next.need === 1 ? 'recipe' : 'recipes'} in the Kitchen for a new seed!` : 'Keep cooking!');
+    });
+    pantry.appendChild(b);
   }
+  for (let i = G.FILLING_ORDER.length; i % 4; i++) pantry.appendChild(el('<i class="pitem pk-pad"></i>'));
 }
 
 function onPlot(i) {

@@ -18,7 +18,6 @@ export const FILLINGS = {
   blueberry:  { name: 'Blueberry',  color: '#5A7FE0', rgb: [175, 195, 255], adj: 'Bluey',   noun: 'Drop',     poop: 'blue',     fx: 'sparkle' },
   broccoli:   { name: 'Broccoli',   color: '#4FA84A', rgb: [160, 215, 140], adj: 'Bushy',   noun: 'Bite',     poop: 'green',    fx: null },
   radish:     { name: 'Radish',     color: '#F0507A', rgb: [255, 170, 190], adj: 'Rosy',    noun: 'Roll',     poop: 'pink',     fx: 'zoom' },
-  cucumber:   { name: 'Cucumber',   color: '#6CC070', rgb: [190, 235, 200], adj: 'Cool',    noun: 'Bean',     poop: 'green',    fx: 'sleepy' },
   pepper:     { name: 'Pepper',     color: '#FFC21C', rgb: [255, 220, 110], adj: 'Zippy',   noun: 'Wonton',   poop: 'orange',   fx: 'zoom' },
   eggplant:   { name: 'Eggplant',   color: '#8A4FC0', rgb: [205, 170, 235], adj: 'Purply',  noun: 'Pillow',   poop: 'lavender', fx: 'sleepy' },
   bokchoy:    { name: 'Bok choy',   color: '#7CCB5A', rgb: [215, 245, 190], adj: 'Chompy',  noun: 'Mochi',    poop: 'white',    fx: null },
@@ -386,6 +385,12 @@ export function migrate(state) {
     state.booksFilled = 0;
   }
   if (state.pantry && state.pantry.hay == null) state.pantry.hay = 2;   // hay arrived in version 54
+  // Version 57 trimmed the crops to 16 (cucumber left): drop anything made from it.
+  const known = (k) => !!dumplingInfo(k);
+  if (state.pantry) for (const f of Object.keys(state.pantry)) if (!FILLINGS[f]) delete state.pantry[f];
+  if (state.discovered) state.discovered = state.discovered.filter(known);
+  for (const bag of [state.recipeBook, state.dumplings]) if (bag) for (const k of Object.keys(bag)) if (!known(k)) delete bag[k];
+  if (state.garden) state.garden = state.garden.map(g => g && !FILLINGS[g.filling] ? (state.compost += 1, null) : g);
   if (!state.recipeBook) {                                 // saves from before the Dumpling Book
     state.recipeBook = {};
     for (const k of state.discovered || []) state.recipeBook[k] = 1;

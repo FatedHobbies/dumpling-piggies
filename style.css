@@ -585,3 +585,7 @@ button.pk:active { transform: scale(.95); }
 .garden .plant svg { width: 36px; height: 36px; }
 .garden .pantry { margin-top: 12px; }
 .pitem svg { width: 36px; height: 36px; }
+.pitem.locked { background: #F4EEE0; font-family: inherit; }
+.pitem.locked span { color: var(--soft); }
+.pitem.locked .count { background: var(--line); color: var(--soft); }
+.pantry .pk-pad { visibility: hidden; }
