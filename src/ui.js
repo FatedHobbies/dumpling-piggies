@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 51;
+const VERSION = 52;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -302,7 +302,7 @@ function updateSteamer() {
   const poops = new Map([...floor.querySelectorAll('.poop')].map(c => [+c.dataset.id, c]));
   for (const poop of state.poops) {
     if (!poops.has(poop.id)) {
-      const b = el(`<button class="poop ${poop.color || 'brown'}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y};z-index:${depth(poop.y)}">${Art.poop(poop)}</button>`);
+      const b = el(`<button class="poop ${poop.color || 'brown'}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y}">${Art.poop(poop)}</button>`);
       b.addEventListener('click', () => onScoop(poop.id, b));
       floor.appendChild(b);
     }
