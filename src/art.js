@@ -738,13 +738,6 @@ export function poopShadow(p = {}) {
     .replace(/fill="(?!none)[^"]*"/g, 'fill="#D5CDBA"').replace(/stroke="[^"]*"/g, 'stroke="#B7AC94"');
 }
 
-// Any picture as a grey "not found yet" silhouette, like the books use.
-export function shadow(svg) {
-  return svg.replace(/<defs>[\s\S]*?<\/defs>/g, '').replace(/<text[\s\S]*?<\/text>/g, '')
-    .replace(/fill="(?!none)[^"]*"/g, 'fill="#D5CDBA"').replace(/stroke="(?!none)[^"]*"/g, 'stroke="#B7AC94"')
-    .replace(/(fill|stroke|stop-color):\s*[^;"]+/g, (m, k) => `${k}:${k === 'stroke' ? '#B7AC94' : '#D5CDBA'}`);
-}
-
 export function badgeIcon(locked = false) {
   const c = locked ? ['#D5CDBA', '#B7AC94', '#E6DCC8'] : ['#FFD34D', '#E0941C', '#FFF3B0'];
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 38 L14 60 L32 50 L50 60 L44 38Z" fill="${locked ? '#B7AC94' : '#F2544A'}"/><circle cx="32" cy="28" r="22" fill="${c[0]}" stroke="${c[1]}" stroke-width="3"/><path d="M32 14 l4.5 9 10 1.5 -7 7 1.5 10 -9 -4.8 -9 4.8 1.5 -10 -7 -7 10 -1.5z" fill="${c[2]}" stroke="${c[1]}" stroke-width="2" stroke-linejoin="round"/></svg>`;
@@ -1270,6 +1263,76 @@ function shade(rgb) {
   return `rgb(${m[0]},${m[1]},${m[2]})`;
 }
 
+// Points along a quadratic curve, for tracing an edge to make fuzzy.
+function qPoints([x0, y0], [cx, cy], [x1, y1], n) {
+  return Array.from({ length: n }, (_, i) => {
+    const t = i / n, u = 1 - t;
+    return [u * u * x0 + 2 * u * t * cx + t * t * x1, u * u * y0 + 2 * u * t * cy + t * t * y1];
+  });
+}
+// Turns a traced edge into a furry one: every other point pokes out a little
+// (by a wobbly amount) so the outline is soft little tufts, not a hard line.
+function furPath(pts, out, seed) {
+  const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  const p = pts.map(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)], [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const len = Math.hypot(bx - ax, by - ay) || 1;
+    const k = i === 0 || i === pts.length - 1 ? 0 : i % 2 ? out * (0.7 + rnd() * 0.6) : -out * 0.2;
+    return [x + (by - ay) / len * k, y - (bx - ax) / len * k];
+  });
+  // Round bumps: each poked-out point pulls a curve between its neighbours.
+  const f = n => n.toFixed(1);
+  let d = `M${f(p[0][0])} ${f(p[0][1])}`;
+  for (let i = 1; i < p.length - 1; i += 2) d += ` Q${f(p[i][0])} ${f(p[i][1])} ${f(p[i + 1][0])} ${f(p[i + 1][1])}`;
+  return d + ` L${f(p[p.length - 1][0])} ${f(p[p.length - 1][1])}Z`;
+}
+// Dense points along straight lines too.
+const linePoints = ([x0, y0], [x1, y1], n) => Array.from({ length: n }, (_, i) => [x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n]);
+
+// A soft fabric tunnel: a furry outline, matte cloth with soft folds and
+// little fluff strokes, and a fluffy rim round the doorway. No shine, so it
+// reads as fuzzy, not plastic.
+function fuzzyTunnel() {
+  const base = '#8E7FF0', dark = '#5546B8', lite = '#AFA4FF', deep = '#7465DD';
+  // Traced clockwise: up the left side, over the top, down the right side.
+  const outer = [...linePoints([6, 94], [6, 64], 8), ...qPoints([6, 64], [6, 30], [60, 30], 16), ...qPoints([60, 30], [114, 30], [114, 64], 16), ...linePoints([114, 64], [114, 94], 8), [114, 94]];
+  const door = [...linePoints([15, 94], [15, 68], 7), ...qPoints([15, 68], [15, 47], [33, 47], 7), ...qPoints([33, 47], [51, 47], [51, 68], 7), ...linePoints([51, 68], [51, 94], 7), [51, 94]];
+  let seed = 7;
+  const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  const fluff = [];
+  while (fluff.length < 48) {
+    const x = 10 + rnd() * 100, y = 36 + rnd() * 54;
+    const inArch = y > 64 ? true : Math.hypot((x - 60) / 50, (y - 66) / 32) < 1;
+    if (!inArch || (x > 10 && x < 56 && y > 42)) continue;
+    const tilt = (rnd() - 0.5) * 3;
+    fluff.push(`<path d="M${x.toFixed(1)} ${y.toFixed(1)} q${tilt.toFixed(1)} -2 ${(tilt * 0.5).toFixed(1)} -4" stroke="${fluff.length % 3 ? lite : deep}" stroke-width="1.8" stroke-linecap="round" fill="none"/>`);
+  }
+  return `<ellipse cx="60" cy="94" rx="56" ry="6" fill="#000" opacity=".12"/>
+    <g class="toy-move"><path d="${furPath(outer, 5, 3)}" fill="${base}" stroke="${dark}" stroke-width="3" stroke-linejoin="round"/>
+    ${[64, 82, 100].map(x => `<path d="M${x} 38 Q${x + 5} 64 ${x} 92" fill="none" stroke="${deep}" stroke-width="10" stroke-linecap="round" opacity=".5"/>`).join('')}
+    <g opacity=".65">${fluff.join('')}</g>
+    <path d="${furPath(door.map(([x, y]) => [33 + (x - 33) * 1.18, 94 + (y - 94) * 1.14]), 4.5, 11)}" fill="${lite}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="${furPath(door, 2.5, 5)}" fill="#33286F"/>
+    <path d="M22 94 V72 Q22 60 32 59" fill="none" stroke="#28205C" stroke-width="5" stroke-linecap="round" opacity=".7"/></g>`;
+}
+
+// The hut is a giant squishy dumpling, drawn like the game's dumplings: a wide
+// soft bun, pleats swirling up to a twist on top, rosy blush, happy squinty
+// eyes, and the doorway for its mouth.
+function dumplingHut() {
+  const dough = '#FFF1DC', dark = '#D2AE80';
+  const pleat = (x, y) => `M60 24 Q${(60 + x) / 2 + (x < 60 ? -4 : x > 60 ? 4 : 0)} ${(24 + y) / 2 - 4} ${x} ${y}`;
+  return `<ellipse cx="60" cy="94" rx="56" ry="6" fill="#000" opacity=".12"/>
+    <g class="toy-move"><path d="M7 90 C1 56 28 22 60 22 C92 22 119 56 113 90 Q60 99 7 90Z" fill="${dough}" stroke="${dark}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M12 86 Q60 94 108 86" fill="none" stroke="#F3DDBC" stroke-width="5" stroke-linecap="round"/>
+    <path d="${[[20, 44], [32, 46], [46, 45], [60, 44], [74, 45], [88, 46], [100, 44]].map(([x, y]) => pleat(x, y)).join(' ')}" stroke="${dark}" stroke-width="3.5" fill="none" stroke-linecap="round" opacity=".6"/>
+    <path d="M51 24 Q60 9 69 24 Q60 29 51 24Z" fill="${dark}"/>
+    <ellipse cx="34" cy="38" rx="11" ry="5" transform="rotate(-30 34 38)" fill="#fff" opacity=".85"/>
+    <path d="M24 60 Q34 52 40 62 M80 62 Q86 52 96 60" stroke="#E8CDA8" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="29" cy="71" rx="7" ry="4" fill="#FFB3C1" opacity=".8"/><ellipse cx="91" cy="71" rx="7" ry="4" fill="#FFB3C1" opacity=".8"/>
+    <path d="M42 93 V77 Q42 60 60 60 Q78 60 78 77 V93Z" fill="#6A4524" stroke="${dark}" stroke-width="3"/></g>`;
+}
+
 // ---- Pen toys ----
 // Squishy-style toys drawn on a 120x100 box, sitting on the floor at y=94.
 const TOY_ART = {
@@ -1280,19 +1343,8 @@ const TOY_ART = {
     <circle cx="60" cy="44" r="4" fill="#fff" opacity=".9"/><circle cx="74" cy="72" r="3.5" fill="#fff" opacity=".9"/>
     <ellipse cx="48" cy="52" rx="8" ry="5" transform="rotate(-30 48 52)" fill="#fff" opacity=".55"/></g>`,
 
-  tunnel: `<ellipse cx="60" cy="94" rx="56" ry="6" fill="#000" opacity=".12"/>
-    <g class="toy-move"><path d="M6 94 V64 Q6 30 60 30 Q114 30 114 64 V94Z" fill="#7B6CF6" stroke="#4F42B5" stroke-width="4" stroke-linejoin="round"/>
-    ${[26, 46, 66, 86].map(x => `<path d="M${x} 34 Q${x + 4} 64 ${x} 94" fill="none" stroke="#9A8DFF" stroke-width="6"/>`).join('')}
-    <path d="M16 94 V68 Q16 48 34 48 Q50 48 50 68 V94Z" fill="#3B2F86"/>
-    <path d="M20 40 Q60 26 100 40" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/></g>`,
-  hut: `<ellipse cx="60" cy="94" rx="54" ry="6" fill="#000" opacity=".12"/>
-    <g class="toy-move"><path d="M8 92 Q4 54 36 40 Q60 30 84 40 Q116 54 112 92Z" fill="#FFF3E2" stroke="#D9B890" stroke-width="4" stroke-linejoin="round"/>
-    <path d="M60 14 Q50 26 52 38 M60 14 Q70 26 68 38 M60 14 Q60 28 60 38" stroke="#D9B890" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <path d="M52 38 Q60 30 68 38 Q76 44 72 52 Q60 44 48 52 Q44 44 52 38Z" fill="#FFF3E2" stroke="#D9B890" stroke-width="3.5"/>
-    <path d="M24 60 Q34 52 40 62 M80 62 Q86 52 96 60" stroke="#E8CDA8" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M42 92 V74 Q42 60 60 60 Q78 60 78 74 V92Z" fill="#6A4524"/>
-    <ellipse cx="30" cy="72" rx="7" ry="4" fill="#FFB3C1" opacity=".8"/><ellipse cx="90" cy="72" rx="7" ry="4" fill="#FFB3C1" opacity=".8"/>
-    <ellipse cx="34" cy="50" rx="10" ry="5" transform="rotate(-25 34 50)" fill="#fff" opacity=".8"/></g>`,
+  tunnel: fuzzyTunnel(),
+  hut: dumplingHut(),
   // The slide faces left: drawn facing right, then flipped.
   slide: `<ellipse cx="60" cy="94" rx="54" ry="6" fill="#000" opacity=".12"/>
     <g class="toy-move"><g transform="translate(120 0) scale(-1 1)"><path d="M20 94 V22 M36 94 V22" stroke="#9C6A3A" stroke-width="5" stroke-linecap="round"/>
