@@ -709,7 +709,8 @@ export function poopKind(state, rng = Math.random) {
   const fed = state.piggies.filter(p => p.hunger > 30);
   const pooper = fed[Math.floor(rng() * fed.length)] || state.piggies[0];
   const special = specialPoop(state, pooper, rng);
-  if (special) return { shape: 'sp', color: special };
+  const by = pooper ? pooper.id : undefined;   // the Pen drops it from this piggy
+  if (special) return { shape: 'sp', color: special, by };
   const shape = rng() < 0.4 ? 'swirl' : 'beans';
   let color = 'brown';
   // Recipes color the poop after one of their veggies; specials give a surprise color.
@@ -721,7 +722,7 @@ export function poopKind(state, rng = Math.random) {
   else if (r < 0.014) color = 'gold';
   else if (r < 0.044) color = 'rainbow';
   else if (r < 0.127) color = ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple'][Math.floor(rng() * 6)];
-  return { shape, color };
+  return { shape, color, by };
 }
 
 export function addPoop(state) {

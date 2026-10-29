@@ -63,7 +63,6 @@ function loop() {
   const events = G.tick(state, dt, now);
   for (const e of events) {
     if (e.type === 'coin') floatCoin();
-    if (e.type === 'poop') sfx.plop();
     if (e.type === 'toyGone') toyGone(e.id);
   }
   bookCheck();
@@ -317,10 +316,14 @@ function updateSteamer() {
       const b = el(`<button class="poop ${poop.color || 'brown'}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y}">${Art.poop(poop)}</button>`);
       b.addEventListener('click', () => onScoop(poop.id, b));
       floor.appendChild(b);
+      // Poops already there when the game opens just sit there; new ones
+      // sometimes drop out of a piggy's behind, otherwise they just plop.
+      if (poopsShown && !(Math.random() < 0.5 && dropFromPiggy(poop, b))) sfx.plop();
     }
     poops.delete(poop.id);
   }
   for (const [, c] of poops) c.remove();
+  poopsShown = true;
   // Dumpling tray
   const tray = $('#tray');
   // Surprise dumplings sit at the front of the tray.
@@ -336,6 +339,45 @@ function updateSteamer() {
       tray.appendChild(b);
     }
   }
+}
+
+// A new poop falls out of the back end of the piggy that made it (or any
+// piggy out in the open), lands behind them with a squish, and says "plop!".
+// The piggy stops and gives a little wiggle. Returns false if nobody can.
+let poopsShown = false;
+function dropFromPiggy(poop, b) {
+  const floor = $('#floor');
+  if (tab !== 'steamer' || !floor.offsetWidth) return false;
+  const free = state.piggies.filter(p => { const w = wander.get(p.id); return w && !w.inside && !w.peek && !w.riding && !w.using; });
+  const pig = free.find(p => p.id === poop.by) || free[Math.floor(Math.random() * free.length)];
+  const d = pig && $(`.piggy[data-id="${pig.id}"]`, floor);
+  if (!d) return false;
+  const w = wander.get(pig.id);
+  w.front = false;   // turn sideways so the bottom shows
+  w.pause = Math.max(w.pause || 0, Date.now() + 1600);
+  d.classList.remove('walking');
+  syncPose(d, w);
+  const fr = floor.getBoundingClientRect(), ar = $('.pig-art', d).getBoundingClientRect();
+  const f = w.face < 0 ? -1 : 1;   // piggies face right, so the rear is on the left
+  const rearX = f > 0 ? ar.left + ar.width * 0.13 : ar.right - ar.width * 0.13;
+  const rearY = ar.top + ar.height * 0.7;
+  const x = Math.min(0.95, Math.max(0.05, (rearX - f * ar.width * 0.05 - fr.left) / fr.width));
+  const y = Math.min(0.99, pig.y + 0.01);
+  poop.x = x; poop.y = y;
+  b.style.setProperty('--x', x.toFixed(3));
+  b.style.setProperty('--y', y.toFixed(3));
+  b.style.setProperty('--drop', Math.max(0, fr.top + y * fr.height - rearY).toFixed(0) + 'px');
+  b.style.setProperty('--pz', depth(pig.y) - 1);   // starts tucked behind the piggy
+  b.classList.add('plop');
+  d.classList.add('pooping');
+  setTimeout(() => {
+    sfx.plop();
+    const word = el(`<span class="plop-word" style="--x:${Math.min(0.92, Math.max(0.08, x - f * 0.07)).toFixed(3)};--y:${y.toFixed(3)}">plop!</span>`);
+    floor.appendChild(word);
+    setTimeout(() => word.remove(), 1200);
+  }, 520);
+  setTimeout(() => { b.classList.remove('plop'); d.classList.remove('pooping'); }, 1000);
+  return true;
 }
 
 function placePig(d, pig, w) {

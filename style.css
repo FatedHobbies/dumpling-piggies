@@ -314,6 +314,21 @@ button.pk:active { transform: scale(.95); }
 .poop.crystal { animation-name: glow-ice; }
 @keyframes glow-ice { from { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #7FD4FF); } to { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px #9FB8FF); } }
 @keyframes glow { from { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #FFD166); } to { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px #FFD166); } }
+/* A poop dropping out of a piggy's behind: it squeezes out tucked behind
+   the piggy, falls, squishes on the floor and bounces still. */
+#floor .poop.plop { z-index: var(--pz); transform-origin: 50% 100%; animation: poop-drop 1s both; }
+@keyframes poop-drop {
+  0% { transform: translate(-50%, calc(-100% - var(--drop))) scale(.15); animation-timing-function: ease-out; }
+  22% { transform: translate(-50%, calc(-100% - var(--drop))) scale(.75); animation-timing-function: ease-in; }
+  52% { transform: translate(-50%, -100%) scale(.85, 1.1); animation-timing-function: ease-out; }
+  64% { transform: translate(-50%, -100%) scale(1.3, .7); }
+  80% { transform: translate(-50%, -112%) scale(.92, 1.1); }
+  100% { transform: translate(-50%, -100%) scale(1); }
+}
+.piggy.pooping .pig-art { transform-origin: 50% 90%; animation: poop-wiggle .5s ease-in-out 2; }
+@keyframes poop-wiggle { 0%, 100% { transform: scaleX(var(--f)); } 25% { transform: scaleX(var(--f)) rotate(-5deg) scaleY(.94); } 75% { transform: scaleX(var(--f)) rotate(5deg) scaleY(.94); } }
+.plop-word { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); z-index: 501; pointer-events: none; font-family: var(--display); font-weight: 700; font-size: 1.05rem; color: #7A4A21; -webkit-text-stroke: 4px #fff; paint-order: stroke fill; transform: translate(-50%, -150%); animation: plop-word 1.2s ease-out both; }
+@keyframes plop-word { 0% { opacity: 0; transform: translate(-50%, -150%) scale(.4); } 20% { opacity: 1; transform: translate(-50%, -230%) scale(1.15); } 70% { opacity: 1; transform: translate(-50%, -270%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -320%) scale(1); } }
 .poop-card svg { width: 120px; height: 120px; }
 .odds { font-size: 13px; color: #6A4524; margin: -6px 0 8px; }
 .plant.pulled { transition: transform .4s, opacity .4s; transform: translate(-50%, -40px) rotate(20deg); opacity: 0; }
