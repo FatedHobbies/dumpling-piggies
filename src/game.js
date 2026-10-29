@@ -145,6 +145,7 @@ export const BREEDS = {
   american:   { name: 'American',    blurb: 'Short, smooth and shiny.' },
   abyssinian: { name: 'Abyssinian',  blurb: 'Swirly rosettes all over.' },
   peruvian:   { name: 'Peruvian',    blurb: 'Long flowing hair, a bit messy.' },
+  silkie:     { name: 'Silkie',      blurb: 'Silky hair swept back like a cape.' },
   texel:      { name: 'Texel',       blurb: 'Curly like a little sheep.' },
   skinny:     { name: 'Skinny pig',  blurb: 'Almost no hair at all!' },
 };

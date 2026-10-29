@@ -11,6 +11,23 @@ function darken(hex, f = 0.78) {
   return '#' + m.slice(0, 3).map(h => Math.round(parseInt(h, 16) * f).toString(16).padStart(2, '0')).join('');
 }
 
+// Rounded locks of hair hanging from a line at height y, from x0 to x1 (either
+// direction). Every other lock hangs a little longer so the ends look messy.
+// `phase` keeps locks lined up when two pieces of hair share one edge.
+function locks(x0, x1, y, drop, n, phase = 0) {
+  const w = (x1 - x0) / n;
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const a = x0 + i * w, k = drop * ((i + phase) % 2 ? 1.05 : 1.45);
+    d += ` C${(a + w * 0.05).toFixed(1)} ${y + k} ${(a + w * 0.95).toFixed(1)} ${y + k} ${(a + w).toFixed(1)} ${y}`;
+  }
+  return d;
+}
+const strands = (d, c) => `<path d="${d}" stroke="${c}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".4"/>`;
+const curl = (x, y, c, r = 5) => `<path d="M${x - r} ${y} a${r} ${r} 0 1 1 ${r} ${r}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>`;
+// A soft tuft of fur pointing up from (x, y).
+const furTuft = (x, y, c, h = 12) => `<path d="M${x - 8} ${y + 6} Q${x - 4} ${y - h * 0.4} ${x + 1} ${y - h} Q${x + 3} ${y - h * 0.3} ${x + 8} ${y + 6}Z" fill="${c}"/>`;
+
 // Side-view piggy facing right. Coat decides colors and the breed decides
 // hair: rosettes, long hair, curls, or nearly none.
 export function piggySide(opts = {}) {
@@ -28,20 +45,49 @@ export function piggySide(opts = {}) {
     ? `<path d="M152 104 Q160 108 168 104" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>`
     : `<g class="blink"><circle cx="160" cy="104" r="6.5" fill="${INK}"/><circle cx="162" cy="101.5" r="2.2" fill="#fff"/></g>`;
 
-  let hair = '';
+  // Long hair is drawn in the coat's own colors with no outline, so it
+  // grows out of the body instead of sitting on top of it.
+  let hair = '', fringe = '';
+  const ldark = darken(patch);
+  const backTop = (x) => 122 - 44 * Math.sqrt(Math.max(0, 1 - ((x - 96) / 72) ** 2));
   if (coat.breed === 'abyssinian') {
-    hair = [[70, 112], [104, 100], [120, 138], [60, 140], [138, 112]].map(([x, y]) =>
-      `<path d="M${x - 10} ${y} a10 10 0 1 1 10 10 a6 6 0 1 0 6 -6" fill="none" stroke="${dark}" stroke-width="3" stroke-linecap="round" opacity=".7"/>`).join('') +
-      `<path d="M40 92 l-6 -10 M60 82 l-4 -11 M84 78 l0 -11 M110 80 l4 -11" stroke="${dark}" stroke-width="4" stroke-linecap="round"/>`;
-  } else if (coat.breed === 'peruvian') {
-    hair = `<path d="M28 150 Q36 176 30 184 Q44 178 52 190 Q58 176 68 186 Q74 174 86 186 Q92 174 104 184 Q110 172 122 182 Q128 170 140 178 L146 150Z" fill="${main}" stroke="${dark}" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M48 160 Q50 176 46 184 M72 162 Q74 178 70 186 M100 160 Q102 176 98 182 M126 160 Q128 172 124 178" stroke="${dark}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".6"/>
-      <path d="M118 82 Q140 60 170 76 Q178 92 184 100 Q172 94 164 98 Q150 88 138 100 Q126 92 118 82Z" fill="${patch}" stroke="${darken(patch)}" stroke-width="2"/>
-      <path d="M150 86 Q154 100 150 108 M164 84 Q170 96 168 104" stroke="${darken(patch)}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".6"/>`;
+    hair = [40, 58, 78, 98, 120].map(x => furTuft(x, backTop(x) + 2, x > 68 && x < 116 ? patch : main)).join('') +
+      [[70, 112], [104, 100], [120, 138], [60, 140], [138, 112]].map(([x, y]) =>
+      `<path d="M${x - 10} ${y} a10 10 0 1 1 10 10 a6 6 0 1 0 6 -6" fill="none" stroke="${x > 68 && x < 116 ? ldark : dark}" stroke-width="3" stroke-linecap="round" opacity=".55"/>`).join('');
+  } else if (coat.breed === 'peruvian' || coat.breed === 'silkie') {
+    const silkie = coat.breed === 'silkie';
+    const x0 = silkie ? 6 : 14, w = (150 - x0) / 8;
+    // Main coat: over the back, down past the belly, and up behind the cheek.
+    hair = silkie
+      ? `<path d="M172 84 C156 62 124 62 100 68 C60 64 26 78 12 104 C2 124 2 148 ${x0} 168${locks(x0, 150, 168, 9, 8)} C140 150 132 130 130 114 C138 100 154 90 172 84Z" fill="${main}"/>`
+      : `<path d="M128 80 C108 64 64 64 40 78 C22 88 10 112 14 140 L${x0} 168${locks(x0, 150, 168, 9, 8)} C142 150 132 130 126 110 Z" fill="${main}"/>`;
+    // The patch color carries on down into the hair as one long stripe.
+    const p0 = x0 + 3 * w, p1 = x0 + 6 * w;
+    hair += `<path d="M${p0} 168 C${p0 - 6} 130 ${p0 - 4} 92 ${p0 + 6} 72 C${p0 + 20} 66 ${p1 - 16} 66 ${p1 - 2} 74 C${p1 + 4} 100 ${p1 + 2} 140 ${p1} 168${locks(p1, p0, 168, 9, 3, 1)}Z" fill="${patch}"/>`;
+    hair += strands([0, 1, 2, 6, 7].map(i => { const c = x0 + (i + 0.5) * w; return `M${c + 4} ${i < 1 ? 120 : 98} Q${c - 4} 140 ${c} 176`; }).join(' '), dark);
+    hair += strands([3, 4, 5].map(i => { const c = x0 + (i + 0.5) * w; return `M${c + 4} 92 Q${c - 4} 140 ${c} 176`; }).join(' '), ldark);
+    if (silkie) {
+      // Swept straight back off the face.
+      hair += strands('M162 84 Q140 74 112 78 M154 94 Q134 86 116 92', dark);
+    } else {
+      // A side-parted fringe that tumbles over the forehead and ear.
+      fringe = `<path d="M116 96 C112 72 136 58 160 64 C174 68 182 80 184 90${locks(184, 138, 90, 5, 4)} Q126 100 116 96Z" fill="${main}"/>` +
+        strands('M146 68 Q154 76 150 92 M160 68 Q168 78 166 92 M134 70 Q136 82 130 94', dark);
+    }
   } else if (coat.breed === 'texel') {
-    hair = [[36, 100], [52, 86], [74, 80], [98, 80], [120, 86], [40, 150], [66, 160], [96, 164], [124, 160], [30, 126]].map(([x, y]) =>
-      `<circle cx="${x}" cy="${y}" r="9" fill="${main}" stroke="${dark}" stroke-width="2.5"/>`).join('') +
-      `<circle cx="140" cy="80" r="9" fill="${patch}" stroke="${darken(patch)}" stroke-width="2.5"/>`;
+    // Curls make the outline itself bumpy, with a few spirals on the coat.
+    const rim = [];
+    for (let t = 25; t <= 330; t += 19) {
+      const r = t * Math.PI / 180, x = 96 + 68 * Math.cos(r), y = 122 - 41 * Math.sin(r);
+      if (y > 164 || x > 150) continue;
+      rim.push([x, y]);
+    }
+    for (const t of [70, 100, 130, 160]) { const r = t * Math.PI / 180; rim.push([148 + 36 * Math.cos(r), 112 - 33 * Math.sin(r)]); }
+    const inPatch = (x) => x > 66 && x < 116;
+    hair = rim.map(([x, y]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="11" fill="${inPatch(x) ? patch : main}"/>`).join('') +
+      [[44, 116], [56, 140], [128, 128], [140, 96]].map(([x, y]) => curl(x, y, dark)).join('') +
+      [[86, 104], [96, 136]].map(([x, y]) => curl(x, y, ldark)).join('') +
+      rim.map(([x, y]) => curl(x + 1, y - 1, inPatch(x) ? ldark : dark, 4)).join('');
   } else if (skinny) {
     hair = `<path d="M60 110 Q72 104 84 110 M58 128 Q72 122 86 128 M64 146 Q76 140 88 146" stroke="#D98C77" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".7"/>
       <path d="M176 92 q6 -14 16 -8 q-4 10 -16 8z" fill="${col(coat.main)}"/>`;
@@ -62,6 +108,7 @@ export function piggySide(opts = {}) {
       <path d="M180 104 Q190 116 184 128 Q170 132 162 122 Q170 112 180 104Z" fill="${patch}"/>
       ${hair}
       <ellipse cx="136" cy="80" rx="14" ry="10" transform="rotate(-25 136 80)" fill="${dark}"/><ellipse cx="136" cy="81" rx="8" ry="5" transform="rotate(-25 136 81)" fill="#FFB3C1"/>
+      ${fringe}
       ${hatSvg}
       ${eye}
       <ellipse cx="164" cy="122" rx="8" ry="4.5" fill="#FF8FA8" opacity=".7"/>
@@ -121,13 +168,26 @@ export function piggyFace(opts = {}) {
   const main = skinny ? '#F2B8A0' : col(coat.main);
   const patch = skinny ? '#F7CDBB' : col(coat.patch);
   const dark = darken(main);
-  let hair = '';
-  if (coat.breed === 'abyssinian') hair = `<path d="M34 34 l-4 -10 M44 30 l-1 -11 M56 30 l1 -11 M66 34 l4 -10" stroke="${dark}" stroke-width="4" stroke-linecap="round"/><path d="M22 66 a7 7 0 1 1 7 7 M70 64 a7 7 0 1 1 7 7" fill="none" stroke="${dark}" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>`;
-  else if (coat.breed === 'peruvian') hair = `<path d="M18 52 Q8 74 12 94 Q20 86 24 96 Q28 80 30 66Z M82 52 Q92 74 88 94 Q80 86 76 96 Q72 80 70 66Z" fill="${main}" stroke="${dark}" stroke-width="2" stroke-linejoin="round"/><path d="M30 40 Q50 22 70 40 Q62 34 56 42 Q50 32 44 42 Q38 34 30 40Z" fill="${patch}" stroke="${darken(patch)}" stroke-width="2"/>`;
-  else if (coat.breed === 'texel') hair = [[24, 44], [20, 62], [26, 80], [76, 44], [80, 62], [74, 80], [40, 32], [60, 32]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="7" fill="${i > 5 ? patch : main}" stroke="${dark}" stroke-width="2"/>`).join('');
+  let back = '', hair = '';
+  if (coat.breed === 'abyssinian') hair = [36, 50, 64].map(x => furTuft(x, 32, x === 50 ? patch : main, 11)).join('') + curl(26, 66, dark, 7) + curl(72, 64, dark, 7);
+  else if (coat.breed === 'peruvian') {
+    // Long hair falls down both cheeks with a side-parted fringe, all in coat colors.
+    back = `<path d="M50 16 C20 16 6 40 8 66 L8 96${locks(8, 92, 96, 5, 6)} L92 66 C94 40 80 16 50 16Z" fill="${main}"/>`;
+    hair = `<path d="M14 64 C10 38 28 22 50 22 C72 22 90 38 86 64 L88 98${locks(88, 74, 98, 5, 2)} C74 80 76 62 70 48${locks(70, 30, 46, 4, 4, 1)} C28 60 28 80 26 98${locks(26, 12, 98, 5, 2)} Z" fill="${main}"/>` +
+      strands('M42 26 Q30 34 22 56 M42 26 Q58 30 66 44 M78 46 Q84 64 82 90 M20 64 Q18 80 18 92', dark);
+  } else if (coat.breed === 'silkie') {
+    // Swept back off the face, flowing out behind like a cape.
+    back = `<path d="M50 14 C18 14 2 40 4 70 L4 98${locks(4, 96, 98, 5, 6)} L96 70 C98 40 82 14 50 14Z" fill="${main}"/>`;
+    hair = `<path d="M24 40 C10 50 8 76 10 98${locks(10, 24, 98, 5, 1)} C20 80 18 60 26 44Z M76 40 C90 50 92 76 90 98${locks(90, 76, 98, 5, 1)} C80 80 82 60 74 44Z" fill="${main}"/>` +
+      strands('M44 34 Q32 26 20 34 M56 34 Q68 26 80 34 M16 54 Q12 74 14 92 M84 54 Q88 74 86 92', dark);
+  } else if (coat.breed === 'texel') {
+    back = [[18, 34], [10, 50], [8, 68], [12, 86], [82, 34], [90, 50], [92, 68], [88, 86], [32, 24], [68, 24], [50, 20]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="11" fill="${x === 50 ? patch : main}"/>` + curl(x, y, x === 50 ? darken(patch) : dark, 4)).join('');
+    hair = curl(28, 44, dark) + curl(72, 44, dark) + curl(22, 80, dark) + curl(78, 80, dark);
+  }
   else if (skinny) hair = `<path d="M44 30 q6 -12 14 -4 q-6 4 -14 4z" fill="${col(coat.main)}"/>`;
   const hat = opts.hat ? `<g transform="translate(-32.5 -9) scale(.55)">${hatSide(opts.hat === true ? 'strawberry' : opts.hat)}</g>` : '';
   return `<svg viewBox="0 0 100 100" class="piggy-face" aria-hidden="true">
+    ${back}
     <ellipse cx="20" cy="42" rx="11" ry="8" transform="rotate(-30 20 42)" fill="${dark}"/><ellipse cx="20" cy="43" rx="6" ry="4" transform="rotate(-30 20 43)" fill="#FFB3C1"/>
     <ellipse cx="80" cy="42" rx="11" ry="8" transform="rotate(30 80 42)" fill="${dark}"/><ellipse cx="80" cy="43" rx="6" ry="4" transform="rotate(30 80 43)" fill="#FFB3C1"/>
     <ellipse cx="50" cy="62" rx="34" ry="32" fill="${main}"/>
@@ -152,8 +212,25 @@ export function piggyTop(opts = {}) {
   const hat = opts.hat ? hatTop(opts.hat === true ? 'strawberry' : opts.hat) : '';
   let hair = '';
   if (coat.breed === 'abyssinian') hair = [[-24, 10], [22, 20], [0, 44], [-20, -10], [24, -12]].map(([x, y]) => `<path d="M${x - 8} ${y} a8 8 0 1 1 8 8" fill="none" stroke="${dark}" stroke-width="3" stroke-linecap="round" opacity=".7"/>`).join('');
-  if (coat.breed === 'peruvian') hair = `<path d="M-46 30 Q-50 70 -40 84 Q-30 70 -20 86 Q-10 70 0 88 Q10 70 20 86 Q30 70 40 84 Q50 70 46 30Z" fill="${main}" stroke="${dark}" stroke-width="2"/>`;
-  if (coat.breed === 'texel') hair = [[-40, -10], [40, -10], [-44, 30], [44, 30], [-30, 62], [30, 62], [0, 70]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="${main}" stroke="${dark}" stroke-width="2.5"/>`).join('');
+  if (coat.breed === 'peruvian' || coat.breed === 'silkie') {
+    // From above, long hair parts down the spine and spills over both sides.
+    const silkie = coat.breed === 'silkie';
+    hair = silkie
+      ? `<path d="M-28 -52 C-44 -30 -62 0 -62 50 L-62 70${locks(-62, 62, 70, 5, 7)} L62 50 C62 0 44 -30 28 -52 C10 -42 -10 -42 -28 -52Z" fill="${main}"/>`
+      : `<path d="M-30 -26 C-52 -16 -60 20 -58 60 L-58 70${locks(-58, 58, 70, 5, 7)} C60 20 52 -16 30 -26 C14 -18 -14 -18 -30 -26Z" fill="${main}"/>`;
+    const w = (silkie ? 124 : 116) / 7, p = w * 1.5;
+    hair += `<path d="M${-p} 70 C${-p} 40 -20 10 -14 ${silkie ? -36 : -14} Q0 ${silkie ? -30 : -8} 14 ${silkie ? -36 : -14} C20 10 ${p} 40 ${p} 70${locks(p, -p, 70, 5, 3)}Z" fill="${patch}"/>`;
+    hair += `<path d="M0 ${silkie ? -34 : -12} L0 64" stroke="${darken(patch)}" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>` +
+      strands('M-16 -6 Q-40 10 -48 60 M16 -6 Q40 10 48 60 M-26 -16 Q-50 0 -54 40 M26 -16 Q50 0 54 40', dark);
+    if (!silkie) hair += `<path d="M-22 -6 C-24 -40 -14 -54 -8 -60 Q0 -54 8 -60 C14 -54 24 -40 22 -6 Q0 0 -22 -6Z" fill="${main}"/>` + strands('M-8 -14 Q-8 -40 -6 -56 M8 -14 Q8 -40 6 -56', dark);
+  }
+  if (coat.breed === 'texel') {
+    const rim = [];
+    for (let t = -40; t <= 220; t += 20) { const r = t * Math.PI / 180; rim.push([46 * Math.cos(r), 8 + 62 * Math.sin(r)]); }
+    const inPatch = ([x, y]) => (x / 34) ** 2 + ((y - 26) / 30) ** 2 < 1.4;
+    hair = rim.map(pt => `<circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="10" fill="${inPatch(pt) ? patch : main}"/>` + curl(pt[0], pt[1], inPatch(pt) ? darken(patch) : dark, 4)).join('') +
+      curl(-20, 20, darken(patch)) + curl(16, 40, darken(patch)) + curl(-24, -20, dark) + curl(24, -16, dark);
+  }
   return `<svg viewBox="-70 -90 140 170" x="-70" y="-90" width="140" height="170" class="piggy-top" aria-hidden="true">
     <g class="pawA"><ellipse cx="-46" cy="-30" rx="11" ry="8" fill="#F3B9A0"/><ellipse cx="44" cy="40" rx="11" ry="8" fill="#F3B9A0"/></g>
     <g class="pawB"><ellipse cx="46" cy="-30" rx="11" ry="8" fill="#F3B9A0"/><ellipse cx="-44" cy="40" rx="11" ry="8" fill="#F3B9A0"/></g>
