@@ -1539,7 +1539,7 @@ function updateShop() {
         ${others.length ? `<div class="hat-side"><div class="hat-pigs ${state.piggies.length > 2 ? 'two' : ''}">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div></div>` : ''}
         <div class="hat-model">${Art.piggySide({ coat: p.coat, hat: showing })}</div>
         <div class="hat-who"><span class="hat-title"><small>Fancy hats for</small><b>${esc(p.name)}</b></span>
-          ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}! ${G.HATS[tryHat.id].goal ? `${G.HATS[tryHat.id].goal} to earn it.` : 'Tap again to buy.'}</em>` : ''}</div>
+          ${tryHat ? `<em>${G.HATS[tryHat.id].goal ? `${G.HATS[tryHat.id].name}! ${G.HATS[tryHat.id].goal} to earn it!` : `Trying on the ${G.HATS[tryHat.id].name}! Like ${/s$/.test(G.HATS[tryHat.id].name) ? 'them' : 'it'}? Press Buy!`}</em>` : ''}</div>
       </div></div>
       <p class="hint small">Tap a hat to try it on. Hats you own fit every piggy.</p><div class="hat-grid"></div>`;
     hats.querySelectorAll('.hat-pigs .face').forEach(f => f.addEventListener('click', () => { selectedPig = +f.dataset.id; tryHat = null; sfx.pop(); render(); }));
