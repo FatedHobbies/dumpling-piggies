@@ -419,10 +419,12 @@ button.pk:active { transform: scale(.95); }
 .pig-card { width: 100%; max-width: 110px; } .pig-card svg { width: 100%; height: auto; }
 .pig-card.big { max-width: 160px; margin: 0 auto; }
 .hats { padding: 10px; }
-.hat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
-.hat > svg { width: 56px; height: 56px; }
-.hat > span:first-of-type { font-size: .72rem; font-weight: 700; color: var(--soft); }
-.hat .price { font-size: .8rem; }
+.hat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; }
+.hat-grid .hat { padding: 5px 2px 4px; border-radius: 12px; gap: 0; min-width: 0; }
+.hat > svg { width: 40px; height: 40px; }
+.hat > span:first-of-type { font-size: .62rem; font-weight: 700; color: var(--soft); line-height: 1.1; text-align: center; min-height: 1.4em; }
+.hat .price { font-size: .7rem; }
+.hat .price .coin-sm svg { width: 14px; height: 14px; }
 .hat.owned .price { color: var(--blue-dark); }
 .hat.wearing { border-color: var(--blue); box-shadow: 0 3px 0 var(--blue-dark); background: #EAF4FF; }
 .hat.wearing .price { color: var(--green-dark); }
@@ -620,19 +622,34 @@ button.pk:active { transform: scale(.95); }
 .counter-bar { bottom: 2.5%; }
 .opt .count.have { background: var(--mint); color: #0E2E25; }
 
-.hat-pin { position: sticky; top: calc(var(--headh, 120px) - 12px); z-index: 4; margin: -10px -10px 8px; padding: 8px 10px 6px; background: var(--panel); border-radius: 16px 16px 0 0; box-shadow: 0 6px 6px -4px rgba(0,0,0,.15); }
-.hat-pin .hat-for { padding: 4px 10px 4px 4px; gap: 10px; }
-.hat-pin .hat-model { width: 92px; }
-.hat-pin .hat-who b { font-size: 1.3rem; }
-.hat-pin .hat-pigs { justify-content: flex-start; margin-top: 4px; gap: 6px; }
-.hat-pin .hat-pigs .face { width: 38px; height: 38px; flex: 0 0 38px; }
-.hat-pin .hat-for { justify-content: flex-start; }
-.hat-pin .hat-pigs { display: grid; grid-template-columns: 38px; gap: 6px; margin: 0; flex: 0 0 auto; }
-.hat-pin .hat-pigs.two { grid-template-columns: 38px 38px; }
-.hat-pin .hat-model { flex: 0 0 auto; }
-.hat-pin .hat-who { flex: 1; }
-.hat-pin .hat-who { order: 1; text-align: left; }
-.hat-pin .hat-model { order: 2; }
-.hat-pin .hat-pigs { order: 3; }
-.hat-pin .hat-for { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
-.hat-pin .hat-pigs { justify-self: end; }
+.hat-pin { position: sticky; top: calc(var(--headh, 120px) - 12px); z-index: 4; margin: -10px -10px 8px; padding: 6px 10px; background: var(--panel); border-radius: 16px 16px 0 0; box-shadow: 0 6px 6px -4px rgba(0,0,0,.15); }
+/* A little dressing room: name plate on the left, the piggy on a spotlight
+   rug in the middle, the other piggies waiting on the right. */
+.hat-pin .hat-for { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 4px 6px; background: linear-gradient(#FFFDF7, #FBEFD9); border: 3px solid #E9D7B4; border-radius: 16px; }
+.hat-pin .hat-who { order: 1; align-items: center; text-align: center; gap: 5px; }
+.hat-pin .hat-who small { font-size: .72rem; }
+.hat-pin .hat-who b { font-size: 1rem; color: #5A3A1E; background: #FFF8EC; border: 3px solid var(--wood-dark); border-radius: 999px; padding: 1px 10px; box-shadow: 0 2px 0 #6A4524; }
+.hat-pin .hat-who em { font-size: .68rem; }
+.hat-pin .hat-model { order: 2; width: 96px; position: relative; }
+.hat-pin .hat-model::before { content: ""; position: absolute; left: 6%; right: 6%; bottom: 4%; height: 22%; border-radius: 50%; background: #FFC4D2; border: 3px solid #F59AB0; }
+.hat-pin .hat-model svg { position: relative; }
+.hat-pin .hat-pigs { order: 3; justify-self: end; display: grid; grid-template-columns: 36px; gap: 5px; margin: 0; }
+.hat-pin .hat-pigs.two { grid-template-columns: 36px 36px; }
+.hat-pin .hat-pigs.three { grid-template-columns: 36px 36px 36px; }
+.hat-pin .hat-pigs .face.on { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--blue); }
+.hat-pin .hat-pigs .face { width: 36px; height: 36px; flex: none; }
+.hint.small { font-size: .75rem; margin: 2px 0 0; }
+/* Picker breathing room: everything a touch smaller with more space around it. */
+.hat-pin .hat-for { gap: 14px; padding: 8px 12px; }
+.hat-pin .hat-who { gap: 7px; }
+.hat-pin .hat-who small { font-size: .66rem; }
+.hat-pin .hat-who b { font-size: .88rem; padding: 1px 9px; }
+.hat-pin .hat-who em { font-size: .62rem; line-height: 1.25; }
+.hat-pin .hat-model { width: 80px; }
+.hat-pin .hat-pigs { gap: 8px; }
+.hat-pin .hat-pigs .face { width: 30px; height: 30px; }
+.hat-pin .hat-pigs, .hat-pin .hat-pigs.two, .hat-pin .hat-pigs.three { grid-auto-rows: 30px; }
+.hat-pin .hat-pigs { grid-template-columns: 30px; }
+.hat-pin .hat-pigs.two { grid-template-columns: 30px 30px; }
+.hat-pin .hat-pigs.three { grid-template-columns: 30px 30px 30px; }
+.hat-pin .hat-pigs .face.on { box-shadow: 0 0 0 2px #fff, 0 0 0 5px var(--blue); }
