@@ -1103,6 +1103,8 @@ export function penScene() {
 // The house, water bottle and food bowl stand on the pen floor as their own
 // pictures, so piggies can walk in front of or behind them. Each is drawn in
 // pen-scene coordinates; `box` is its viewBox, `x` its middle, `y` its bottom.
+// `back` (if set) is where it sorts for depth: the bowl is so low and flat that
+// a piggy eating from it must draw in front of it.
 export const PEN_FIXTURES = {
   house:  { box: '22 74 88 86', x: 66, y: 158, svg: `<g>
       <path d="M26 156 L26 110 Q66 76 106 110 L106 156Z" fill="#C9935A" stroke="#8A5634" stroke-width="4" stroke-linejoin="round"/>
@@ -1122,7 +1124,7 @@ export const PEN_FIXTURES = {
       <circle class="drip" cx="200" cy="107" r="4" fill="#6FC6F0"/>
       <circle class="bubble-up" cx="200" cy="70" r="2.5" fill="#fff" opacity="0"/>
     </g>` },
-  bowl:   { box: '164 270 72 30', x: 200, y: 299, svg: `<g class="pen-bowl">
+  bowl:   { box: '164 270 72 30', x: 200, y: 299, back: 274, svg: `<g class="pen-bowl">
       <ellipse cx="200" cy="286" rx="34" ry="12" fill="#7AA6FF" stroke="#4C7FD9" stroke-width="3"/>
       <ellipse cx="200" cy="282" rx="24" ry="6" fill="#B8D0FF"/>
       <g class="kibble"><ellipse cx="190" cy="281" rx="5" ry="3" fill="#FF9A3C"/><ellipse cx="202" cy="279" rx="5" ry="3" fill="#7DC768"/><ellipse cx="212" cy="282" rx="5" ry="3" fill="#E8C27A"/><ellipse cx="197" cy="284" rx="4" ry="2.5" fill="#7DC768"/><ellipse cx="207" cy="285" rx="4" ry="2.5" fill="#FF9A3C"/></g>

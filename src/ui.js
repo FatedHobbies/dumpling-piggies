@@ -5,7 +5,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 151;
+const VERSION = 152;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -353,7 +353,7 @@ function steamerView() {
     <div class="stage" id="stage">
       ${Art.penScene()}
       <div class="floor" id="floor">
-        ${Object.entries(Art.PEN_FIXTURES).map(([id, f]) => { const y = fixtureY(f); return `<div class="fixture" data-fix="${id}" style="--x:${f.x / 400};--y:${y.toFixed(3)};--w:${f.box.split(' ')[2] / 4}%;z-index:${depth(y)}">${Art.penFixture(id)}</div>`; }).join('')}
+        ${Object.entries(Art.PEN_FIXTURES).map(([id, f]) => { const y = fixtureY(f); return `<div class="fixture" data-fix="${id}" style="--x:${f.x / 400};--y:${y.toFixed(3)};--w:${f.box.split(' ')[2] / 4}%;z-index:${depth(f.back ? fixtureY({ y: f.back }) : y)}">${Art.penFixture(id)}</div>`; }).join('')}
         <button class="spot-hit" data-spot="bowl" aria-label="Food bowl" style="--x:${SPOTS.bowl.x};--y:${SPOTS.bowl.y}"></button>
         <button class="spot-hit" data-spot="bottle" aria-label="Water bottle" style="--x:${SPOTS.bottle.x};--y:${SPOTS.bottle.y}"></button>
       </div>
