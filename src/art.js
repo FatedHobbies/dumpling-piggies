@@ -1,6 +1,6 @@
 // Copyright (c) 2026 FatedHobbies. All rights reserved. No copying, modifying or redistributing without permission.
 // Squishy-style art, all SVG strings so it stays sharp and tiny.
-import { COLORS, FILLINGS, RECIPES, hash } from './game.js';
+import { COLORS, FILLINGS, GLITTER, RECIPES, hash } from './game.js';
 
 const INK = '#2A1A14';
 const DEFAULT_COAT = { breed: 'american', main: 'ginger', patch: 'white' };
@@ -566,7 +566,7 @@ const POOP_FILL = {
   aqua: ['#7FDCD6', '#3BA8A0'], purple: ['#9B5BD8', '#5E2E9C'],
   gold: ['#FFD34D', '#D9A21B'], rainbow: ['url(#rainbowPoop)', '#B48CE0'], crystal: ['url(#crystalPoop)', '#6FA8DC'],
 };
-const POOP_GLITTER = new Set(['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple', 'gold', 'crystal']);
+const POOP_GLITTER = new Set(GLITTER);
 // Glitter speckles, placed inside the body of each shape.
 const SPECK = {
   swirl: [[16,46],[22,55],[30,44],[38,56],[46,48],[50,54],[21,34],[30,37],[40,32],[44,38],[26,24],[33,18],[37,27],[36,43],[14,52]],
@@ -925,17 +925,17 @@ export const MAZE_THEMES = {
 
 
 // Fun tiles that drop into the maze on Go, drawn in each theme. Zoom pads
-// speed the piggy up, puddles make it splash, tunnels come in pairs, and a
-// bridge lets the piggy hop over one wall. Drawn in cell coordinates.
+// speed the piggy up, tunnels come in pairs, and a trampoline ('bounce')
+// boings the piggy over one wall. Drawn in cell coordinates.
 export const FUN_LOOK = {
-  hay:     { zoom: '#FF9A3C', puddle: ['#7EC8F0', '#3F86B5'], tunnel: ['#E6B566', '#9C6A3A'], bridge: ['#C98F4B', '#7A4E2C'] },
-  pumpkin: { zoom: '#5FAE4E', puddle: ['#9C6A3A', '#6B4423'], tunnel: 'pumpkin', bridge: ['#A86E3C', '#5A3A22'] },
-  galaxy:  { zoom: '#3FD6C2', puddle: ['#120E36', '#8C74E0'], tunnel: 'wormhole', bridge: ['#FFE66B', '#C9A21A'] },
-  unicorn: { zoom: '#FF8FC8', puddle: ['#D9C4FF', '#B38CF0'], tunnel: 'rainbow', bridge: 'cloud' },
-  kitchen: { zoom: '#EE5146', puddle: ['#6B3A1E', '#3E200F'], tunnel: ['#FF8A7A', '#B83A30'], bridge: ['#E8B060', '#9C6A3A'] },
-  snow:    { zoom: '#4AA8E8', puddle: ['#D4EEFB', '#7FB9DD'], tunnel: 'igloo', bridge: ['#A9DDF7', '#3F86B5'] },
-  sea:     { zoom: '#2C98CF', puddle: ['#5CC8C0', '#2E8E86'], tunnel: 'castle', bridge: 'turtle' },
-  poop:    { zoom: '#F2B624', puddle: ['#7A4E2C', '#4A2C16'], tunnel: ['#9C6A3A', '#5A3A22'], bridge: ['#C98F4B', '#7A4E2C'] },
+  hay:     { zoom: '#FF9A3C', tunnel: ['#E6B566', '#9C6A3A'] },
+  pumpkin: { zoom: '#5FAE4E', tunnel: 'pumpkin' },
+  galaxy:  { zoom: '#3FD6C2', tunnel: 'wormhole' },
+  unicorn: { zoom: '#FF8FC8', tunnel: 'rainbow' },
+  kitchen: { zoom: '#EE5146', tunnel: ['#FF8A7A', '#B83A30'] },
+  snow:    { zoom: '#4AA8E8', tunnel: 'igloo' },
+  sea:     { zoom: '#2C98CF', tunnel: 'castle' },
+  poop:    { zoom: '#F2B624', tunnel: ['#9C6A3A', '#5A3A22'] },
 };
 export function funTile(theme, kind, px, py) {
   const L = FUN_LOOK[theme] || FUN_LOOK.hay, cx = px + 24, cy = py + 24;
@@ -944,12 +944,6 @@ export function funTile(theme, kind, px, py) {
     return `<rect x="${px + 6}" y="${py + 6}" width="36" height="36" rx="10" fill="${c}" stroke="#fff" stroke-width="3"/>
       <path d="M${cx - 9} ${cy + 2} L${cx} ${cy - 7} L${cx + 9} ${cy + 2} M${cx - 9} ${cy + 11} L${cx} ${cy + 2} L${cx + 9} ${cy + 11}" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       ${star4(px + 37, py + 10, 4, '#FFF3B0')}`;
-  }
-  if (kind === 'puddle') {
-    const [c, d] = L.puddle;
-    return `<path d="M${px + 8} ${cy} Q${px + 6} ${py + 10} ${cx - 2} ${py + 11} Q${px + 36} ${py + 6} ${px + 41} ${py + 18} Q${px + 46} ${py + 30} ${px + 36} ${py + 38} Q${cx} ${py + 44} ${px + 14} ${py + 38} Q${px + 6} ${py + 34} ${px + 8} ${cy}Z" fill="${c}" stroke="${d}" stroke-width="2.5"/>
-      <ellipse cx="${px + 18}" cy="${py + 18}" rx="6" ry="2.5" fill="#fff" opacity=".6" transform="rotate(-20 ${px + 18} ${py + 18})"/>
-      ${theme === 'galaxy' ? star4(px + 30, py + 28, 3, '#fff') : theme === 'unicorn' ? star4(px + 30, py + 27, 4, '#fff') + star4(px + 15, py + 31, 2.5, '#FF8FC8') : `<circle cx="${px + 31}" cy="${py + 29}" r="2" fill="#fff" opacity=".5"/>`}`;
   }
   if (kind === 'tunnel') {
     const t = L.tunnel;
@@ -985,16 +979,6 @@ export function funTile(theme, kind, px, py) {
     <path d="M${cx - 4} ${cy + 5} l4 -5 l4 5" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
 }
 
-// A veggie wall for the maze: a chunky crate in the veggie's color with the
-// veggie sitting on top, drawn in a 64 box.
-export function veggieWall(filling, color) {
-  return `<svg viewBox="0 0 64 64" aria-hidden="true">
-    <rect x="3" y="14" width="58" height="46" rx="10" fill="${color}" stroke="#7A4E2C" stroke-width="3.5"/>
-    <rect x="3" y="14" width="58" height="46" rx="10" fill="#fff" opacity=".28"/>
-    <path d="M10 30 H54 M10 44 H54" stroke="#7A4E2C" stroke-width="3" opacity=".35" stroke-linecap="round"/>
-    <g transform="translate(12 2) scale(.62)">${veggie(filling, 64).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g></svg>`;
-}
-
 // The maze tray's Eraser: an empty square of the theme's own floor with a
 // dashed edge and a red X, so it matches the Wall and Theme tiles beside it.
 export function eraserIcon(theme = 'hay') {
@@ -1004,10 +988,6 @@ export function eraserIcon(theme = 'hay') {
     <rect x="1.5" y="1.5" width="45" height="45" rx="9" fill="none" stroke="${edge}" stroke-width="3" stroke-dasharray="6 5"/>
     <path d="M15 15 L33 33 M33 15 L15 33" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".85"/>
     <path d="M15 15 L33 33 M33 15 L15 33" stroke="#E0564F" stroke-width="5.5" stroke-linecap="round"/></svg>`;
-}
-
-export function hayWallIcon() {
-  return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="10" width="56" height="46" rx="11" fill="#E6B566" stroke="#9C6A3A" stroke-width="3.5"/><path d="M12 22 H52 M12 33 H52 M12 44 H52" stroke="#C98F4B" stroke-width="3.5" stroke-linecap="round"/><path d="M20 12 V54 M44 12 V54" stroke="#9C6A3A" stroke-width="3" opacity=".6"/></svg>`;
 }
 
 // Maze treasure, drawn in a 64 box: a little pile of coins, a basket with a
@@ -1040,7 +1020,6 @@ export function upgradeIcon(kind) {
     sun: `<circle cx="32" cy="32" r="14" fill="#FFD34D"/><g stroke="#FFB02E" stroke-width="4" stroke-linecap="round"><path d="M32 6 V14 M32 50 V58 M6 32 H14 M50 32 H58 M13 13 L19 19 M45 45 L51 51 M13 51 L19 45 M45 19 L51 13"/></g>`,
     robot: `<rect x="14" y="18" width="36" height="30" rx="8" fill="#9BB7D4"/><circle cx="25" cy="32" r="4" fill="#2A1A14"/><circle cx="39" cy="32" r="4" fill="#2A1A14"/><path d="M26 42 H38" stroke="#2A1A14" stroke-width="3" stroke-linecap="round"/><path d="M32 18 V8" stroke="#9BB7D4" stroke-width="4"/><circle cx="32" cy="7" r="4" fill="#FF5C7A"/>`,
     bowl: `<path d="M8 28 H56 Q54 54 32 54 Q10 54 8 28Z" fill="#7AA6FF"/><ellipse cx="32" cy="28" rx="24" ry="6" fill="#A9C4FF"/><ellipse cx="22" cy="27" rx="5" ry="3" fill="#FF9A3C"/><ellipse cx="33" cy="25" rx="5" ry="3" fill="#7DC768"/><ellipse cx="43" cy="28" rx="5" ry="3" fill="#E8C27A"/><ellipse cx="30" cy="30" rx="4" ry="2.5" fill="#FF5C7A"/>`,
-    hat: `<path d="M12 44 Q32 4 52 40 Q36 36 22 42 Q16 46 12 44Z" fill="#FF5C7A"/><circle cx="22" cy="36" r="3" fill="#FFF3B0"/><circle cx="34" cy="26" r="3" fill="#FFF3B0"/><circle cx="44" cy="32" r="3" fill="#FFF3B0"/><path d="M10 46 Q32 38 54 44" stroke="#4CAF50" stroke-width="5" fill="none" stroke-linecap="round"/>`,
     pen: `<rect x="6" y="26" width="52" height="26" rx="6" fill="#D9B27A" stroke="#8A5634" stroke-width="3"/><path d="M14 26 V18 M26 26 V18 M38 26 V18 M50 26 V18" stroke="#8A5634" stroke-width="3" stroke-linecap="round"/><path d="M8 20 H56" stroke="#8A5634" stroke-width="3" stroke-linecap="round"/><ellipse cx="32" cy="42" rx="12" ry="7" fill="#E9A15B"/>`,
     piggy: `<ellipse cx="30" cy="38" rx="22" ry="14" fill="#E9A15B"/><circle cx="46" cy="34" r="12" fill="#E9A15B"/><ellipse cx="42" cy="24" rx="5" ry="3.5" transform="rotate(-25 42 24)" fill="#C9773E"/><circle cx="50" cy="32" r="2.2" fill="#2A1A14"/><circle cx="58" cy="36" r="1.6" fill="#E86A86"/><path d="M22 26 Q30 24 36 28 Q38 40 34 50 Q26 52 20 50 Q18 38 22 26Z" fill="#FFF7EC"/>`,
   }[kind];
@@ -1048,12 +1027,6 @@ export function upgradeIcon(kind) {
 }
 
 // ---- Scenes ----
-
-// Place a side-view piggy inside another SVG at (x, y) with the given size.
-export function piggyAt(x, y, size, opts = {}) {
-  const svg = piggySide(opts).replace('<svg viewBox="0 0 200 200"', `<svg viewBox="0 0 200 200" width="200" height="200"`);
-  return `<g transform="translate(${x} ${y}) scale(${size / 200})">${svg}</g>`;
-}
 
 function tuft(x, y, s = 1, c = '#5FAE4E') {
   return `<path d="M${x} ${y} q-2 -10 -8 -14 M${x} ${y} q0 -12 2 -18 M${x} ${y} q3 -10 9 -13" transform="translate(${x} ${y}) scale(${s}) translate(${-x} ${-y})" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round"/>`;

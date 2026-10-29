@@ -5,7 +5,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 145;
+const VERSION = 146;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -162,7 +162,7 @@ const TIPS = [
   { id: 'tools', tab: 'maze', look: true, text: () => 'Tap squares to build hay walls. Eraser takes them away!', when: () => !run, target: '.mtile[data-tile]' },
   funTip('zoom', 'A zoom pad! Your piggy zooms fast after this.'),
   funTip('tunnel', 'Tunnels! Your piggy goes in one and pops out the other.'),
-  funTip('bounce', 'A bridge! Your piggy can hop over the wall here.'),
+  funTip('bounce', 'A trampoline! Your piggy boings over the wall here.'),
   { id: 'carrot', tab: 'maze', look: true, text: () => 'Drop a carrot by the treasure! Your piggy runs to it.',
     when: () => run && !run.done && (state.maze.treasure || []).length > 0, target: '#mtreasure > *' },
   { id: 'theme', tab: 'maze', on: 'theme', text: () => 'A new maze look! Tap Theme to pick it.',
@@ -181,7 +181,7 @@ function tipDone() {
   if (!tipNow) return;
   state.tips = { ...(state.tips || {}), [tipNow.id]: true };
   tipNow = null; tutWait = Date.now() + 600;
-  sfx.pop(); save(state); render();
+  sfx.pop(); persist(); render();
 }
 
 // The tip to show now, if any: the first unseen one that fits this tab.
@@ -206,13 +206,13 @@ function tut(action) {
   state.tutorial.step += 1;
   tutWait = Date.now() + 1400;
   const next = TUTORIAL[state.tutorial.step];
-  if (!next) { state.tutorial = { done: true }; save(state); sfx.fanfare(); popup('Piggy pro!', `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div><p>You know everything ${esc(current().name)} needs. Have fun!</p>`, 'Yay!'); return; }
+  if (!next) { state.tutorial = { done: true }; persist(); sfx.fanfare(); popup('Piggy pro!', `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div><p>You know everything ${esc(current().name)} needs. Have fun!</p>`, 'Yay!'); return; }
   if (next.on === 'home') {
     state.coins += TUT_REWARD;
     sfx.fanfare();
     popup('You did it!', `<div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${TUT_REWARD}</span></div><p>Spend them in the Shop!</p>`, 'Yay!');
   } else sfx.ding();
-  save(state);
+  persist();
 }
 
 let arrowTarget = ''; // selector the bouncing arrow points at
@@ -232,7 +232,7 @@ function updateCoach() {
   // A short pause after each step so the dumpling can land, the poop can
   // pop, and so on, before the spotlight moves on.
   if (Date.now() < tutWait) { arrowTarget = ''; positionArrow(); setTimeout(updateCoach, tutWait - Date.now() + 20); return; }
-  if (tutEntered !== i) { tutEntered = i; if (step.enter) { step.enter(); save(state); if (tab === 'steamer') updateSteamer(); } }
+  if (tutEntered !== i) { tutEntered = i; if (step.enter) { step.enter(); persist(); if (tab === 'steamer') updateSteamer(); } }
   const n = esc(current().name);
   if ($('#coachpig').dataset.id !== String(current().id)) { $('#coachpig').dataset.id = String(current().id); $('#coachpig').innerHTML = Art.piggySide({ coat: current().coat }); }
   const away = step.tab && tab !== step.tab;
@@ -1011,8 +1011,6 @@ function actTick(pig, w, d, now) {
     return;
   }
   if (act.kind === 'ball') {
-    // Each push sends the ball rolling over to the other piggy, four times,
-    // then the ball rolls back to the middle.
     const leftD = act.left === pig.id ? da : db, rightD = act.left === pig.id ? db : da;
     // The ball rolls over to the left piggy, then each push sends it to the
     // other one, four times, and it rolls back to the middle.
@@ -1050,7 +1048,6 @@ function playAt(pig, id, d) {
   if (G.playToy(state, pig.id, id).gone) toyGone(id);
   if (id === 'slide' && d && w) return rideSlide(pig, w, d);
   if (d) {
-    const w = wander.get(pig.id);
     if (w) { w.face = toySpot(id).x > pig.x ? 1 : -1; placePig(d, pig, w); }
     d.classList.remove('hop'); void d.offsetWidth; d.classList.add('hop');
     setTimeout(() => d.classList.remove('hop'), 600);
@@ -1241,7 +1238,7 @@ function onScoop(id, btn) {
   if (c === 'rainbow' || c === 'gold' || c === 'crystal' || (sp && (r.isNew || (sp.page !== 'shapes' && sp.page !== 'patterns')))) {
     sfx.fanfare();
     const title = !sp ? (c === 'gold' ? 'A golden poop!' : c === 'crystal' ? 'A crystal poop!' : 'A rainbow poop!')
-      : `${/^[aeiou]/i.test(sp.name) ? 'An' : 'A'} ${sp.name.toLowerCase()} poop!`;
+      : `${/^[aeio]/i.test(sp.name) ? 'An' : 'A'} ${sp.name.toLowerCase()} poop!`;
     popup(sp && r.isNew ? 'New poop!' : title, `<div class="pig-card poop-card">${Art.poop(r.poop)}</div><p>${sp && r.isNew ? `<b>${G.poopName(r.poop)}</b> goes in the Poop Book! ` : 'Wow! '}That's worth <b>${r.coins} coins</b> and <b>${r.compost} compost</b>.</p>`, 'Wow!');
   } else if (c !== 'brown' || sp) toast(`${G.poopName(r.poop)} poop! +${r.coins} coins`);
   tut('scoop');
@@ -1508,7 +1505,7 @@ function updateMaze() {
   const fsig = mazeTheme() + (m.fun || []).map(f => `${f.x},${f.y},${f.kind}`).join('|');
   if (fun.dataset.sig !== fsig) {
     fun.dataset.sig = fsig;
-    fun.innerHTML = (m.fun || []).map(f => `<g class="mfun-tile" data-kind="${f.kind}">${Art.funTile(mazeTheme(), f.kind === 'bounce' ? 'bridge' : f.kind, f.x * CELL, f.y * CELL)}</g>`).join('');
+    fun.innerHTML = (m.fun || []).map(f => `<g class="mfun-tile" data-kind="${f.kind}">${Art.funTile(mazeTheme(), f.kind, f.x * CELL, f.y * CELL)}</g>`).join('');
   }
   const tre = $('#mtreasure');
   const tsig = (m.treasure || []).map(t => `${t.x},${t.y},${t.kind},${t.filling || ''}`).join('|');
@@ -1525,7 +1522,6 @@ function updateMaze() {
   placeMazePig(run ? run.pos : M.START, run ? run.lastDir : null);
   const ok = M.solvable(m);
   const hint = $('#mhint'), btns = $('#mbtns');
-  const name = esc(current().name);
   const bsig = run ? 'run' : ok ? 'ok' : 'blocked';
   const loot = (m.treasure || []).length;
   if (run) hint.textContent = run.done ? 'Yay!' : loot ? 'Tap by the treasure to drop a carrot!' : `Tap squares to drop carrots. Tap ${current().name} to cheer!`;
@@ -1551,8 +1547,7 @@ function btn(label, onClick, cls = '') {
   return b;
 }
 
-// The tile tray: Wall (in the maze's style), Eraser, then the fun tiles,
-// which show as "?" until they're unlocked. The Theme tile picks the look.
+// The tile tray: Wall (in the maze's style) and Eraser. The Theme tile picks the look.
 let mazeTile = 1;
 // Maze themes change the board, floor, walls and bar. Hay barn is free; four
 // are sold in the Shop's Mazes tab and three are earned by playing.
@@ -1614,14 +1609,13 @@ function updateTray() {
     `<button class="mtile mtheme"><i>${themePreview(style)}</i><span>Theme</span></button>`;
   $('.mtheme', tray).addEventListener('click', () => { tut('theme'); pickMazeStyle(); });
   tray.querySelectorAll('.mtile[data-tile]').forEach(b => b.addEventListener('click', () => {
-    if (b.classList.contains('locked')) { sfx.nope(); toast('Find more recipes to unlock!'); return; }
     mazeTile = +b.dataset.tile;
     sfx.pop(); render();
   }));
 }
 
 // Fun tiles unlock as she finds recipes: zoom pads from the start, tunnels at
-// 10 recipes, trampolines at 20.
+// 10 recipes, trampolines ('bounce') at 20.
 function funKinds() {
   const n = (state.discovered || []).length;
   return ['zoom', ...(n >= 10 ? ['tunnel'] : []), ...(n >= 20 ? ['bounce'] : [])];
@@ -2111,7 +2105,7 @@ const COLLECTIONS = [
       id, name: h.name, art: Art.hatIcon(id), own: !!state.hats[id],
       cost: h.cost, goal: h.goal, have: h.goal && Math.min(h.have(state), h.need), need: h.need,
       where: 'Hats tab in the Shop',
-      note: () => { const on = state.piggies.filter(p => p.hat === id).map(p => p.name); return on.length ? `Worn by <b>${on.join(', ')}</b>` : ''; } })) },
+      note: () => { const on = state.piggies.filter(p => p.hat === id).map(p => esc(p.name)); return on.length ? `Worn by <b>${on.join(', ')}</b>` : ''; } })) },
   { id: 'toys', label: 'Toys', items: () => Object.entries(G.TOYS).map(([id, t]) => ({
       id, name: t.name, art: Art.toyArt(id), own: !!(state.toys[id] || (state.gotToys || {})[id]),
       cost: t.cost, where: 'Toys tab in the Shop',

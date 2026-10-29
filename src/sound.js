@@ -70,8 +70,8 @@ export const sfx = {
 const BPM = 76;
 const EIGHTH = 30 / BPM;
 const VOLUME = 0.05;
-// I-vi-IV-V in C, two bars each chord over 16 bars; the second half moves to
-// F and back. Each chord: [bass, pad notes...] as MIDI numbers.
+// I-vi-IV-V in C, two bars each chord, played twice over 16 bars with a new
+// melody the second time. Each chord: [bass, pad notes...] as MIDI numbers.
 const CHORDS = [
   [48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 59, 62, 67],
   [48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 59, 62, 67],

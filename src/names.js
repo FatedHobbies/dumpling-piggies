@@ -3,7 +3,7 @@
 // player-typed names kind. Everything runs on the device; nothing is sent anywhere.
 
 // Silly, kid-friendly names. One short word each, so a name always fits in
-// the top bar beside the Poop Book and music buttons.
+// the top bar beside the book buttons.
 export const NAMES = [
   'Bao', 'Squeak', 'Princess', 'Wheeks', 'Fluff', 'Mochi', 'Noodle', 'Gyoza', 'Wonton', 'Dimsum',
   'Biscuit', 'Pudding', 'Nugget', 'Peanut', 'Jelly', 'Sprinkle', 'Pickle', 'Mallow', 'Tofu', 'Bun',

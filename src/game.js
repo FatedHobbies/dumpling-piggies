@@ -252,10 +252,10 @@ export function wearHat(state, piggyId, id) {
 // (owned but put away); only TOY_LIMIT fit in the pen at once. Chews get
 // nibbled away (`state.toyWear`, 0 to 100) and must be bought again.
 export const TOYS = {
-  ball:   { name: 'Bouncy ball',  desc: 'Piggies love to nose it around.',  cost: 90,  x: 0.50, y: 0.58 },
+  ball:   { name: 'Bouncy ball',  desc: 'Piggies love to nose it around.',  cost: 90 },
   chew:   { name: 'Chew sticks',  desc: 'A crunchy bundle to nibble on. Gets eaten up!', cost: 75, chew: true },
   carrot: { name: 'Carrot chew',  desc: 'A wooden carrot to gnaw. Gets eaten up!',      cost: 60, chew: true },
-  tunnel: { name: 'Fuzzy tunnel', desc: 'Run in one end and out the other!', cost: 240,  x: 0.76, y: 0.86 },
+  tunnel: { name: 'Fuzzy tunnel', desc: 'Run in one end and out the other!', cost: 240 },
   hut:    { name: 'Dumpling hut', desc: 'A cozy hidey house shaped like a dumpling.', cost: 360 },
   slide:  { name: 'Tiny slide',   desc: 'Wheee! Down the slide.',            cost: 480 },
 };
@@ -333,7 +333,6 @@ export function playToy(state, piggyId, id) {
 export const RENAME_COST = 30;
 export { NAME_MAX };
 export const ADOPT_COST = [0, 150, 400, 800, 1400, 2000];
-export const MAX_PIGGIES = 6;
 export const PEN_MAX = 4;          // more than this and the pen gets too busy to follow
 const HUGE_PEN_COST = 800;         // the old Huge pen upgrade, refunded in version 94
 
@@ -420,8 +419,20 @@ export function newState(now = Date.now()) {
   return s;
 }
 
-// Older saves had one `piggy`; lift it into the `piggies` list.
+// Brings saves from older versions up to date.
 export function migrate(state) {
+  // Version 1 saves had one `piggy`; lift it into the `piggies` list first so
+  // every step below sees the list.
+  if (!(state.version >= 2)) {
+    const old = state.piggy || {};
+    state.piggies = [{
+      id: state.nextId++, name: old.name || 'Bao', coat: { breed: 'american', main: 'ginger', patch: 'white' },
+      hunger: old.hunger ?? 70, fun: old.fun ?? 70, effect: old.effect || null, effectUntil: old.effectUntil || 0, hat: null, x: 0.5, y: 0.5,
+    }];
+    delete state.piggy;
+    state.offer = null;
+    state.version = 2;
+  }
   if (!state.tutorial) state.tutorial = { done: true };   // saves from before the tutorial existed
   // Saves from before tips: skip the tips for things she has clearly done already.
   if (!state.tips) {
@@ -462,6 +473,7 @@ export function migrate(state) {
     }
   }
   for (const p of [...(state.piggies || []), ...(state.offer || [])]) if (SHORT_NAMES[p.name]) p.name = SHORT_NAMES[p.name];
+  // Special poop kinds that were taken out of the game become plain swirls.
   for (const poop of state.poops || []) if (poop.shape === 'sp' && !parseSpecial(poop.color).def) Object.assign(poop, { shape: 'swirl', color: 'brown' });
   if (!state.bookPage) {                                   // saves from before the book could be refilled
     state.bookPage = {};
@@ -492,15 +504,6 @@ export function migrate(state) {
     for (const k of state.discovered || []) state.recipeBook[k] = 1;
     state.dbookPrizes = {};
   }
-  if (state.version >= 2) return state;
-  const old = state.piggy || {};
-  state.piggies = [{
-    id: state.nextId++, name: old.name || 'Bao', coat: { breed: 'american', main: 'ginger', patch: 'white' },
-    hunger: old.hunger ?? 70, fun: old.fun ?? 70, effect: old.effect || null, effectUntil: old.effectUntil || 0, x: 0.5, y: 0.5,
-  }];
-  delete state.piggy;
-  state.offer = null;
-  state.version = 2;
   return state;
 }
 
@@ -646,7 +649,9 @@ export const POOP_COLORS = {
   gred: 'Glitter red', ggreen: 'Glitter green', gpink: 'Glitter pink', silver: 'Silver', aqua: 'Aqua', purple: 'Purple',
   rainbow: 'Rainbow', gold: 'Golden', crystal: 'Crystal',
 };
-export const GLITTER = ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple', 'gold', 'crystal'];
+// Glitter poops (1 in 12); GLITTER adds the golden and crystal ones, which sparkle too.
+export const GLITTER_COLORS = ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple'];
+export const GLITTER = [...GLITTER_COLORS, 'gold', 'crystal'];
 export const PLAIN_COLORS = ['white', 'pink', 'red', 'blue', 'green', 'orange', 'lavender'];
 // Odds per poop, shown in the Poop Book.
 export const POOP_ODDS = [
@@ -656,24 +661,24 @@ export const POOP_ODDS = [
 // The Poop Book groups kinds by how rare they are.
 export const POOP_TIERS = [
   { label: 'Everyday', odds: 'common', colors: ['brown', ...PLAIN_COLORS] },
-  { label: 'Glitter', odds: '1 in 12', colors: ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple'] },
+  { label: 'Glitter', odds: '1 in 12', colors: GLITTER_COLORS },
   { label: 'Super rare', odds: 'rainbow 1 in 33 · golden 1 in 100 · crystal 1 in 250', colors: ['rainbow', 'gold', 'crystal'] },
 ];
 export const POOP_VALUE = { brown: { coins: 1, compost: 1 }, rainbow: { coins: 5, compost: 3 }, gold: { coins: 25, compost: 5 }, crystal: { coins: 50, compost: 8 } };
 for (const c of PLAIN_COLORS) POOP_VALUE[c] = { coins: 1, compost: 1 };
-for (const c of ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple']) POOP_VALUE[c] = { coins: 3, compost: 2 };
+for (const c of GLITTER_COLORS) POOP_VALUE[c] = { coins: 3, compost: 2 };
 
 // Special poops each have their own drawing. They are stored as
 // { shape: 'sp', color: id }, so their book key is 'sp-<id>'.
 // `odds` is per poop for the random ones; `how` explains the event ones.
 export const SPECIAL_POOPS = {
-  // Funny shapes, 1 in 6 altogether.
+  // Funny shapes, 1 in 25 altogether.
   log:       { name: 'Log',        page: 'shapes',    coins: 2 },
   pellets:   { name: 'Pellet pile', page: 'shapes',   coins: 2 },
   donut:     { name: 'Donut',      page: 'shapes',    coins: 2 },
   tower:     { name: 'Tower',      page: 'shapes',    coins: 2 },
   tiny:      { name: 'Teeny',      page: 'shapes',    coins: 2 },
-  // Patterns, 1 in 10 altogether.
+  // Patterns, 1 in 50 altogether.
   polka:     { name: 'Polka dot',  page: 'patterns',  coins: 3 },
   candy:     { name: 'Candy stripe', page: 'patterns', coins: 3 },
   sprinkles: { name: 'Sprinkles',  page: 'patterns',  coins: 3 },
@@ -681,7 +686,7 @@ export const SPECIAL_POOPS = {
   checkers:  { name: 'Checkers',   page: 'patterns',  coins: 3 },
   zigzag:    { name: 'Zigzag',     page: 'patterns',  coins: 3 },
   cow:       { name: 'Cow spots',  page: 'patterns',  coins: 3 },
-  // Silly ones, 1 in 12 altogether.
+  // Silly ones, 1 in 80 altogether.
   dumpling:  { name: 'Dumpling',   page: 'silly',     coins: 5 },
   carrot:    { name: 'Carrot',     page: 'silly',     coins: 5 },
   bubblegum: { name: 'Bubblegum',  page: 'silly',     coins: 5 },
@@ -703,8 +708,6 @@ export const SPECIAL_POOPS = {
   robo:      { name: 'Robo',       page: 'legend',    coins: 15, odds: 'Robo-scooper finds it' },
 };
 const specialsOn = (page) => Object.keys(SPECIAL_POOPS).filter(id => SPECIAL_POOPS[id].page === page);
-// Kinds Ryan took out of the game. Any still lying in a pen become plain swirls.
-export const RETIRED_POOPS = ['heart', 'star', 'cube', 'pancake', 'squiggle', 'ghost', 'snowman', 'icecream'];
 // Variations: funny shapes come in every everyday color, and every special
 // except the legendary ones can come out sparkly. A variation is written into
 // the color: 'log', 'log.pink', 'log.pink.g' (sparkly pink log), 'polka.g'.
@@ -784,16 +787,14 @@ export function poopKind(state, rng = Math.random) {
   const by = pooper ? pooper.id : undefined;   // the Pen drops it from this piggy
   if (special) return { shape: 'sp', color: special, by };
   const shape = rng() < 0.4 ? 'swirl' : 'beans';
-  let color = 'brown';
   // Recipes color the poop after one of their veggies; specials give a surprise color.
-  const food = (pooper && pooper.lastFood ? pooper.lastFood : '').replace(/^shiny:/, '');
-  color = foodColor(food, rng) || color;
+  let color = foodColor(pooper && pooper.lastFood ? pooper.lastFood : '', rng) || 'brown';
   const r = rng();
   // Rare ones: crystal 1 in 250, golden 1 in 100, rainbow 1 in 33, glitter 1 in 12.
   if (r < 0.004) color = 'crystal';
   else if (r < 0.014) color = 'gold';
   else if (r < 0.044) color = 'rainbow';
-  else if (r < 0.127) color = ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple'][Math.floor(rng() * 6)];
+  else if (r < 0.127) color = GLITTER_COLORS[Math.floor(rng() * GLITTER_COLORS.length)];
   return { shape, color, by };
 }
 
@@ -845,7 +846,7 @@ export const ACHIEVEMENTS = [
   { id: 'swirly',   name: 'Swirly spotter',   desc: 'Collect a swirly poop.',             coins: 10,  test: s => Object.keys(s.poopBook || {}).some(k => k.startsWith('swirl')) },
   { id: 'rainbow',  name: 'Rainbow hunter',   desc: 'Find a rainbow poop.',               coins: 25,  test: s => poopKinds().some(k => k.color === 'rainbow' && (s.poopBook || {})[k.key]) },
   { id: 'gold',     name: 'Golden touch',     desc: 'Find a golden poop.',                coins: 50,  test: s => poopKinds().some(k => k.color === 'gold' && (s.poopBook || {})[k.key]) },
-  { id: 'glitter',  name: 'Glitter getter',   desc: 'Find a glitter poop.',               coins: 15,  test: s => poopKinds().some(k => ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple'].includes(k.color) && (s.poopBook || {})[k.key]) },
+  { id: 'glitter',  name: 'Glitter getter',   desc: 'Find a glitter poop.',               coins: 15,  test: s => poopKinds().some(k => GLITTER_COLORS.includes(k.color) && (s.poopBook || {})[k.key]) },
   { id: 'crystal',  name: 'Crystal gazer',    desc: 'Find a crystal poop.',               coins: 75,  test: s => poopKinds().some(k => k.color === 'crystal' && (s.poopBook || {})[k.key]) },
   { id: 'five',     name: 'Collector',        desc: 'Collect 5 different kinds of poop.', coins: 20,  test: s => poopsFound(s) >= 5 },
   { id: 'all',      name: 'Poop professor',   desc: 'Fill the whole Poop Book.',          coins: 100, test: s => poopsFound(s) >= bookSlots().length },
