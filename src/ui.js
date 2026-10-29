@@ -959,9 +959,8 @@ function mazeView() {
   const th = Art.MAZE_THEMES[mazeTheme()];
   const v = el(`<section class="maze">
     <div class="maze-bar panel">
-      <div class="maze-top"><p class="maze-hint" id="mhint"></p><button class="btn btn-grey mstyle" id="mstyle">Theme</button></div>
       <div class="maze-btns" id="mbtns"></div>
-      <div class="maze-tray" id="mtray"></div>
+      <div class="maze-top"><div class="maze-tray" id="mtray"></div><p class="maze-hint" id="mhint"></p></div>
     </div>
     <div class="maze-wrap">
       <svg id="mgrid" viewBox="-10 -10 ${w + 20} ${h + 20}" class="maze-svg">
@@ -1002,7 +1001,6 @@ function mazeView() {
   $('#mfinish', v).innerHTML = `<g transform="translate(-20 -20) scale(.62)">${Art.dumpling('cabbage+carrot', 64)}</g>`;
   $('#mrot', v).innerHTML = Art.piggyTop({ hat: current().hat, coat: current().coat });
   $('#mpig', v).addEventListener('click', onCheer);
-  $('#mstyle', v).addEventListener('click', pickMazeStyle);
   mazeAngle = 0;
   return v;
 }
@@ -1073,7 +1071,7 @@ function btn(label, onClick, cls = '') {
 }
 
 // The tile tray: Wall (in the maze's style), Eraser, then the fun tiles,
-// which show as "?" until they're unlocked. The Style button picks the look.
+// which show as "?" until they're unlocked. The Theme tile picks the look.
 let mazeTile = 1;
 // Maze themes change the board, floor, walls and bar. Hay barn is free; four
 // are sold in the Shop's Mazes tab and three are earned by playing.
@@ -1129,11 +1127,12 @@ function updateTray() {
   if (tray.dataset.sig === sig) return;
   tray.dataset.sig = sig;
   tray.hidden = !!run;
-  $('#mstyle').hidden = !!run;
   if (run) return;
   const tile = (id, icon, label) => `<button class="mtile ${id === mazeTile ? 'on' : ''}" data-tile="${id}"><i>${icon}</i><span>${label}</span></button>`;
-  tray.innerHTML = tile(1, wallIcon(style), 'Wall') + tile(0, Art.eraserIcon(), 'Eraser');
-  tray.querySelectorAll('.mtile').forEach(b => b.addEventListener('click', () => {
+  tray.innerHTML = tile(1, wallIcon(style), 'Wall') + tile(0, Art.eraserIcon(), 'Eraser') +
+    `<button class="mtile mtheme"><i>${themePreview(style)}</i><span>Theme</span></button>`;
+  $('.mtheme', tray).addEventListener('click', pickMazeStyle);
+  tray.querySelectorAll('.mtile[data-tile]').forEach(b => b.addEventListener('click', () => {
     if (b.classList.contains('locked')) { sfx.nope(); toast('Find more recipes to unlock!'); return; }
     mazeTile = +b.dataset.tile;
     sfx.pop(); render();
