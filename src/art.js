@@ -775,20 +775,18 @@ export const MAZE_THEMES = {
   },
   sea: {
     side: '#D98A7A', name: 'Seashell beach', board: '#3FA7D6', floor: '#F3E2B3', seen: '#E8D196', start: '#9BE7D8', startEdge: '#3BB5A0', post: '#FF9A8A', postEdge: '#D2604F',
-    // A giant scallop shell standing up in the sand, filling the block.
+    // A big round clam sitting in the sand, filling the block.
     cube: true,
     wall: (px, py, i) => {
-      const [c, d] = [['#FFB8A8', '#E07A6A'], ['#FFD39A', '#D9944A'], ['#F8C6E6', '#C979AE']][i % 3];
-      const cx = px + 24, by = py + 46;
-      const lobes = 6, top = py + 5, l = px + 2, r = px + 46, w = (r - l) / lobes;
-      let edge = `M${cx} ${by} L${l} ${py + 22}`;
-      for (let k = 0; k < lobes; k++) edge += ` Q${l + w * k} ${top + (k === 0 || k === lobes - 1 ? 8 : 0)} ${l + w * (k + .5)} ${top + (k === 0 || k === lobes - 1 ? 6 : -2)} Q${l + w * (k + 1)} ${top + (k === 0 || k === lobes - 1 ? 8 : 0)} ${l + w * (k + 1)} ${k === lobes - 1 ? py + 22 : top + 6}`;
-      edge += 'Z';
-      const ribs = Array.from({ length: lobes - 1 }, (_, k) => `M${cx} ${by - 4} L${l + w * (k + 1)} ${top + 7}`).join(' ');
-      return `<path d="${edge}" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>
-        <path d="${ribs}" stroke="${d}" stroke-width="2" opacity=".7" stroke-linecap="round"/>
-        <path d="M${cx - 8} ${by - 2} L${cx} ${by - 9} L${cx + 8} ${by - 2}Z" fill="${d}"/>
-        <path d="M${l + 7} ${py + 18} Q${l + 10} ${top + 6} ${l + 16} ${top + 4}" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".7"/>`;
+      const [c, d, lt] = [['#FFB8A8', '#D9705F', '#FFD9CF'], ['#FFD39A', '#CF8A3C', '#FFE9C7'], ['#F8C6E6', '#BE6CA4', '#FDE3F3']][i % 3];
+      const cx = px + 24, lip = py + 30, l = px + 3, r = px + 45, top = py + 6, bot = py + 47;
+      const ridges = [-14, -7, 0, 7, 14].map(o => `M${cx + o * .5} ${lip - 1} Q${cx + o * 1.25} ${top + 10} ${cx + o * 1.05} ${top + 4}`).join(' ');
+      return `<path d="M${l} ${lip} Q${l} ${bot} ${cx} ${bot} Q${r} ${bot} ${r} ${lip}Z" fill="${d}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M${l + 6} ${lip + 6} Q${cx} ${lip + 13} ${r - 6} ${lip + 6}" stroke="${c}" stroke-width="2" fill="none" opacity=".7"/>
+        <path d="M${l} ${lip} Q${l} ${top} ${cx} ${top} Q${r} ${top} ${r} ${lip} Q${cx} ${lip + 5} ${l} ${lip}Z" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="${ridges}" stroke="${d}" stroke-width="1.8" fill="none" opacity=".6" stroke-linecap="round"/>
+        <path d="M${l + 6} ${lip - 6} Q${l + 6} ${top + 6} ${cx - 6} ${top + 3}" stroke="${lt}" stroke-width="3" fill="none" stroke-linecap="round"/>
+        ${i % 4 === 0 ? `<circle cx="${cx + 9}" cy="${lip + 2}" r="3.2" fill="#FFFDF5" stroke="#E7DCC8" stroke-width="1"/>` : ''}`;
     },
     deco: (px, py, i) => `<circle cx="${px + 10 + jit(i, 1) * 28}" cy="${py + 10 + jit(i, 2) * 28}" r="2.6" fill="none" stroke="#fff" stroke-width="1.2" opacity=".8"/><circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1.4" fill="none" stroke="#fff" stroke-width="1" opacity=".8"/>`,
   },
