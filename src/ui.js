@@ -2151,7 +2151,6 @@ function collectionBook() {
   }).join('');
   popup('Collection Book', `<div class="book-tabs ctabs">${tabs.map(({ c, items }) => `<button class="${c.id === cbookTab ? 'on' : ''}" data-pane="c-${c.id}">${c.label} <small>${items.filter(i => i.own).length} / ${items.length}</small></button>`).join('')}</div>
     <div class="book-prize"><span class="next-prize">Collected <b>${got}</b> / ${total}</span></div>
-    <p class="book-hint">Buy them in the Shop or win the gold ones!</p>
     <div class="pages">${panes}</div>`, 'Close');
   sfx.pop();
 }
