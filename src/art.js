@@ -686,6 +686,24 @@ export function coinIcon() {
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="#F5B32B"/><circle cx="32" cy="32" r="22" fill="#FFD34D" stroke="#E0941C" stroke-width="3"/><path d="M32 16 l5 10 11 1.5 -8 7.5 2 11 -10 -5.5 -10 5.5 2 -11 -8 -7.5 11 -1.5z" fill="#FFF3B0" stroke="#E0941C" stroke-width="2" stroke-linejoin="round"/></svg>`;
 }
 
+// A veggie wall for the maze: a chunky crate in the veggie's color with the
+// veggie sitting on top, drawn in a 64 box.
+export function veggieWall(filling, color) {
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">
+    <rect x="3" y="14" width="58" height="46" rx="10" fill="${color}" stroke="#7A4E2C" stroke-width="3.5"/>
+    <rect x="3" y="14" width="58" height="46" rx="10" fill="#fff" opacity=".28"/>
+    <path d="M10 30 H54 M10 44 H54" stroke="#7A4E2C" stroke-width="3" opacity=".35" stroke-linecap="round"/>
+    <g transform="translate(12 2) scale(.62)">${veggie(filling, 64).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g></svg>`;
+}
+
+export function eraserIcon() {
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="10" width="48" height="44" rx="10" fill="#D9F0B8" stroke="#8ACB6A" stroke-width="3" stroke-dasharray="6 5"/><path d="M22 22 L42 42 M42 22 L22 42" stroke="#E0564F" stroke-width="6" stroke-linecap="round"/></svg>`;
+}
+
+export function hayWallIcon() {
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="10" width="56" height="46" rx="11" fill="#E6B566" stroke="#9C6A3A" stroke-width="3.5"/><path d="M12 22 H52 M12 33 H52 M12 44 H52" stroke="#C98F4B" stroke-width="3.5" stroke-linecap="round"/><path d="M20 12 V54 M44 12 V54" stroke="#9C6A3A" stroke-width="3" opacity=".6"/></svg>`;
+}
+
 // Maze treasure, drawn in a 64 box: a little pile of coins, a basket with a
 // veggie peeking out, or a pink mystery box with a bow.
 export function treasure(t) {

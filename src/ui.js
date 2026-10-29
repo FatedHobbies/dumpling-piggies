@@ -834,6 +834,7 @@ function mazeView() {
     <div class="maze-bar panel">
       <p class="maze-hint" id="mhint"></p>
       <div class="maze-btns" id="mbtns"></div>
+      <div class="maze-tray" id="mtray"></div>
     </div>
     <div class="maze-wrap">
       <svg id="mgrid" viewBox="-10 -10 ${w + 20} ${h + 20}" class="maze-svg">
@@ -857,6 +858,7 @@ function mazeView() {
       <g class="bale"><rect x="${px + 3}" y="${py + 6}" width="${CELL - 6}" height="${CELL - 10}" rx="9" fill="#E6B566" stroke="#9C6A3A" stroke-width="3"/>
         <path d="M${px + 10} ${py + 14} h${CELL - 20} M${px + 10} ${py + 24} h${CELL - 20} M${px + 10} ${py + 34} h${CELL - 20}" stroke="#C98F4B" stroke-width="3" stroke-linecap="round"/>
         <path d="M${px + 16} ${py + 8} v${CELL - 14} M${px + CELL - 16} ${py + 8} v${CELL - 14}" stroke="#9C6A3A" stroke-width="2.5" opacity=".6"/></g>
+      <g class="vwall" transform="translate(${px + 2} ${py + 2})"></g>
     </g>`;
   }
   cells.innerHTML = html;
@@ -875,9 +877,17 @@ function updateMaze() {
   const m = state.maze;
   const grid = $('#mgrid');
   grid.classList.toggle('running', !!run);
+  $('.maze-bar').classList.toggle('running', !!run);
   for (const r of document.querySelectorAll('.mcell')) {
     const x = +r.dataset.x, y = +r.dataset.y;
-    r.classList.toggle('wall', M.isWall(m, x, y));
+    const c = m.cells[M.idx(x, y)];
+    r.classList.toggle('wall', c === 1);
+    const vw = r.querySelector('.vwall'), vsig = typeof c === 'string' ? c : '';
+    if (vw.dataset.sig !== vsig) {
+      vw.dataset.sig = vsig;
+      const f = vsig.slice(2);
+      vw.innerHTML = vsig && G.FILLINGS[f] ? Art.veggieWall(f, G.FILLINGS[f].color).replace('<svg ', `<svg width="${CELL - 4}" height="${CELL - 4}" `) : '';
+    }
     r.classList.toggle('start', x === M.START.x && y === M.START.y);
     r.classList.toggle('seen', !!(run && run.visited[M.idx(x, y)]));
   }
@@ -899,8 +909,9 @@ function updateMaze() {
   const name = esc(current().name);
   const bsig = run ? 'run' : ok ? 'ok' : 'blocked';
   const loot = (m.treasure || []).length;
-  if (run) hint.textContent = run.done ? 'Yay!' : loot ? `Drop a carrot by the treasure to lead ${current().name} there! (${run.lures} left)` : `Tap a square to drop a carrot (${run.lures} left). Tap ${current().name} to cheer!`;
-  else hint.textContent = ok ? 'Tap squares to build hay walls, then press Go!' : `${current().name} can't reach the dumpling. Open a path!`;
+  if (run) hint.textContent = run.done ? 'Yay!' : loot ? `Drop a carrot by the treasure! (${run.lures} left)` : `Tap a square to drop a carrot (${run.lures} left). Tap ${current().name} to cheer!`;
+  else hint.textContent = ok ? 'Pick a wall, tap squares, then press Go!' : `${current().name} can't reach the dumpling. Open a path!`;
+  updateTray();
   if (btns.dataset.sig === bsig) return;
   btns.dataset.sig = bsig;
   btns.innerHTML = '';
@@ -919,6 +930,34 @@ function btn(label, onClick, cls = '') {
   const b = el(`<button class="btn ${cls}">${label}</button>`);
   b.addEventListener('click', onClick);
   return b;
+}
+
+// The tile tray: hay walls, the eraser, then a wall for every veggie she has
+// unlocked. Locked veggies and the fun tiles still to come show as "?".
+let mazeTile = 1;
+const FUN_TILES = 4;
+function updateTray() {
+  const tray = $('#mtray');
+  const have = G.unlockedFillings(state).filter(f => f !== 'hay');
+  const locked = G.FILLING_ORDER.filter(f => f !== 'hay' && !have.includes(f));
+  const sig = run ? 'run' : `${mazeTile}|${have.join()}`;
+  if (tray.dataset.sig === sig) return;
+  tray.dataset.sig = sig;
+  tray.hidden = !!run;
+  if (run) return;
+  const tile = (id, icon, label) => `<button class="mtile ${id === mazeTile ? 'on' : ''}" data-tile="${id}"><i>${icon}</i><span>${label}</span></button>`;
+  const mystery = (why) => `<button class="mtile locked" data-why="${why}"><i>?</i><span>???</span></button>`;
+  tray.innerHTML = tile(1, Art.hayWallIcon(), 'Hay') + tile(0, Art.eraserIcon(), 'Eraser')
+    + have.map(f => tile('w:' + f, Art.veggieWall(f, G.FILLINGS[f].color), G.FILLINGS[f].name)).join('')
+    + locked.map(() => mystery('veggie')).join('') + Array.from({ length: FUN_TILES }, () => mystery('recipes')).join('');
+  tray.querySelectorAll('.mtile').forEach(b => b.addEventListener('click', () => {
+    if (b.classList.contains('locked')) { sfx.nope(); toast(b.dataset.why === 'veggie' ? 'Grow new veggies to unlock!' : 'Find more recipes to unlock!'); return; }
+    const t = b.dataset.tile;
+    mazeTile = t === '1' ? 1 : t === '0' ? 0 : t;
+    sfx.pop(); render();
+  }));
+  const on = tray.querySelector('.on');
+  if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 let mazeAngle = 0;
@@ -952,7 +991,7 @@ function onCell(x, y) {
     else sfx.nope();
     return;
   }
-  if (M.toggleWall(state.maze, x, y)) { sfx.pop(); render(); }
+  if (M.toggleWall(state.maze, x, y, mazeTile)) { sfx.pop(); render(); }
 }
 
 function onCheer() {

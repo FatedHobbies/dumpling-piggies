@@ -14,11 +14,15 @@ export function newMaze() {
 export const idx = (x, y) => y * COLS + x;
 const inside = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS;
 const same = (a, b) => a.x === b.x && a.y === b.y;
-export const isWall = (m, x, y) => m.cells[idx(x, y)] === 1;
+// A cell is 0 (open), 1 (hay bale) or 'w:<veggie>' (a veggie wall from the tile tray).
+export const isWall = (m, x, y) => !!m.cells[idx(x, y)];
 
-export function toggleWall(m, x, y) {
+// Paints a square with the picked tile; tapping the same tile again clears it.
+export function toggleWall(m, x, y, tile = 1) {
   if (!inside(x, y) || same({ x, y }, START) || same({ x, y }, FINISH) || treasureAt(m, x, y)) return false;
-  m.cells[idx(x, y)] = m.cells[idx(x, y)] ? 0 : 1;
+  const i = idx(x, y);
+  if (!tile && !m.cells[i]) return false;
+  m.cells[i] = m.cells[i] === tile ? 0 : tile;
   return true;
 }
 
@@ -68,7 +72,7 @@ export function randomize(m, rng = Math.random, fillings = ['carrot']) {
     const dirs = [[0, -2], [2, 0], [0, 2], [-2, 0]].sort(() => rng() - 0.5);
     for (const [dx, dy] of dirs) {
       const nx = x + dx, ny = y + dy;
-      if (inside(nx, ny) && m.cells[idx(nx, ny)] === 1) {
+      if (inside(nx, ny) && m.cells[idx(nx, ny)]) {
         m.cells[idx(x + dx / 2, y + dy / 2)] = 0;
         carve(nx, ny);
       }
