@@ -855,6 +855,7 @@ function mazeView() {
         <rect x="-10" y="-10" width="${w + 20}" height="${h + 20}" rx="18" fill="${th.board}"/>
         <g id="mcells"></g>
         <g id="mfence"></g>
+        <g id="mfun"></g>
         <g id="mtreasure"></g>
         <g id="mlure"></g>
         <g id="mfinish" transform="translate(${M.FINISH.x * CELL + CELL / 2} ${M.FINISH.y * CELL + CELL / 2})"></g>
@@ -911,6 +912,12 @@ function updateMaze() {
     r.classList.toggle('start', x === M.START.x && y === M.START.y);
     r.classList.toggle('seen', !!(run && run.visited[M.idx(x, y)]));
   }
+  const fun = $('#mfun');
+  const fsig = mazeTheme() + (m.fun || []).map(f => `${f.x},${f.y},${f.kind}`).join('|');
+  if (fun.dataset.sig !== fsig) {
+    fun.dataset.sig = fsig;
+    fun.innerHTML = (m.fun || []).map(f => Art.funTile(mazeTheme(), f.kind === 'bounce' ? 'bridge' : f.kind, f.x * CELL, f.y * CELL)).join('');
+  }
   const tre = $('#mtreasure');
   const tsig = (m.treasure || []).map(t => `${t.x},${t.y},${t.kind},${t.filling || ''}`).join('|');
   if (tre.dataset.sig !== tsig) {
@@ -938,7 +945,7 @@ function updateMaze() {
   if (run) {
     btns.appendChild(btn('Stop', () => { stopRun(); render(); }, 'btn-grey'));
   } else {
-    btns.appendChild(btn('Surprise me', () => { M.randomize(m, Math.random, G.unlockedFillings(state)); sfx.pop(); tut('surprise'); render(); }, 'btn-grey surprise'));
+    btns.appendChild(btn('Surprise me', () => { M.randomize(m, Math.random, G.unlockedFillings(state)); M.placeFun(m, funKinds()); sfx.pop(); tut('surprise'); render(); }, 'btn-grey surprise'));
     btns.appendChild(btn('Clear', () => { M.clear(m); sfx.pop(); render(); }, 'btn-grey'));
     const go = btn('Go!', startRun, 'btn-green go');
     go.disabled = !ok;
@@ -955,7 +962,6 @@ function btn(label, onClick, cls = '') {
 // The tile tray: Wall (in the maze's style), Eraser, then the fun tiles,
 // which show as "?" until they're unlocked. The Style button picks the look.
 let mazeTile = 1;
-const FUN_TILES = 4;
 // Maze themes change the board, floor, walls and bar. Hay barn is free; four
 // are sold in the Shop's Mazes tab and three are earned by playing.
 const MAZE_UNLOCKS = {
@@ -1013,13 +1019,19 @@ function updateTray() {
   $('#mstyle').hidden = !!run;
   if (run) return;
   const tile = (id, icon, label) => `<button class="mtile ${id === mazeTile ? 'on' : ''}" data-tile="${id}"><i>${icon}</i><span>${label}</span></button>`;
-  tray.innerHTML = tile(1, wallIcon(style), 'Wall') + tile(0, Art.eraserIcon(), 'Eraser')
-    + Array.from({ length: FUN_TILES }, () => `<button class="mtile locked"><i>?</i><span>???</span></button>`).join('');
+  tray.innerHTML = tile(1, wallIcon(style), 'Wall') + tile(0, Art.eraserIcon(), 'Eraser');
   tray.querySelectorAll('.mtile').forEach(b => b.addEventListener('click', () => {
     if (b.classList.contains('locked')) { sfx.nope(); toast('Find more recipes to unlock!'); return; }
     mazeTile = +b.dataset.tile;
     sfx.pop(); render();
   }));
+}
+
+// Fun tiles unlock as she finds recipes: zoom pads from the start, tunnels at
+// 10 recipes, trampolines at 20.
+function funKinds() {
+  const n = (state.discovered || []).length;
+  return ['zoom', ...(n >= 10 ? ['tunnel'] : []), ...(n >= 20 ? ['bounce'] : [])];
 }
 
 function pickMazeStyle() {
@@ -1042,7 +1054,7 @@ function placeMazePig(pos, dir) {
     mazeAngle += d;
   } else if (!run) mazeAngle = 0;
   const zoom = run && Date.now() < run.zoomUntil;
-  pig.style.transitionDuration = run ? (zoom ? '.17s' : '.52s') : '0s';
+  pig.style.transitionDuration = !run || run.jump === 'tunnel' ? '0s' : run.jump === 'bounce' ? '.5s' : zoom ? '.17s' : '.52s';
   // Never draw the piggy off the board, whatever the run says.
   const ok = pos && Number.isFinite(pos.x) && Number.isFinite(pos.y);
   const cx = ok ? Math.min(M.COLS - 1, Math.max(0, Math.round(pos.x))) : M.START.x;
@@ -1075,6 +1087,7 @@ function startRun() {
   if (!M.solvable(state.maze)) return;
   // Her own mazes get treasure too: if none is left, two goodies drop in.
   if (!(state.maze.treasure || []).length) M.hideTreasure(state.maze, Math.random, G.unlockedFillings(state));
+  if (!(state.maze.fun || []).length) M.placeFun(state.maze, funKinds());
   run = M.newRun();
   sfx.ding();
   render();
@@ -1092,6 +1105,9 @@ function scheduleStep() {
     render();
     const pig = $('#mpig');
     if (ev === 'deadend') { sfx.wheek(); svgBubble('wheek?'); }
+    if (ev === 'zoom') { sfx.wheek(); svgBubble('zoom!'); }
+    if (ev === 'tunnel') { sfx.pop(); svgBubble('pop!'); }
+    if (ev === 'bounce') { sfx.wheek(); svgBubble('boing!'); pig.classList.remove('boing'); void pig.getBoundingClientRect(); pig.classList.add('boing'); }
     if (ev === 'treasure') {
       const t = M.claim(state, run.found);
       state.stats.treasures = (state.stats.treasures || 0) + 1;

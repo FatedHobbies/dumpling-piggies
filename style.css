@@ -418,7 +418,7 @@ button.pk:active { transform: scale(.95); }
 .maze-tray { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none; }
 .maze-tray[hidden] { display: none; }
 .maze-tray::-webkit-scrollbar { display: none; }
-.mtile { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 2px 3px; border-radius: 12px; border: 3px solid #E3D5BE; background: #FFF8EC; font: inherit; font-size: .62rem; font-weight: 800; color: var(--soft); }
+.mtile { flex: 0 0 64px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 2px 3px; border-radius: 12px; border: 3px solid #E3D5BE; background: #FFF8EC; font: inherit; font-size: .62rem; font-weight: 800; color: var(--soft); }
 .mtile i { width: 36px; height: 36px; display: grid; place-items: center; font-style: normal; }
 .mtile i svg { width: 100%; height: 100%; }
 .mtile span { max-width: 58px; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -445,6 +445,8 @@ button.pk:active { transform: scale(.95); }
 @keyframes popcorn { 50% { transform: scale(1.3) rotate(-8deg); } }
 .toast-ico { display: inline-block; width: 36px; height: 36px; vertical-align: middle; margin-right: 4px; }
 .toast-ico svg { width: 100%; height: 100%; }
+.mpig.boing .mpig-rot { animation: boing .5s ease-out; }
+@keyframes boing { 0% { scale: 1; } 45% { scale: 1.8; } 100% { scale: 1; } }
 .mtreasure { animation: treasure-bob 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
 @keyframes treasure-bob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.06); } }
 .mbubble { font-family: var(--display); font-weight: 600; font-size: 44px; fill: var(--red); paint-order: stroke; stroke: #fff; stroke-width: 10px; }

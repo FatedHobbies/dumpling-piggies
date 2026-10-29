@@ -23,10 +23,11 @@ export function toggleWall(m, x, y, tile = 1) {
   const i = idx(x, y);
   if (!tile && !m.cells[i]) return false;
   m.cells[i] = m.cells[i] ? 0 : tile;
+  m.fun = [];   // walls changed, so fun tiles are placed fresh on the next Go
   return true;
 }
 
-export function clear(m) { m.cells.fill(0); }
+export function clear(m) { m.cells.fill(0); m.fun = []; }
 
 export function neighbors(m, x, y) {
   const out = [];
@@ -87,6 +88,7 @@ export function randomize(m, rng = Math.random, fillings = ['carrot']) {
   m.cells[idx(FINISH.x, FINISH.y)] = 0;
   if (!solvable(m)) return randomize(m, rng, fillings);
   hideTreasure(m, rng, fillings);
+  m.fun = [];
 }
 
 // Treasure: Surprise mazes hide a couple of goodies, best of all down the side
@@ -113,6 +115,40 @@ export function hideTreasure(m, rng = Math.random, fillings = ['carrot']) {
   });
 }
 
+// Fun tiles: a zoom pad, a pair of tunnels, and a trampoline that boings the
+// piggy over the next wall. They drop onto free squares when Go is pressed.
+export const funAt = (m, x, y) => (m.fun || []).find(f => f.x === x && f.y === y);
+const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+export function placeFun(m, kinds, rng = Math.random) {
+  const free = [];
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+    if (isWall(m, x, y) || same({ x, y }, START) || same({ x, y }, FINISH) || treasureAt(m, x, y)) continue;
+    if (path(m, START, { x, y })) free.push({ x, y });
+  }
+  const pick = (ok = () => true) => {
+    const opts = free.filter(c => ok(c) && !funAt(m, c.x, c.y));
+    return opts.length ? opts[Math.floor(rng() * opts.length)] : null;
+  };
+  m.fun = [];
+  for (const kind of kinds) {
+    if (kind === 'zoom') { const c = pick(); if (c) m.fun.push({ ...c, kind }); }
+    if (kind === 'tunnel') {
+      const a = pick(c => c.y >= ROWS / 2), b = a && pick(c => Math.abs(c.x - a.x) + Math.abs(c.y - a.y) >= 5);
+      if (a && b) m.fun.push({ ...a, kind, to: { x: b.x, y: b.y } }, { ...b, kind, to: { x: a.x, y: a.y } });
+    }
+    if (kind === 'bounce') {
+      // A square next to a wall, with open ground just past the wall that can
+      // still reach the dumpling.
+      const spots = [];
+      for (const c of free) for (const [dx, dy] of DIRS) {
+        const w = { x: c.x + dx, y: c.y + dy }, to = { x: c.x + 2 * dx, y: c.y + 2 * dy };
+        if (inside(to.x, to.y) && isWall(m, w.x, w.y) && !isWall(m, to.x, to.y) && !funAt(m, c.x, c.y) && path(m, to, FINISH)) spots.push({ ...c, to });
+      }
+      if (spots.length) m.fun.push({ ...spots[Math.floor(rng() * spots.length)], kind });
+    }
+  }
+}
+
 // Gives the treasure to the player. A mystery box holds one dumpling of a
 // recipe she has already found (carrot if none yet).
 export function claim(state, t, rng = Math.random) {
@@ -132,6 +168,7 @@ export function newRun() {
 // 'ate' (reached a lure), 'treasure' (run.found) or 'finish'.
 export function step(m, run, rng = Math.random, now = Date.now()) {
   if (run.done) return 'finish';
+  run.jump = null;
   const { x, y } = run.pos;
   const open = neighbors(m, x, y);
   let next = null;
@@ -166,6 +203,22 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
 
   // Finishing always wins, even if a carrot was dropped on the dumpling square.
   if (same(run.pos, FINISH)) { run.done = true; run.lure = null; return 'finish'; }
+  const f = funAt(m, run.pos.x, run.pos.y);
+  // Each fun tile works once per run, so tunnels can't bounce her back and forth forever.
+  run.used = run.used || {};
+  if (f && run.landed !== idx(f.x, f.y) && !run.used[idx(f.x, f.y)]) {
+    run.used[idx(f.x, f.y)] = 1;
+    if (f.kind === 'zoom') { run.zoomUntil = now + 3000; run.landed = idx(f.x, f.y); return 'zoom'; }
+    run.lure = null;
+    run.jump = f.kind;
+    run.pos = { ...f.to };
+    run.landed = idx(f.to.x, f.to.y);
+    run.visited[run.landed] = (run.visited[run.landed] || 0) + 1;
+    run.lastDir = null;
+    if (same(run.pos, FINISH)) { run.done = true; return 'finish'; }
+    return f.kind;
+  }
+  if (!f) run.landed = null;
   const t = treasureAt(m, run.pos.x, run.pos.y);
   if (t) { m.treasure = m.treasure.filter(o => o !== t); run.found = t; if (run.lure && same(run.pos, run.lure)) run.lure = null; return 'treasure'; }
   if (run.lure && same(run.pos, run.lure)) { run.lure = null; return 'ate'; }
