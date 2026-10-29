@@ -1113,12 +1113,13 @@ const TOY_ART = {
     <path d="M42 92 V74 Q42 60 60 60 Q78 60 78 74 V92Z" fill="#6A4524"/>
     <ellipse cx="30" cy="72" rx="7" ry="4" fill="#FFB3C1" opacity=".8"/><ellipse cx="90" cy="72" rx="7" ry="4" fill="#FFB3C1" opacity=".8"/>
     <ellipse cx="34" cy="50" rx="10" ry="5" transform="rotate(-25 34 50)" fill="#fff" opacity=".8"/></g>`,
+  // The slide faces left: drawn facing right, then flipped.
   slide: `<ellipse cx="60" cy="94" rx="54" ry="6" fill="#000" opacity=".12"/>
-    <g class="toy-move"><path d="M20 94 V22 M36 94 V22" stroke="#9C6A3A" stroke-width="5" stroke-linecap="round"/>
+    <g class="toy-move"><g transform="translate(120 0) scale(-1 1)"><path d="M20 94 V22 M36 94 V22" stroke="#9C6A3A" stroke-width="5" stroke-linecap="round"/>
     <path d="M20 40 H36 M20 58 H36 M20 76 H36" stroke="#9C6A3A" stroke-width="4" stroke-linecap="round"/>
     <rect x="14" y="16" width="30" height="10" rx="5" fill="#D9A862" stroke="#9C6A3A" stroke-width="3"/>
     <path d="M40 18 Q60 22 78 60 Q90 84 112 88 L112 96 Q84 94 70 66 Q56 34 40 30Z" fill="#5BC8A8" stroke="#2E8C70" stroke-width="4" stroke-linejoin="round"/>
-    <path d="M48 24 Q62 30 74 56" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".6"/></g>`,
+    <path d="M48 24 Q62 30 74 56" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".6"/></g</g>`,
 };
 // Chews get smaller as they are eaten: `left` runs from 1 (new) to 0.
 function chewSticks(left) {
