@@ -434,31 +434,40 @@ export function gardenScene(opts = {}) {
   </svg>`;
 }
 
-// The kitchen: tiled wall, shelves of jars, a counter with a bamboo steamer
-// on a wok, and the piggy chef behind it. The UI overlays the ingredient
-// slots on the counter.
+// The kitchen: mint tiled wall (so the cream and orange chef stands out),
+// shelves of jars, and a counter with a real dumpling setup: a stacked
+// bamboo steamer with a lid sitting on a pot of simmering water over a
+// little burner. The piggy chef holds a wooden spatula in one paw, out in
+// front of its face. The UI overlays the ingredient slots on the counter.
 export function kitchenScene(opts = {}) {
   const toque = `<g class="hat"><path d="M112 72 Q110 48 134 46 Q142 30 160 40 Q178 36 180 56 Q188 70 170 74 Z" fill="#fff" stroke="#D5CDBA" stroke-width="3"/><rect x="118" y="66" width="56" height="12" rx="4" fill="#fff" stroke="#D5CDBA" stroke-width="3"/></g>`;
   const pig = piggySide({ coat: opts.coat }).replace('<svg viewBox="0 0 200 200"', '<svg viewBox="0 0 200 200" width="200" height="200"').replace('</g>\n  </svg>', toque + '</g></svg>');
+  const tier = (y, h) => `<rect x="240" y="${y}" width="104" height="${h}" rx="6" fill="#E6B566" stroke="#9C6A3A" stroke-width="3"/>
+      <path d="M242 ${y + h / 2} H342" stroke="#C98F4B" stroke-width="2.5"/>
+      <g stroke="#9C6A3A" stroke-width="2" opacity=".45">${[254, 270, 286, 302, 318, 334].map(x => `<path d="M${x} ${y + 3} V${y + h - 3}"/>`).join('')}</g>`;
   return `<svg viewBox="0 0 400 230" class="scene" preserveAspectRatio="none" aria-hidden="true">
-    <defs><pattern id="tiles" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#FFF1D6"/><rect x="2" y="2" width="36" height="36" rx="6" fill="#FFE3B8"/></pattern></defs>
+    <defs><pattern id="tiles" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#A9DCC6"/><rect x="2" y="2" width="36" height="36" rx="6" fill="#CDEEDF"/></pattern></defs>
     <rect width="400" height="230" fill="url(#tiles)"/>
     <g><rect x="16" y="22" width="150" height="10" rx="3" fill="#B9824A"/><rect x="234" y="22" width="150" height="10" rx="3" fill="#B9824A"/>
       <g stroke="#8A5634" stroke-width="2.5"><rect x="30" y="-2" width="26" height="26" rx="5" fill="#FFB77A"/><rect x="66" y="2" width="22" height="22" rx="5" fill="#A6DB8C"/><rect x="100" y="-4" width="30" height="28" rx="6" fill="#FF8FA8"/><rect x="250" y="0" width="24" height="24" rx="5" fill="#8FD3F2"/><rect x="286" y="-2" width="28" height="26" rx="6" fill="#FFD34D"/><rect x="326" y="4" width="22" height="20" rx="5" fill="#C9B8D6"/></g></g>
     <g class="chef">${'<g transform="translate(26 54) scale(.62)">' + pig + '</g>'}
-      <g class="spoon"><path d="M128 120 L150 86" stroke="#8A5634" stroke-width="6" stroke-linecap="round"/><ellipse cx="152" cy="82" rx="9" ry="6" fill="#B9824A"/></g></g>
+      <g class="spoon"><path d="M152 136 L188 100" stroke="#8A5634" stroke-width="5" stroke-linecap="round"/><rect x="183" y="80" width="16" height="22" rx="6" fill="#C98F4B" stroke="#8A5634" stroke-width="2.5" transform="rotate(42 191 91)"/>
+        <ellipse cx="152" cy="137" rx="8" ry="6.5" fill="#FFF8EE" stroke="#C9A27A" stroke-width="2.5"/></g></g>
     <rect x="0" y="150" width="400" height="80" fill="#C9935A"/><rect x="0" y="146" width="400" height="12" rx="4" fill="#E6B566" stroke="#9C6A3A" stroke-width="3"/>
     <g class="pot">
-      <path d="M212 118 Q292 150 372 118 L360 150 H224Z" fill="#3A2A22"/><ellipse cx="292" cy="150" rx="68" ry="8" fill="#2A1A14"/>
-      <path d="M204 112 L220 112 M364 112 L380 112" stroke="#3A2A22" stroke-width="7" stroke-linecap="round"/>
-      <rect x="232" y="82" width="120" height="34" rx="10" fill="#E6B566" stroke="#9C6A3A" stroke-width="3"/>
-      <path d="M232 96 H352" stroke="#C98F4B" stroke-width="3"/>
-      <g stroke="#9C6A3A" stroke-width="2" opacity=".5">${[246, 262, 278, 294, 310, 326, 342].map(x => `<path d="M${x} 86 V112"/>`).join('')}</g>
-      <ellipse cx="292" cy="82" rx="62" ry="12" fill="#F2CE7E" stroke="#9C6A3A" stroke-width="3"/>
-      <ellipse cx="292" cy="80" rx="46" ry="7" fill="#E6B566"/>
-      <path d="M292 72 V58" stroke="#9C6A3A" stroke-width="5" stroke-linecap="round"/><circle cx="292" cy="56" r="6" fill="#C98F4B" stroke="#9C6A3A" stroke-width="2"/>
+      <rect x="236" y="141" width="112" height="7" rx="3" fill="#4A4A55"/>
+      <g fill="#FF9A3D">${[240, 334].map(x => `<path d="M${x} 141 Q${x + 5} 130 ${x + 10} 141Z"/>`).join('')}</g>
+      <path d="M236 112 H348 L344 132 Q340 140 330 140 H254 Q244 140 240 132Z" fill="#9DB4CB" stroke="#5E7189" stroke-width="3"/>
+      <path d="M244 124 H340" stroke="#C7D7E6" stroke-width="3" stroke-linecap="round"/>
+      <path d="M230 116 H222 M354 116 H362" stroke="#5E7189" stroke-width="6" stroke-linecap="round"/>
+      <rect x="232" y="108" width="120" height="8" rx="4" fill="#B9CCDE" stroke="#5E7189" stroke-width="3"/>
+      <g fill="#8FD3F2" stroke="#5E9BC0" stroke-width="1.5">${[238, 346].map(x => `<circle cx="${x}" cy="104" r="3"/>`).join('')}</g>
+      ${tier(84, 24)}${tier(60, 24)}
+      <path d="M238 62 Q292 30 346 62 Z" fill="#F2CE7E" stroke="#9C6A3A" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M256 54 Q292 38 328 54" fill="none" stroke="#C98F4B" stroke-width="2"/>
+      <circle cx="292" cy="40" r="5" fill="#C98F4B" stroke="#9C6A3A" stroke-width="2"/>
     </g>
-    <g class="vapor"><ellipse class="puff p1" cx="268" cy="46" rx="9" ry="12" fill="#fff" opacity=".85"/><ellipse class="puff p2" cx="292" cy="38" rx="10" ry="14" fill="#fff" opacity=".85"/><ellipse class="puff p3" cx="316" cy="48" rx="8" ry="11" fill="#fff" opacity=".85"/></g>
+    <g class="vapor"><ellipse class="puff p1" cx="246" cy="52" rx="8" ry="11" fill="#fff" opacity=".9"/><ellipse class="puff p2" cx="292" cy="26" rx="10" ry="12" fill="#fff" opacity=".9"/><ellipse class="puff p3" cx="340" cy="52" rx="8" ry="11" fill="#fff" opacity=".9"/></g>
   </svg>`;
 }
 
