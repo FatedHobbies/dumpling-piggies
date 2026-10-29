@@ -775,9 +775,9 @@ export const PEN_FIXTURES = {
       <path d="M44 156 V130 Q66 108 88 130 V156Z" fill="#5A3A26"/>
       <path d="M26 110 Q66 76 106 110" fill="none" stroke="#E6B566" stroke-width="6"/>
     </g>` },
-  bottle: { box: '176 -16 48 160', x: 200, y: 140, svg: `<g class="pen-bottle">
-      <path d="M200 26 V13 Q200 6 207 6 Q212 6 213 10" fill="none" stroke="#6E7C88" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M200 26 V13 Q200 6 207 6 Q212 6 213 10" fill="none" stroke="#B6C2CC" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  bottle: { box: '176 -32 48 160', x: 200, y: 122, svg: `<g class="pen-bottle">
+      <path d="M200 24 V16 Q200 9 207 9 Q214 9 214 16 V27" fill="none" stroke="#6E7C88" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M200 24 V16 Q200 9 207 9 Q214 9 214 16 V27" fill="none" stroke="#B6C2CC" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
       <rect x="194" y="18" width="12" height="8" rx="3" fill="#8C9AA6"/>
       <rect x="183" y="22" width="34" height="62" rx="13" fill="#BFE6F7" stroke="#6FB7D9" stroke-width="3"/>
       <rect x="189" y="36" width="22" height="42" rx="7" fill="#8FD3F2"/>
