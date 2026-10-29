@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 100;
+const VERSION = 101;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -124,7 +124,7 @@ const TUTORIAL = [
   { tab: 'steamer', on: 'scoop', text: n => `Uh oh, a poop! Tap it to scoop it up.`, target: '.poop', enter: () => { if (!state.poops.length) G.addPoop(state); } },
   { tab: null,      on: 'poopbook', text: n => `Every poop goes in your Poop Book! Tap it to look.`, target: '#poopbook' },
   { tab: 'garden',  on: 'plant', text: n => `Poop helps veggies grow! Tap Plant.`, target: () => $('.plot.empty') ? '.plot.empty' : '.plot',
-    enter: () => { if (state.compost < 1) state.compost = 1; } },
+    enter: () => { const need = Math.max(...G.unlockedFillings(state).map(G.plantCost)); if (state.compost < need) state.compost = need; } },
   { tab: 'kitchen', on: 'cook',  text: n => `Tap two veggies, then tap Steam it!`, target: () => selected.length < 2 ? '.fill:not(:disabled)' : '#cook',
     enter: () => { if (Object.values(state.pantry).reduce((a, b) => a + b, 0) < 2) state.pantry.carrot = (state.pantry.carrot || 0) + 2; } },
   { tab: 'steamer', on: 'feed',  text: n => `Yum! Feed your new dumpling to ${n}.`, target: '.dump', enter: () => lowNeed('hunger') },
@@ -872,12 +872,13 @@ function onPlot(i) {
     return;
   }
   if (state.compost < 1) { sfx.nope(); toast('You need compost. Scoop some poop first!'); return; }
-  picker('What should we plant?', G.unlockedFillings(state).map(f => ({ id: f, html: Art.veggie(f, 48), label: G.FILLINGS[f].name, count: state.pantry[f] || 0 })), (f) => {
+  picker('What should we plant?', G.unlockedFillings(state).map(f => ({ id: f, html: Art.veggie(f, 48), label: G.FILLINGS[f].name, count: state.pantry[f] || 0,
+    cost: G.plantCost(f), locked: state.compost < G.plantCost(f) })), (f) => {
     gardenerRun(i, () => {
       const r = G.plant(state, i, f);
       if (r.ok) { sfx.pop(); tut('plant'); render(); }
     });
-  });
+  }, () => { sfx.nope(); toast('Scoop more poop for compost!'); });
 }
 
 // The piggy gardener trots into the plot, digs, and trots out. `onDig` fires
@@ -1737,7 +1738,7 @@ function sendAway(id) {
 function picker(title, options, onPick, onLocked = null) {
   const box = el(`<div class="modal"><div class="card panel"><div class="ribbon"><span>${title}</span></div><div class="opts ${options.length > 6 ? 'many' : ''}"></div><div class="row center"><button class="btn btn-grey">Cancel</button></div></div></div>`);
   for (const o of options) {
-    const b = el(`<button class="opt tile ${o.locked ? 'locked' : ''}">${o.html}<span>${o.label}</span>${o.count != null ? `<b class="count have">${o.count}</b>` : ''}</button>`);
+    const b = el(`<button class="opt tile ${o.locked ? 'locked' : ''}">${o.html}<span>${o.label}</span>${o.count != null ? `<b class="count have">${o.count}</b>` : ''}${o.cost != null ? `<b class="cost">${Art.compostIcon()}${o.cost}</b>` : ''}</button>`);
     b.onclick = () => { if (o.locked) { sfx.nope(); if (onLocked) onLocked(o.id); return; } box.remove(); onPick(o.id); };
     $('.opts', box).appendChild(b);
   }

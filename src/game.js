@@ -853,11 +853,17 @@ export function scoop(state, id) {
   return { ok: true, coins: v.coins, compost: v.compost, poop, isNew };
 }
 
+// Planting costs compost by row of the 4x4 crop grid: row 1 costs 1, row 4 costs 4.
+export function plantCost(filling) {
+  return Math.floor(Math.max(0, FILLING_ORDER.indexOf(filling)) / 4) + 1;
+}
+
 export function plant(state, plot, filling, now = Date.now()) {
   if (plot >= plotCount(state) || state.garden[plot]) return { ok: false, reason: 'busy' };
   if (!unlockedFillings(state).includes(filling)) return { ok: false };
-  if (state.compost < 1) return { ok: false, reason: 'compost' };
-  state.compost -= 1;
+  const cost = plantCost(filling);
+  if (state.compost < cost) return { ok: false, reason: 'compost' };
+  state.compost -= cost;
   state.garden[plot] = { filling, plantedAt: now };
   return { ok: true };
 }
