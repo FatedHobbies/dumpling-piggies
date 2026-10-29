@@ -221,6 +221,7 @@ function steamerView() {
     <div class="stage" id="stage">
       ${Art.penScene()}
       <div class="floor" id="floor"></div>
+      <div class="faces" id="faces"></div>
       <span class="pen-count" id="pencount"></span>
     </div>
     <div class="tray panel" id="tray"></div>
@@ -234,6 +235,19 @@ function updateSteamer() {
   $('[data-need="fun"] i').style.width = p.fun + '%';
   $('[data-need="clean"] i').style.width = Math.max(0, 100 - state.poops.length / G.MAX_POOPS * 100) + '%';
   $('#pencount').textContent = `${state.piggies.length} / ${G.capacity(state)} piggies`;
+  // Portrait row across the top of the window; tapping one picks that piggy.
+  const faces = $('#faces');
+  const fsig = state.piggies.map(g => g.id + JSON.stringify(g.coat) + (g.hat || '')).join('|');
+  if (faces.dataset.sig !== fsig) {
+    faces.dataset.sig = fsig;
+    faces.innerHTML = '';
+    for (const pig of state.piggies) {
+      const b = el(`<button class="face" data-id="${pig.id}" aria-label="Pick ${esc(pig.name)}">${Art.piggyFace({ coat: pig.coat, hat: pig.hat })}</button>`);
+      b.addEventListener('click', () => pickPig(pig.id));
+      faces.appendChild(b);
+    }
+  }
+  faces.querySelectorAll('.face').forEach(b => b.classList.toggle('on', +b.dataset.id === selectedPig));
   const floor = $('#floor');
   // Piggies
   const have = new Map([...floor.querySelectorAll('.piggy')].map(c => [+c.dataset.id, c]));
@@ -374,6 +388,14 @@ function playAt(pig, id, d) {
     setTimeout(() => d.classList.remove('hop'), 600);
     bubble(d, G.TOYS[id].chew ? 'Nom nom!' : ['Wheee!', 'Fun!', '♥', 'Wheek!'][Math.floor(Math.random() * 4)]);
   }
+}
+
+function pickPig(id) {
+  selectedPig = id;
+  const d = $(`.piggy[data-id="${id}"]`);
+  if (d) { d.classList.remove('hop'); void d.offsetWidth; d.classList.add('hop'); bubble(d, 'wheek!'); }
+  sfx.wheek();
+  render();
 }
 
 function onPet(id) {

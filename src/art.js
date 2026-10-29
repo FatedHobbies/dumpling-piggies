@@ -107,6 +107,35 @@ export function hatIcon(id) {
   return `<svg viewBox="104 0 92 92" aria-hidden="true"><g transform="translate(0 8)">${hatSide(id)}</g></svg>`;
 }
 
+// Front-view face for the portrait row in the pen, drawn in a 100x100 box.
+// The hat reuses the side-view hat, shrunk and centred on the head.
+export function piggyFace(opts = {}) {
+  const coat = opts.coat || DEFAULT_COAT;
+  const skinny = coat.breed === 'skinny';
+  const main = skinny ? '#F2B8A0' : col(coat.main);
+  const patch = skinny ? '#F7CDBB' : col(coat.patch);
+  const dark = darken(main);
+  let hair = '';
+  if (coat.breed === 'abyssinian') hair = `<path d="M34 34 l-4 -10 M44 30 l-1 -11 M56 30 l1 -11 M66 34 l4 -10" stroke="${dark}" stroke-width="4" stroke-linecap="round"/><path d="M22 66 a7 7 0 1 1 7 7 M70 64 a7 7 0 1 1 7 7" fill="none" stroke="${dark}" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>`;
+  else if (coat.breed === 'peruvian') hair = `<path d="M18 52 Q8 74 12 94 Q20 86 24 96 Q28 80 30 66Z M82 52 Q92 74 88 94 Q80 86 76 96 Q72 80 70 66Z" fill="${main}" stroke="${dark}" stroke-width="2" stroke-linejoin="round"/><path d="M30 40 Q50 22 70 40 Q62 34 56 42 Q50 32 44 42 Q38 34 30 40Z" fill="${patch}" stroke="${darken(patch)}" stroke-width="2"/>`;
+  else if (coat.breed === 'texel') hair = [[24, 44], [20, 62], [26, 80], [76, 44], [80, 62], [74, 80], [40, 32], [60, 32]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="7" fill="${i > 5 ? patch : main}" stroke="${dark}" stroke-width="2"/>`).join('');
+  else if (skinny) hair = `<path d="M44 30 q6 -12 14 -4 q-6 4 -14 4z" fill="${col(coat.main)}"/>`;
+  const hat = opts.hat ? `<g transform="translate(-32.5 -9) scale(.55)">${hatSide(opts.hat === true ? 'strawberry' : opts.hat)}</g>` : '';
+  return `<svg viewBox="0 0 100 100" class="piggy-face" aria-hidden="true">
+    <ellipse cx="20" cy="42" rx="11" ry="8" transform="rotate(-30 20 42)" fill="${dark}"/><ellipse cx="20" cy="43" rx="6" ry="4" transform="rotate(-30 20 43)" fill="#FFB3C1"/>
+    <ellipse cx="80" cy="42" rx="11" ry="8" transform="rotate(30 80 42)" fill="${dark}"/><ellipse cx="80" cy="43" rx="6" ry="4" transform="rotate(30 80 43)" fill="#FFB3C1"/>
+    <ellipse cx="50" cy="62" rx="34" ry="32" fill="${main}"/>
+    <path d="M50 30 C42 44 38 60 36 74 Q50 92 64 74 C62 60 58 44 50 30Z" fill="${patch}"/>
+    ${hair}
+    <circle cx="35" cy="58" r="5.5" fill="${INK}"/><circle cx="36.8" cy="56" r="1.9" fill="#fff"/>
+    <circle cx="65" cy="58" r="5.5" fill="${INK}"/><circle cx="66.8" cy="56" r="1.9" fill="#fff"/>
+    <ellipse cx="27" cy="70" rx="6" ry="3.5" fill="#FF8FA8" opacity=".7"/><ellipse cx="73" cy="70" rx="6" ry="3.5" fill="#FF8FA8" opacity=".7"/>
+    <path d="M46 69 Q50 73 54 69Z" fill="#E86A86" stroke="#E86A86" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M44 76 Q47 80 50 76 Q53 80 56 76" fill="none" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>
+    ${hat}
+  </svg>`;
+}
+
 // Top-down piggy for the maze, drawn around (0,0) with the nose pointing up.
 export function piggyTop(opts = {}) {
   const coat = opts.coat || DEFAULT_COAT;
