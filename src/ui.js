@@ -258,7 +258,7 @@ function updateSteamer() {
   for (const pig of state.piggies) {
     let d = have.get(pig.id);
     if (!d) {
-      d = el(`<div class="piggy" data-id="${pig.id}" role="button" tabindex="0" aria-label="Pet ${esc(pig.name)}"><span class="need-bubble"></span><div class="pig-art"></div><span class="tag"></span></div>`);
+      d = el(`<div class="piggy" data-id="${pig.id}" role="button" tabindex="0" aria-label="Pet ${esc(pig.name)}"><span class="pick-ring"></span><span class="pick-arrow"></span><span class="need-bubble"></span><div class="pig-art"></div><span class="tag"></span></div>`);
       d.addEventListener('click', () => onPet(pig.id));
       d.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') onPet(pig.id); });
       floor.appendChild(d);
