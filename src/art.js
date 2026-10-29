@@ -728,18 +728,17 @@ export const MAZE_THEMES = {
     // A space-rock cube: lit top face, darker front face with its own craters.
     cube: true,
     wall: (px, py, i) => {
-      // Oblique cube: a square front face, a lit top face slanting back to the
-      // right, and a shaded right side, so every edge reads as a real box.
-      const d = 8, l = px + 3, r = px + 45 - d, t = py + 3 + d, b = py + 49;
-      const top = `M${l} ${t} L${l + d} ${t - d} H${r + d} L${r} ${t}Z`;
-      const side = `M${r} ${t} L${r + d} ${t - d} V${b - d} L${r} ${b}Z`;
-      return `<path d="${side}" fill="#2E2178" stroke="#1E145A" stroke-width="2.5" stroke-linejoin="round"/>
-        <rect x="${l}" y="${t}" width="${r - l}" height="${b - t}" rx="3" fill="#5B44B8" stroke="#1E145A" stroke-width="2.5"/>
-        <path d="${top}" fill="#8F78E8" stroke="#1E145A" stroke-width="2.5" stroke-linejoin="round"/>
-        <circle cx="${l + 10}" cy="${t + 10}" r="4.5" fill="#4A35A0"/><circle cx="${l + 24}" cy="${t + 22}" r="5.5" fill="#4A35A0"/><circle cx="${l + 9}" cy="${t + 28}" r="2.5" fill="#4A35A0"/>
-        <path d="M${l + 3} ${t + 4} V${b - 4}" stroke="#7A60D8" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="${r + d / 2}" cy="${t + 12}" r="2" fill="#1E145A"/>
-        ${i % 3 === 0 ? star4(px + 42, py + 2, 5, '#FFE66B') : ''}`;
+      // Classic top-down block: the camera looks down from the front, so the
+      // top face is big and the front face shows as a darker band below it,
+      // with straight up-and-down side edges.
+      const l = px + 3, r = px + 45, t = py + 1, e = py + 32, b = py + 47;
+      return `<rect x="${l}" y="${t}" width="${r - l}" height="${b - t}" rx="7" fill="#3E2C96" stroke="#1E145A" stroke-width="2.5"/>
+        <path d="M${l + 1.5} ${e} H${r - 1.5}" stroke="#2A1C6E" stroke-width="2"/>
+        <circle cx="${px + 14}" cy="${py + 40}" r="2.4" fill="#2E2178"/><circle cx="${px + 32}" cy="${py + 41}" r="1.8" fill="#2E2178"/>
+        <path d="M${l + 1.5} ${e - 1} V${t + 7} Q${l + 1.5} ${t + 1.5} ${l + 7} ${t + 1.5} H${r - 7} Q${r - 1.5} ${t + 1.5} ${r - 1.5} ${t + 7} V${e - 1}Z" fill="#8F78E8"/>
+        <circle cx="${px + 15}" cy="${py + 12}" r="5" fill="#6E56CC"/><circle cx="${px + 31}" cy="${py + 21}" r="5.5" fill="#6E56CC"/><circle cx="${px + 34}" cy="${py + 9}" r="2.2" fill="#6E56CC"/>
+        <path d="M${l + 5} ${t + 10} Q${l + 5} ${t + 5} ${l + 10} ${t + 5} H${r - 10}" stroke="#C7B9FF" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        ${i % 3 === 0 ? star4(px + 41, py + 2, 5, '#FFE66B') : ''}`;
     },
     deco: (px, py, i) => star4(px + 8 + jit(i, 1) * 30, py + 8 + jit(i, 2) * 30, 2.6, '#fff') + `<circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1" fill="#C9C2FF"/>`,
   },
@@ -775,18 +774,18 @@ export const MAZE_THEMES = {
   },
   sea: {
     side: '#D98A7A', name: 'Seashell beach', board: '#3FA7D6', floor: '#F3E2B3', seen: '#E8D196', start: '#9BE7D8', startEdge: '#3BB5A0', post: '#FF9A8A', postEdge: '#D2604F',
-    // A big round clam sitting in the sand, filling the block.
+    // A classic clam shell: a round fan with ribs, narrowing to a hinge with
+    // two little ears at the bottom.
     cube: true,
     wall: (px, py, i) => {
       const [c, d, lt] = [['#FFB8A8', '#D9705F', '#FFD9CF'], ['#FFD39A', '#CF8A3C', '#FFE9C7'], ['#F8C6E6', '#BE6CA4', '#FDE3F3']][i % 3];
-      const cx = px + 24, lip = py + 30, l = px + 3, r = px + 45, top = py + 6, bot = py + 47;
-      const ridges = [-14, -7, 0, 7, 14].map(o => `M${cx + o * .5} ${lip - 1} Q${cx + o * 1.25} ${top + 10} ${cx + o * 1.05} ${top + 4}`).join(' ');
-      return `<path d="M${l} ${lip} Q${l} ${bot} ${cx} ${bot} Q${r} ${bot} ${r} ${lip}Z" fill="${d}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>
-        <path d="M${l + 6} ${lip + 6} Q${cx} ${lip + 13} ${r - 6} ${lip + 6}" stroke="${c}" stroke-width="2" fill="none" opacity=".7"/>
-        <path d="M${l} ${lip} Q${l} ${top} ${cx} ${top} Q${r} ${top} ${r} ${lip} Q${cx} ${lip + 5} ${l} ${lip}Z" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>
-        <path d="${ridges}" stroke="${d}" stroke-width="1.8" fill="none" opacity=".6" stroke-linecap="round"/>
-        <path d="M${l + 6} ${lip - 6} Q${l + 6} ${top + 6} ${cx - 6} ${top + 3}" stroke="${lt}" stroke-width="3" fill="none" stroke-linecap="round"/>
-        ${i % 4 === 0 ? `<circle cx="${cx + 9}" cy="${lip + 2}" r="3.2" fill="#FFFDF5" stroke="#E7DCC8" stroke-width="1"/>` : ''}`;
+      const cx = px + 24, hy = py + 42;
+      const fan = `M${cx - 6} ${hy} L${px + 4} ${py + 26} Q${px + 2} ${py + 5} ${cx} ${py + 4} Q${px + 46} ${py + 5} ${px + 44} ${py + 26} L${cx + 6} ${hy}Z`;
+      const ribs = [-16, -8, 0, 8, 16].map(o => `M${cx + o * .2} ${hy - 2} L${cx + o} ${py + 8 + Math.abs(o) * .35}`).join(' ');
+      return `<path d="${fan}" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="${ribs}" stroke="${d}" stroke-width="2" opacity=".55" stroke-linecap="round"/>
+        <path d="M${px + 9} ${py + 22} Q${px + 9} ${py + 10} ${cx - 6} ${py + 8}" stroke="${lt}" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M${cx - 6} ${hy} L${cx - 13} ${hy + 1} Q${cx - 14} ${hy + 6} ${cx - 8} ${hy + 6} H${cx + 8} Q${cx + 14} ${hy + 6} ${cx + 13} ${hy + 1} L${cx + 6} ${hy}Z" fill="${d}" stroke="${d}" stroke-width="1.5" stroke-linejoin="round"/>`;
     },
     deco: (px, py, i) => `<circle cx="${px + 10 + jit(i, 1) * 28}" cy="${py + 10 + jit(i, 2) * 28}" r="2.6" fill="none" stroke="#fff" stroke-width="1.2" opacity=".8"/><circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1.4" fill="none" stroke="#fff" stroke-width="1" opacity=".8"/>`,
   },
