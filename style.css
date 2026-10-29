@@ -507,8 +507,11 @@ button.pk:active { transform: scale(.95); }
 .piggy.front .pose.side { display: none; }
 .piggy.front .pose.front { display: block; }
 .piggy.inside { opacity: 0; scale: .3; pointer-events: none; }
-.piggy.peek { scale: .8; }
-.piggy.peek .pig-art { clip-path: inset(0 0 0 58%); }
+.piggy .peek-face { display: none; position: absolute; left: 50%; bottom: 7%; width: var(--pw, 30%); transform: translateX(-50%); pointer-events: none; }
+.piggy .peek-face svg { width: 100%; height: auto; }
+.piggy.peek .pig-art { display: none; }
+.piggy.peek .peek-face { display: block; animation: peek-up .3s ease-out; }
+@keyframes peek-up { from { transform: translate(-50%, 30%) scale(.6); opacity: 0; } }
 .piggy.peek .tag, .piggy.peek .need-bubble, .piggy.peek .pick-ring, .piggy.peek .pick-arrow { display: none; }
 
 /* ---- Hats: who they're for ---- */

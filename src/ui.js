@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 50;
+const VERSION = 51;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -260,7 +260,7 @@ function updateSteamer() {
   for (const pig of state.piggies) {
     let d = have.get(pig.id);
     if (!d) {
-      d = el(`<div class="piggy" data-id="${pig.id}" role="button" tabindex="0" aria-label="Pet ${esc(pig.name)}"><span class="pick-ring"></span><span class="pick-arrow"></span><span class="need-bubble"></span><div class="pig-art"></div><span class="tag"></span></div>`);
+      d = el(`<div class="piggy" data-id="${pig.id}" role="button" tabindex="0" aria-label="Pet ${esc(pig.name)}"><span class="pick-ring"></span><span class="pick-arrow"></span><span class="need-bubble"></span><div class="pig-art"></div><span class="peek-face"></span><span class="tag"></span></div>`);
       d.addEventListener('click', () => onPet(pig.id));
       d.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') onPet(pig.id); });
       floor.appendChild(d);
@@ -271,6 +271,7 @@ function updateSteamer() {
     if (d.dataset.face !== face) {
       d.dataset.face = face;
       $('.pig-art', d).innerHTML = `<div class="pose side">${Art.piggySide({ coat: pig.coat, hat: pig.hat, mood: m })}</div><div class="pose front">${Art.piggyFront({ coat: pig.coat, hat: pig.hat })}</div>`;
+      $('.peek-face', d).innerHTML = Art.piggyFace({ coat: pig.coat, hat: pig.hat });
     }
     $('.tag', d).textContent = pig.name;
     const need = pig.hunger < 25 ? 'hunger' : pig.fun < 25 ? 'fun' : '';
@@ -344,6 +345,15 @@ function syncPose(d, w) {
   d.classList.toggle('front', !!w.front && !w.inside && !w.peek && !w.riding);
   d.classList.toggle('inside', !!w.inside);
   d.classList.toggle('peek', !!w.peek);
+  if (w.peekW) d.style.setProperty('--pw', w.peekW);
+}
+
+// While peeking, only the face shows, sized to fit inside the doorway.
+function peekSize(id, d) {
+  const box = id === 'house' ? $('.fixture[data-fix="house"]') : $(`.toy[data-toy="${id}"]`);
+  const s = parseFloat(d.style.getPropertyValue('--s')) || 1;
+  if (!box || !d.offsetWidth) return '30%';
+  return (box.offsetWidth * HIDES[id].doorW * 0.9 / (d.offsetWidth * s) * 100).toFixed(1) + '%';
 }
 
 // Every 100ms each piggy drifts toward a random spot on the floor, pauses, and
@@ -390,7 +400,7 @@ function wanderTick() {
 // Hidey places have a door to go in by (and the tunnel a far end to come out
 // of), given as x in the toy picture (0 to 120 wide). The slide is climbed
 // from the ladder. The pen's own house counts as a hidey place too.
-const HIDES = { house: { door: 60 }, hut: { door: 60 }, tunnel: { door: 22, exit: 118 } };
+const HIDES = { house: { door: 60, doorW: 0.5 }, hut: { door: 60, doorW: 0.3 }, tunnel: { door: 22, exit: 118, doorW: 0.28 } };
 
 function toySpot(id) {
   if (id === 'house') { const f = Art.PEN_FIXTURES.house; return { x: f.x / 400, y: fixtureY(f) }; }
@@ -516,7 +526,7 @@ function hideIn(pig, id, w) {
   const el = () => $(`.piggy[data-id="${pig.id}"]`);
   syncPose(el(), w);
   if (Math.random() < 0.6) {
-    setTimeout(() => { if (w.hide !== id) return; w.inside = false; w.peek = true; syncPose(el(), w); }, 1300 + Math.random() * 900);
+    setTimeout(() => { const d = el(); if (w.hide !== id || !d) return; w.peekW = peekSize(id, d); w.inside = false; w.peek = true; syncPose(d, w); }, 1300 + Math.random() * 900);
     setTimeout(() => { if (w.hide !== id) return; w.peek = false; w.inside = true; syncPose(el(), w); }, 2600 + Math.random() * 400);
   }
   setTimeout(() => {
