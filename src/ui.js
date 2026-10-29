@@ -1923,8 +1923,7 @@ function poopBook() {
   }).join('');
   popup(`Poop Book`, `<div class="book-tabs"><button class="on" data-pane="poops">Poops <small>${found} / ${G.bookSlots().length}</small></button><button data-pane="badges">Badges <small>${got} / ${G.ACHIEVEMENTS.length}</small></button></div>
     <div class="book-pane swipe" data-pane="poops">
-      <div class="book-prize">${filled ? `<span class="books-filled">${Art.poopBookArt(true)}<span>Filled <b>${filled}</b> ${filled === 1 ? 'time' : 'times'}</span></span>` : ''}
-        <span class="next-prize">Fill it to win <i class="coin-sm">${Art.coinIcon()}</i><b>${G.bookReward(filled)}!</b></span></div>
+      ${filled ? `<div class="book-prize"><span class="books-filled">${Art.poopBookArt(true)}<span>Filled <b>${filled}</b> ${filled === 1 ? 'time' : 'times'}</span></span></div>` : ''}
       <p class="book-hint">${filled ? 'A fresh page! Find every kind again.' : 'Scoop every kind of poop to fill the book.'}</p>
       ${tiers}
     </div>
