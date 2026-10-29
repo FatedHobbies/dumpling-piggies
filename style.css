@@ -235,6 +235,7 @@ button.pk:active { transform: scale(.95); }
 .books-filled b { color: #2F6FB8; font-size: 1.15em; }
 .next-prize { padding-left: 12px; } .next-prize b { color: #E0941C; }
 .next-prize .coin-sm svg { width: 20px; height: 20px; vertical-align: middle; }
+.tier-odds .coin-sm svg { width: 14px; height: 14px; vertical-align: -2px; }
 .celebrate { position: relative; display: flex; justify-content: center; align-items: flex-end; height: 150px; }
 .book-pop { width: 190px; animation: book-pop .7s cubic-bezier(.3, 1.6, .5, 1) both, wobble 2.4s 0.7s ease-in-out infinite; }
 .book-pop svg { width: 100%; height: auto; display: block; }
