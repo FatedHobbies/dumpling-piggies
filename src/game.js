@@ -508,7 +508,9 @@ export function capacity(state) {
 }
 
 export function adoptCost(state) {
-  return ADOPT_COST[Math.min(state.piggies.length + (state.away || []).length, ADOPT_COST.length - 1)];
+  // There is no limit on piggies: past the list, each one costs 600 more.
+  const n = state.piggies.length + (state.away || []).length;
+  return n < ADOPT_COST.length ? ADOPT_COST[n] : ADOPT_COST[ADOPT_COST.length - 1] + 600 * (n - ADOPT_COST.length + 1);
 }
 
 export function isHappy(state, p) {
