@@ -1,7 +1,7 @@
 import * as G from './game.js';
 import * as Art from './art.js';
 import { load, save, wipe } from './save.js';
-import { sfx } from './sound.js';
+import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
 const VERSION = 23;
@@ -34,6 +34,7 @@ export function start() {
   if (!state.maze) state.maze = M.newMaze();
   selectedPig = state.piggies[0].id;
   buildShell();
+  music.init();
   // Welcome popups go up before the first render so the tutorial's own popup waits its turn.
   if (welcome === 'new') {
     const p = state.piggies[0];
@@ -77,6 +78,7 @@ function buildShell() {
   document.body.innerHTML = `
     <header class="hud">
       <button class="hud-pig" id="name" aria-label="Rename your piggy"><span class="hud-avatar" id="avatar"></span><span class="hud-name" id="pigname"></span></button>
+      <button class="hud-music" id="music" aria-label="Music on or off"></button>
       <div class="hud-coins"><span class="coin-ico">${Art.coinIcon()}</span><span id="coins">0</span></div>
     </header>
     <div id="coach" class="coach" hidden><span class="coach-pig" id="coachpig"></span><p id="coachtext"></p><button class="coach-skip" id="coachskip" aria-label="Skip tutorial">✕</button></div>
@@ -91,6 +93,10 @@ function buildShell() {
     <div id="toasts"></div>`;
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); if (tab === 'shop' && b.dataset.tab === 'steamer') tut('home'); tab = b.dataset.tab; sfx.pop(); render(true); }));
   $('#name').addEventListener('click', renameDialog);
+  const musicBtn = $('#music');
+  const showMusic = () => { musicBtn.textContent = music.on ? '🎵' : '🔇'; musicBtn.classList.toggle('off', !music.on); };
+  musicBtn.addEventListener('click', () => { music.toggle(); sfx.pop(); showMusic(); });
+  showMusic();
   $('#coachskip').addEventListener('click', () => confirmBox('Skip the tutorial?', () => { state.tutorial = { done: true }; render(); }));
 }
 
