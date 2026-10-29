@@ -438,3 +438,10 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .toy[data-toy="ball"].play .toy-move { animation: toy-roll .9s ease-in-out; }
 @keyframes toy-jiggle { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(1.1, .88); } 65% { transform: scale(.94, 1.08) translateY(-4%); } }
 @keyframes toy-roll { 0%, 100% { transform: translateX(0) rotate(0); } 30% { transform: translateY(-30%) rotate(120deg); } 60% { transform: translateX(14%) rotate(240deg); } }
+.toy-count { text-align: center; font-family: var(--display); font-size: 1rem; color: var(--ink); }
+.toy-count b { color: var(--blue-dark); font-size: 1.2rem; }
+.toy-tile.box { border-color: var(--line); background: linear-gradient(#FFFFFF, #F1EBDF); }
+.toy-tile.box > svg { opacity: .75; }
+.price.box { color: var(--blue-dark); }
+.chew-meter { width: 70%; height: 10px; border-radius: 5px; background: rgba(0,0,0,.15); overflow: hidden; margin-top: 2px; }
+.chew-meter i { display: block; height: 100%; background: #FF9A3C; border-radius: 5px; }

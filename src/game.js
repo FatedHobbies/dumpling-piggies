@@ -65,31 +65,72 @@ export function wearHat(state, piggyId, id) {
   return { ok: true };
 }
 
-// Pen toys are bought once and sit in the pen at a fixed spot (x, y as
-// fractions of the pen floor). Piggies wander over and play with them.
+// Pen toys sit in the pen at a fixed spot (x, y as fractions of the pen
+// floor) and piggies wander over to play. `state.toys[id]` is 'pen' or 'box'
+// (owned but put away); only TOY_LIMIT fit in the pen at once. Chews get
+// nibbled away (`state.toyWear`, 0 to 100) and must be bought again.
 export const TOYS = {
   ball:   { name: 'Bouncy ball',  desc: 'Piggies love to nose it around.',  cost: 30,  x: 0.80, y: 0.58 },
-  chew:   { name: 'Chew sticks',  desc: 'A crunchy bundle to nibble on.',    cost: 45,  x: 0.32, y: 0.80 },
+  chew:   { name: 'Chew sticks',  desc: 'A crunchy bundle to nibble on. Gets eaten up!', cost: 25, x: 0.32, y: 0.80, chew: true },
+  carrot: { name: 'Carrot chew',  desc: 'A wooden carrot to gnaw. Gets eaten up!',      cost: 20, x: 0.56, y: 0.68, chew: true },
   tunnel: { name: 'Fuzzy tunnel', desc: 'Run in one end and out the other!', cost: 80,  x: 0.80, y: 0.95 },
   hut:    { name: 'Dumpling hut', desc: 'A cozy hidey house shaped like a dumpling.', cost: 120, x: 0.17, y: 0.62 },
   slide:  { name: 'Tiny slide',   desc: 'Wheee! Down the slide.',            cost: 160, x: 0.52, y: 0.34 },
 };
+const CHEW_BITE = 2.5;            // wear per nibble
+const CHEW_DAY = 100 / 86400;     // a chew in the pen also wears out over one day
 
+export function toyLimit(state) {
+  return 3 + (state.upgrades.pen2 ? 1 : 0) + (state.upgrades.pen3 ? 1 : 0);
+}
+export function toysInPen(state) {
+  return Object.keys(TOYS).filter(id => state.toys[id] === 'pen');
+}
+export function toyLeft(state, id) {
+  return Math.max(0, 1 - (state.toyWear[id] || 0) / 100);
+}
+
+// New toys go straight into the pen if there is room, otherwise into the box.
 export function buyToy(state, id) {
   const t = TOYS[id];
   if (!t || state.toys[id]) return { ok: false };
   if (state.coins < t.cost) return { ok: false, reason: 'coins' };
   state.coins -= t.cost;
-  state.toys[id] = true;
-  return { ok: true };
+  state.toys[id] = toysInPen(state).length < toyLimit(state) ? 'pen' : 'box';
+  delete state.toyWear[id];
+  return { ok: true, where: state.toys[id] };
 }
 
-// A piggy reached a toy: a little more fun, no coins.
-export function playToy(state, piggyId) {
+// Move an owned toy between the pen and the toy box.
+export function moveToy(state, id) {
+  const at = state.toys[id];
+  if (!at) return { ok: false };
+  if (at === 'pen') { state.toys[id] = 'box'; return { ok: true, where: 'box' }; }
+  if (toysInPen(state).length >= toyLimit(state)) return { ok: false, reason: 'full' };
+  state.toys[id] = 'pen';
+  return { ok: true, where: 'pen' };
+}
+
+function wearToy(state, id, amount, events) {
+  state.toyWear[id] = (state.toyWear[id] || 0) + amount;
+  if (state.toyWear[id] < 100) return;
+  delete state.toys[id];
+  delete state.toyWear[id];
+  if (events) events.push({ type: 'toyGone', id });
+}
+
+// A piggy reached a toy: a little more fun, no coins. Chews get a bite taken.
+export function playToy(state, piggyId, id) {
   const p = piggy(state, piggyId);
   if (!p) return { ok: false };
   p.fun = clamp(p.fun + 4, 0, 100);
-  return { ok: true, piggy: p };
+  let gone = false;
+  if (TOYS[id] && TOYS[id].chew && state.toys[id] === 'pen') {
+    const ev = [];
+    wearToy(state, id, CHEW_BITE, ev);
+    gone = ev.length > 0;
+  }
+  return { ok: true, piggy: p, gone };
 }
 
 export const RENAME_COST = 30;
@@ -162,7 +203,8 @@ export function newState(now = Date.now()) {
     hats: {},                       // hatId -> true (owned)
     bookPage: {},                   // poop kinds found on the current Poop Book page
     booksFilled: 0,                 // times the Poop Book has been filled
-    toys: {},                       // toyId -> true (owned, in the pen)
+    toys: {},                       // toyId -> 'pen' or 'box'
+    toyWear: {},                    // toyId -> 0..100, how much of a chew is eaten
     stats: { fed: 0, scooped: 0, cooked: 0, petted: 0 },
     offer: null,                    // the three piggies up for adoption
     lastSeen: now,
@@ -177,6 +219,9 @@ export function newState(now = Date.now()) {
 export function migrate(state) {
   if (!state.tutorial) state.tutorial = { done: true };   // saves from before the tutorial existed
   if (!state.toys) state.toys = {};
+  if (!state.toyWear) state.toyWear = {};
+  let room = toyLimit(state);                               // toys from v21 were just `true`
+  for (const id of Object.keys(state.toys)) if (state.toys[id] === true) state.toys[id] = room-- > 0 ? 'pen' : 'box';
   if (!state.hats) {                                        // the old single strawberry-hat upgrade
     state.hats = {};
     if (state.upgrades && state.upgrades.hat) {
@@ -261,6 +306,9 @@ export function tick(state, dt, now = Date.now()) {
     }
     if (isHappy(state, p)) happy += p.effect === 'sparkle' ? 2 : 1;
   }
+
+  // Chews in the pen slowly get nibbled even when nobody is watching.
+  for (const id of toysInPen(state)) if (TOYS[id].chew) wearToy(state, id, CHEW_DAY * dt, events);
 
   // Each happy piggy earns a trickle: 1 coin every 20 seconds, double while sparkling.
   if (happy > 0) {

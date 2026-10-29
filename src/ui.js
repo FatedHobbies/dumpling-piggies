@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 22;
+const VERSION = 23;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -63,6 +63,7 @@ function loop() {
   for (const e of events) {
     if (e.type === 'coin') floatCoin();
     if (e.type === 'poop') sfx.plop();
+    if (e.type === 'toyGone') toyGone(e.id);
   }
   bookCheck();
   render();
@@ -255,11 +256,14 @@ function updateSteamer() {
   // Toys sit on the floor; tapping one sends the picked piggy over to play.
   for (const [id, t] of Object.entries(G.TOYS)) {
     let d = $(`.toy[data-toy="${id}"]`, floor);
-    if (!state.toys[id]) { if (d) d.remove(); continue; }
-    if (d) continue;
-    d = el(`<button class="toy" data-toy="${id}" aria-label="${t.name}" style="--x:${t.x};--y:${t.y}">${Art.toyArt(id)}</button>`);
-    d.addEventListener('click', () => { toyBounce(id); goToToy(current(), id); });
-    floor.appendChild(d);
+    if (state.toys[id] !== 'pen') { if (d) d.remove(); continue; }
+    if (!d) {
+      d = el(`<button class="toy" data-toy="${id}" aria-label="${t.name}" style="--x:${t.x};--y:${t.y}"></button>`);
+      d.addEventListener('click', () => { toyBounce(id); goToToy(current(), id); });
+      floor.appendChild(d);
+    }
+    const left = t.chew ? Math.ceil(G.toyLeft(state, id) * 4) / 4 : 1;   // chews redraw a quarter at a time
+    if (d.dataset.left !== String(left)) { d.dataset.left = left; d.innerHTML = Art.toyArt(id, left); }
   }
   // Poops
   const poops = new Map([...floor.querySelectorAll('.poop')].map(c => [+c.dataset.id, c]));
@@ -314,7 +318,7 @@ function wanderTick() {
       pig.x = w.tx; pig.y = w.ty;
       w.pause = now + 1500 + Math.random() * (zoom ? 500 : 4000);
       if (w.toy) { playAt(pig, w.toy, d); w.toy = null; }
-      const owned = Object.keys(G.TOYS).filter(t => state.toys[t]);
+      const owned = G.toysInPen(state);
       if (owned.length && Math.random() < 0.35) aimAtToy(w, owned[Math.floor(Math.random() * owned.length)]);
       else { w.tx = 0.08 + Math.random() * 0.84; w.ty = Math.random(); }
       if (d) d.classList.remove('walking');
@@ -348,15 +352,21 @@ function toyBounce(id) {
   setTimeout(() => d.classList.remove('play'), 900);
 }
 
+function toyGone(id) {
+  sfx.pop();
+  toast(`The ${G.TOYS[id].name} got all eaten up! Get more in the Shop.`, 'big');
+}
+
 function playAt(pig, id, d) {
+  if (state.toys[id] !== 'pen') return;
   toyBounce(id);
-  G.playToy(state, pig.id);
+  if (G.playToy(state, pig.id, id).gone) toyGone(id);
   if (d) {
     const w = wander.get(pig.id);
     if (w) { w.face = G.TOYS[id].x > pig.x ? 1 : -1; placePig(d, pig, w); }
     d.classList.remove('hop'); void d.offsetWidth; d.classList.add('hop');
     setTimeout(() => d.classList.remove('hop'), 600);
-    bubble(d, ['Wheee!', 'Fun!', '♥', 'Wheek!'][Math.floor(Math.random() * 4)]);
+    bubble(d, G.TOYS[id].chew ? 'Nom nom!' : ['Wheee!', 'Fun!', '♥', 'Wheek!'][Math.floor(Math.random() * 4)]);
   }
 }
 
@@ -755,21 +765,30 @@ function updateShop() {
   });
   document.querySelectorAll('.shop-sec').forEach(sec => { sec.hidden = sec.dataset.sec !== stab; });
   const toys = $('#toys');
-  const tsig = JSON.stringify([state.toys, state.coins]);
+  const tsig = JSON.stringify([state.toys, state.coins, G.toyLimit(state), Object.keys(G.TOYS).map(id => Math.ceil(G.toyLeft(state, id) * 4))]);
   if (toys.dataset.sig !== tsig) {
     toys.dataset.sig = tsig;
-    toys.innerHTML = `<p class="hint">Toys go in the Pen. Your piggies will run over and play!</p><div class="toy-grid"></div>`;
+    const inPen = G.toysInPen(state).length, limit = G.toyLimit(state);
+    toys.innerHTML = `<div class="toy-count"><b>${inPen} / ${limit}</b> toys in the pen</div>
+      <p class="hint">Tap a toy you have to put it in the pen or take it out.${state.upgrades.pen3 ? '' : ' A bigger pen fits more toys!'}</p><div class="toy-grid"></div>`;
     const grid = $('.toy-grid', toys);
     for (const [id, t] of Object.entries(G.TOYS)) {
-      const owned = !!state.toys[id];
-      const b = el(`<button class="toy-tile tile ${owned ? 'owned' : ''}">${Art.toyArt(id)}<span>${t.name}</span><small>${t.desc}</small>
-        ${owned ? '<span class="price can">In the pen!</span>' : price(t.cost)}</button>`);
+      const at = state.toys[id];
+      const left = t.chew && at ? G.toyLeft(state, id) : 1;
+      const label = at === 'pen' ? '<span class="price can">In the pen</span>' : at === 'box' ? '<span class="price box">Put in pen</span>' : price(t.cost);
+      const meter = t.chew && at ? `<span class="chew-meter"><i style="width:${Math.round(left * 100)}%"></i></span>` : '';
+      const b = el(`<button class="toy-tile tile ${at ? 'owned ' + at : ''}">${Art.toyArt(id, Math.ceil(left * 4) / 4)}<span>${t.name}</span><small>${t.desc}</small>${meter}${label}</button>`);
       b.addEventListener('click', () => {
-        if (state.toys[id]) { sfx.pop(); tab = 'steamer'; render(); return; }
+        if (at) {
+          const r = G.moveToy(state, id);
+          if (!r.ok) { sfx.nope(); toast(`The pen fits ${limit} toys. Take one out first!`); return; }
+          sfx.pop(); toast(r.where === 'pen' ? `${t.name} is in the pen!` : `${t.name} went in the toy box`); render(); return;
+        }
         const r = G.buyToy(state, id);
         if (!r.ok) { sfx.nope(); toast(`Need ${t.cost - state.coins} more coins`); return; }
         sfx.fanfare();
-        popup('New toy!', `<div class="toy-card">${Art.toyArt(id)}</div><p>The <b>${t.name}</b> is in the pen. Go see your piggies play!</p>`, 'Go see!', () => { tab = 'steamer'; render(); });
+        if (r.where === 'pen') popup('New toy!', `<div class="toy-card">${Art.toyArt(id)}</div><p>The <b>${t.name}</b> is in the pen. Go see your piggies play!</p>`, 'Go see!', () => { tab = 'steamer'; render(); });
+        else popup('New toy!', `<div class="toy-card">${Art.toyArt(id)}</div><p>The pen is full of toys, so the <b>${t.name}</b> went in the toy box. Take a toy out to make room!</p>`, 'OK');
         render();
       });
       grid.appendChild(b);

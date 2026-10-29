@@ -462,10 +462,7 @@ const TOY_ART = {
     <path d="M40 82 Q60 92 80 82" fill="none" stroke="#7AA6FF" stroke-width="6" stroke-linecap="round"/>
     <circle cx="60" cy="44" r="4" fill="#fff" opacity=".9"/><circle cx="74" cy="72" r="3.5" fill="#fff" opacity=".9"/>
     <ellipse cx="48" cy="52" rx="8" ry="5" transform="rotate(-30 48 52)" fill="#fff" opacity=".55"/></g>`,
-  chew: `<ellipse cx="60" cy="94" rx="34" ry="5" fill="#000" opacity=".12"/>
-    <g class="toy-move">${[[-18, -14], [-6, -4], [6, 4], [18, 14]].map(([dx, r]) => `<rect x="${55 + dx}" y="34" width="10" height="58" rx="5" transform="rotate(${r} ${60 + dx} 92)" fill="#C9935A" stroke="#8A5634" stroke-width="3"/>`).join('')}
-    <path d="M36 64 Q60 72 84 64" fill="none" stroke="#5FAE4E" stroke-width="8" stroke-linecap="round"/>
-    <path d="M58 66 q-12 -14 -2 -18 q8 6 2 18 q12 -12 16 -2 q-8 6 -16 2" fill="#7DC768" stroke="#3E8E2A" stroke-width="2.5"/></g>`,
+
   tunnel: `<ellipse cx="60" cy="94" rx="56" ry="6" fill="#000" opacity=".12"/>
     <g class="toy-move"><path d="M6 94 V64 Q6 30 60 30 Q114 30 114 64 V94Z" fill="#7B6CF6" stroke="#4F42B5" stroke-width="4" stroke-linejoin="round"/>
     ${[26, 46, 66, 86].map(x => `<path d="M${x} 34 Q${x + 4} 64 ${x} 94" fill="none" stroke="#9A8DFF" stroke-width="6"/>`).join('')}
@@ -486,6 +483,24 @@ const TOY_ART = {
     <path d="M40 18 Q60 22 78 60 Q90 84 112 88 L112 96 Q84 94 70 66 Q56 34 40 30Z" fill="#5BC8A8" stroke="#2E8C70" stroke-width="4" stroke-linejoin="round"/>
     <path d="M48 24 Q62 30 74 56" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".6"/></g>`,
 };
-export function toyArt(id) {
-  return `<svg viewBox="0 0 120 100" class="toy-svg" aria-hidden="true">${TOY_ART[id] || ''}</svg>`;
+// Chews get smaller as they are eaten: `left` runs from 1 (new) to 0.
+function chewSticks(left) {
+  const sticks = [[-18, -14], [-6, -4], [6, 4], [18, 14]].slice(0, Math.max(1, Math.ceil(left * 4)));
+  return `<ellipse cx="60" cy="94" rx="34" ry="5" fill="#000" opacity=".12"/>
+    <g class="toy-move">${sticks.map(([dx, r]) => `<rect x="${55 + dx}" y="${34 + (1 - left) * 18}" width="10" height="${58 - (1 - left) * 18}" rx="5" transform="rotate(${r} ${60 + dx} 92)" fill="#C9935A" stroke="#8A5634" stroke-width="3"/>`).join('')}
+    <path d="M36 70 Q60 78 84 70" fill="none" stroke="#5FAE4E" stroke-width="8" stroke-linecap="round"/>
+    <path d="M58 72 q-12 -14 -2 -18 q8 6 2 18 q12 -12 16 -2 q-8 6 -16 2" fill="#7DC768" stroke="#3E8E2A" stroke-width="2.5"/></g>`;
+}
+function carrotChew(left) {
+  const tip = 104 - 74 * Math.max(0.25, left);   // the pointy end gets gnawed back
+  const bites = left < 1 ? `<circle cx="${tip}" cy="72" r="7" fill="#F6DFAE"/><circle cx="${tip + 4}" cy="82" r="6" fill="#F6DFAE"/>` : '';
+  return `<ellipse cx="60" cy="94" rx="40" ry="5" fill="#000" opacity=".12"/>
+    <g class="toy-move"><path d="M${tip} 78 Q${tip} 64 ${Math.min(tip + 10, 88)} 64 L96 62 Q106 76 96 90 L${Math.min(tip + 10, 88)} 90 Q${tip} 90 ${tip} 78Z" fill="#FF9A3C" stroke="#D2691E" stroke-width="4" stroke-linejoin="round"/>
+    ${bites}
+    ${[0.35, 0.55, 0.75].filter(f => 30 + f * 66 > tip + 6).map(f => `<path d="M${30 + f * 66} 68 v6" stroke="#D2691E" stroke-width="3" stroke-linecap="round"/>`).join('')}
+    <path d="M98 66 q10 -16 18 -12 M100 72 q14 -8 18 0 M98 64 q2 -18 10 -20" stroke="#5FAE4E" stroke-width="6" fill="none" stroke-linecap="round"/></g>`;
+}
+export function toyArt(id, left = 1) {
+  const art = id === 'chew' ? chewSticks(left) : id === 'carrot' ? carrotChew(left) : TOY_ART[id] || '';
+  return `<svg viewBox="0 0 120 100" class="toy-svg" aria-hidden="true">${art}</svg>`;
 }
