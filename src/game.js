@@ -742,7 +742,7 @@ export const SPECIAL_POOPS = {
   moon:      { name: 'Moon',       page: 'legend',    coins: 15, odds: 'only at night' },
   champ:     { name: 'Maze champ', page: 'legend',    coins: 15, odds: 'after a maze run' },
   hay:       { name: 'Hay bale',   page: 'legend',    coins: 15, odds: 'after eating hay' },
-  mystery:   { name: 'Mystery',    page: 'legend',    coins: 20, odds: 'after a secret dumpling' },
+  mystery:   { name: 'Mystery',    page: 'legend',    coins: 20, odds: 'after a special dumpling' },
   robo:      { name: 'Robo',       page: 'legend',    coins: 15, odds: 'Robo-scooper finds it' },
 };
 const specialsOn = (page) => Object.keys(SPECIAL_POOPS).filter(id => SPECIAL_POOPS[id].page === page);
@@ -799,6 +799,9 @@ const POOP_BAG = { plain: 70, shapes: 18, glitter: 6, patterns: 3, silly: 2, rai
 // once every 40 poops.
 const TREASURE_BAG = { none: 990, gold: 3, crystal: 2, royal: 2, unicorn: 1, goldicorn: 1, diamond: 1 };
 const TREASURE_GAP = 40;
+// A lucky poop (right after a shiny or special dumpling) is never plain.
+const LUCKY_BAG = { shapes: 12, glitter: 8, patterns: 4, silly: 3, rainbow: 3 };
+const MYSTERY_TRY = { rare: 0.25, super: 0.4, secret: 0.6 };
 const bagOf = (keys) => Object.fromEntries(keys.map(k => [k, 1]));
 const EVERYDAY_BAG = bagOf(['brown', ...PLAIN_COLORS].flatMap(c => ['beans', 'swirl'].map(sh => sh + '|' + c)));
 const SHAPE_BAG = bagOf(specialsOn('shapes').flatMap(id => SHAPE_TINTS.map(t => id + '|' + t)));
@@ -815,7 +818,9 @@ function eventPoop(state, pooper, rng) {
     delete pooper.foodTry;
     if (food.includes('hay') && rng() < 0.2) return 'hay';
     const sp = food.startsWith('sp:') && SPECIALS[food.slice(3)];
-    if (sp && rng() < (sp.tier === 'secret' ? 0.5 : 0.25)) return 'mystery';
+    if (sp && rng() < MYSTERY_TRY[sp.tier]) return 'mystery';
+    // A shiny or special dumpling makes that first poop a lucky one.
+    if (sp || food.startsWith('shiny:')) pooper.lucky = true;
   }
   const hour = new Date().getHours();
   if ((hour >= 20 || hour < 6) && rng() < 1 / 80) {
@@ -843,7 +848,9 @@ export function poopKind(state, rng = Math.random) {
   if (treasure) return sp(treasure);
   const sparkly = () => rng() < 1 / 6;
   const pick = (page) => draw(state, page, bagOf(specialsOn(page)), rng);
-  const kind = draw(state, 'poop', POOP_BAG, rng);
+  const lucky = pooper && pooper.lucky;
+  if (lucky) delete pooper.lucky;
+  const kind = lucky ? draw(state, 'lucky', LUCKY_BAG, rng) : draw(state, 'poop', POOP_BAG, rng);
   if (kind === 'rainbow') return { shape: shape(), color: 'rainbow', by };
   if (kind === 'glitter') return { shape: shape(), color: draw(state, 'glitter', bagOf(GLITTER_COLORS), rng), by };
   if (kind === 'silly' || kind === 'patterns') return sp(specialVariant(pick(kind), 'brown', sparkly()));
