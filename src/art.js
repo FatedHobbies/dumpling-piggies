@@ -146,25 +146,24 @@ export function dumpling(key, size = 64, opts = {}) {
   const dark = shade(fill);
   // A short bamboo-steamer cylinder: the rim behind the bun, the front wall in
   // front of it so the dumpling sits down inside.
-  const back = opts.basket === false ? '' : `<ellipse cx="32" cy="36" rx="28" ry="7" fill="#C98F4B" stroke="#9C6A3A" stroke-width="2.5"/>`;
+  // Plain tan cylinder with a slightly wider lip, seen from a little above.
+  const back = opts.basket === false ? '' : `<ellipse cx="32" cy="37" rx="30" ry="7" fill="#C98F4B" stroke="#B9824A" stroke-width="2.5"/>`;
   const front = opts.basket === false ? '' : `
-    <path d="M4 36 Q32 50 60 36 V53 Q60 59 54 59 H10 Q4 59 4 53Z" fill="#E6B566" stroke="#9C6A3A" stroke-width="2.5" stroke-linejoin="round"/>
-    <path d="M8 50 Q32 56 56 50" stroke="#C98F4B" stroke-width="2" fill="none" opacity=".8"/>
-    <path d="M4 36 Q32 50 60 36" stroke="#C98F4B" stroke-width="4" fill="none"/>
-    <path d="M4 36 Q32 50 60 36" stroke="#9C6A3A" stroke-width="1.5" fill="none" opacity=".5"/>`;
-  const dy = opts.basket === false ? 8 : 0;
+    <path d="M6 44 Q32 57 58 44 V55 Q58 61 52 61 H12 Q6 61 6 55Z" fill="#E8B27A" stroke="#B9824A" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M2 37 Q32 51 62 37 V43 Q32 57 2 43Z" fill="#EFC08C" stroke="#B9824A" stroke-width="2.5" stroke-linejoin="round"/>`;
+  const dy = opts.basket === false ? 6 : 2;
   const sparkle = r.glitter ? `<g fill="#fff" opacity=".9"><circle cx="17" cy="30" r="1.2"/><circle cx="42" cy="24" r="1.1"/><circle cx="47" cy="33" r="1.3"/><circle cx="24" cy="27" r="1"/><circle cx="36" cy="22" r=".9"/><circle cx="31" cy="29" r="1"/></g>
     <path d="M53 12 l1.5 3 3 1.5 -3 1.5 -1.5 3 -1.5 -3 -3 -1.5 3 -1.5z" fill="#fff"/><path d="M10 14 l1 2 2 1 -2 1 -1 2 -1 -2 -2 -1 2 -1z" fill="#fff"/>` : '';
   const eyes = r.sleepy
-    ? `<path d="M23 32 Q26 35 29 32 M35 32 Q38 35 41 32" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/><text x="47" y="20" font-size="9" font-weight="700" fill="#4C7FD9" font-family="sans-serif">z</text>`
+    ? `<path d="M23 29 Q26 32 29 29 M35 29 Q38 32 41 29" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/><text x="47" y="20" font-size="9" font-weight="700" fill="#4C7FD9" font-family="sans-serif">z</text>`
     : r.wink
-      ? `<path d="M23 32 Q26 28 29 32 M35 32 Q38 28 41 32" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
-      : `<circle cx="26" cy="32" r="2.4" fill="${INK}"/><circle cx="38" cy="32" r="2.4" fill="${INK}"/><circle cx="27" cy="31" r=".8" fill="#fff"/><circle cx="39" cy="31" r=".8" fill="#fff"/>`;
+      ? `<path d="M23 29 Q26 25 29 29 M35 29 Q38 25 41 29" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+      : `<circle cx="26" cy="29" r="2.4" fill="${INK}"/><circle cx="38" cy="29" r="2.4" fill="${INK}"/><circle cx="27" cy="28" r=".8" fill="#fff"/><circle cx="39" cy="28" r=".8" fill="#fff"/>`;
   const mouth = r.sleepy
-    ? `<ellipse cx="32" cy="37" rx="1.5" ry="1.1" fill="${INK}"/>`
-    : `<path d="M28.5 36 Q32 40.5 35.5 36Z" fill="${INK}"/><path d="M30.5 38 Q32 39.5 33.5 38" fill="#FF8FA8"/>`;
+    ? `<ellipse cx="32" cy="34" rx="1.5" ry="1.1" fill="${INK}"/>`
+    : `<path d="M28.5 33 Q32 37.5 35.5 33Z" fill="${INK}"/><path d="M30.5 35 Q32 36.5 33.5 35" fill="#FF8FA8"/>`;
   const hat = r.hat ? `<path d="M23 18 Q32 5 43 16 Q36 14 30 18 Q27 20 23 18Z" fill="#FF5C7A"/><circle cx="28" cy="15" r="1.3" fill="#FFF3B0"/><circle cx="35" cy="11" r="1.3" fill="#FFF3B0"/>` : '';
-  const stripes = r.stripes ? `<path d="M15 29 Q32 23 49 29" stroke="${r.stripes}" stroke-width="2.5" fill="none" opacity=".6"/>` : '';
+  const stripes = r.stripes ? `<path d="M14 25 Q32 19 50 25" stroke="${r.stripes}" stroke-width="2.5" fill="none" opacity=".6"/>` : '';
   // A wide squishy bun: flat bottom, pleats gathered to a little twist on top,
   // the face low on the front.
   return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">
@@ -176,7 +175,7 @@ export function dumpling(key, size = 64, opts = {}) {
     <path d="M28 18 Q32 12 36 18 Q32 21 28 18Z" fill="${dark}" opacity=".55"/>
     <ellipse cx="21" cy="25" rx="5" ry="2.6" transform="rotate(-25 21 25)" fill="#fff" opacity=".55"/>
     ${sparkle}
-    <g stroke="#FF6F8E" stroke-width="1.8" stroke-linecap="round" opacity=".8"><path d="M18 33 l1.5 3 M21.5 32 l1.5 3 M41 32 l1.5 3 M44.5 33 l1.5 3"/></g>
+    <g stroke="#FF6F8E" stroke-width="1.8" stroke-linecap="round" opacity=".8"><path d="M18 30 l1.5 3 M21.5 29 l1.5 3 M41 29 l1.5 3 M44.5 30 l1.5 3"/></g>
     ${eyes}${mouth}${hat}
     </g>
     ${front}
