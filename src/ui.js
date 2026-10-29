@@ -882,6 +882,7 @@ function mazeView() {
 
 function updateMaze() {
   const m = state.maze;
+  if (!run) checkMazeThemes();
   const grid = $('#mgrid');
   grid.classList.toggle('running', !!run);
   $('.maze-bar').classList.toggle('running', !!run);
@@ -942,19 +943,52 @@ function btn(label, onClick, cls = '') {
 // which show as "?" until they're unlocked. The Style button picks the look.
 let mazeTile = 1;
 const FUN_TILES = 4;
-// Maze themes change the board, floor and walls. Hay barn is always there;
-// the rest unlock from the other parts of the game.
+// Maze themes change the board, floor, walls and bar. Hay barn is free; four
+// are sold in the Shop's Mazes tab and three are earned by playing.
 const MAZE_UNLOCKS = {
-  hay: { why: '', ok: () => true },
-  pumpkin: { why: 'Grow pumpkins to unlock!', ok: () => G.unlockedFillings(state).includes('pumpkin') },
-  galaxy: { why: 'Steam a Galaxy Bao to unlock!', ok: () => !!(state.recipeBook || {})['sp:galaxy'] },
-  unicorn: { why: 'Scoop a Unicorn poop to unlock!', ok: () => Object.keys(state.poopBook || {}).some(k => /^sp-(unicorn|goldicorn|diamond)/.test(k)) },
-  kitchen: { why: 'Find 20 recipes to unlock!', ok: () => (state.discovered || []).length >= 20 },
-  snow: { why: 'Find 30 recipes to unlock!', ok: () => (state.discovered || []).length >= 30 },
-  sea: { why: 'Find 40 recipes to unlock!', ok: () => (state.discovered || []).length >= 40 },
-  poop: { why: 'Fill the Poop Book to unlock!', ok: () => (state.booksFilled || 0) > 0 },
+  hay: {},
+  pumpkin: { cost: 150 },
+  kitchen: { cost: 250 },
+  snow: { cost: 350 },
+  sea: { cost: 400 },
+  galaxy: { goal: 'Find 10 treasures', have: () => state.stats.treasures || 0, need: 10 },
+  unicorn: { goal: 'Finish 25 mazes', have: () => state.stats.mazes || 0, need: 25 },
+  poop: { goal: 'Fill the Poop Book', have: () => state.booksFilled || 0, need: 1 },
 };
-const mazeTheme = () => Art.MAZE_THEMES[state.mazeStyle] && MAZE_UNLOCKS[state.mazeStyle].ok() ? state.mazeStyle : 'hay';
+const ownsTheme = (id) => id === 'hay' || !!(state.mazeThemes || {})[id];
+function themeLockText(id) {
+  const u = MAZE_UNLOCKS[id];
+  return u.cost ? `Buy it in the Shop for ${u.cost} coins!` : `${u.goal} to unlock! (${Math.min(u.have(), u.need)} / ${u.need})`;
+}
+// Earned themes unlock with a popup the next time she's in the maze.
+function checkMazeThemes() {
+  for (const [id, u] of Object.entries(MAZE_UNLOCKS)) {
+    if (!u.goal || ownsTheme(id) || u.have() < u.need) continue;
+    state.mazeThemes = { ...(state.mazeThemes || {}), [id]: true };
+    persist(); sfx.fanfare();
+    popup('New maze theme!', `<div class="theme-card">${themePreview(id)}</div><p><b>${Art.MAZE_THEMES[id].name}</b> unlocked! Tap <b>Theme</b> in the Maze to use it.</p>`, 'Yay!');
+  }
+}
+function buyTheme(id) {
+  const u = MAZE_UNLOCKS[id];
+  if (ownsTheme(id) || !u.cost) return;
+  if (state.coins < u.cost) { sfx.nope(); toast(`Need ${u.cost - state.coins} more coins`); return; }
+  state.coins -= u.cost;
+  state.mazeThemes = { ...(state.mazeThemes || {}), [id]: true };
+  state.mazeStyle = id;
+  persist(); sfx.fanfare();
+  popup('New maze theme!', `<div class="theme-card">${themePreview(id)}</div><p><b>${Art.MAZE_THEMES[id].name}</b> is ready. Go build a maze!</p>`, 'Go build!', () => { tab = 'maze'; render(true); });
+  render();
+}
+// A little 3x2 corner of a themed maze for shop tiles and popups.
+function themePreview(id) {
+  const t = Art.MAZE_THEMES[id];
+  let out = `<svg viewBox="-6 -10 156 108" aria-hidden="true"><rect x="-6" y="-6" width="156" height="104" rx="12" fill="${t.board}"/>`;
+  for (let y = 0; y < 2; y++) for (let x = 0; x < 3; x++) out += `<rect x="${x * 48 + 2}" y="${y * 48 + 2}" width="44" height="44" rx="8" fill="${t.floor}"/>${t.deco(x * 48, y * 48, y * 3 + x)}`;
+  for (const [x, y] of [[0, 0], [1, 0], [2, 1]]) out += Art.mazeWall3d(id, x * 48, y * 48, y * 3 + x);
+  return out + '</svg>';
+}
+const mazeTheme = () => Art.MAZE_THEMES[state.mazeStyle] && ownsTheme(state.mazeStyle) ? state.mazeStyle : 'hay';
 const wallIcon = (theme) => `<svg viewBox="-2 -12 52 62" aria-hidden="true"><rect x="0" y="0" width="48" height="48" rx="8" fill="${Art.MAZE_THEMES[theme].floor}"/>${Art.mazeWall3d(theme, 0, 0, 0)}</svg>`;
 function updateTray() {
   const tray = $('#mtray');
@@ -976,11 +1010,11 @@ function updateTray() {
 }
 
 function pickMazeStyle() {
-  picker('Maze theme', Object.entries(Art.MAZE_THEMES).map(([id, t]) => MAZE_UNLOCKS[id].ok()
+  picker('Maze theme', Object.entries(Art.MAZE_THEMES).map(([id, t]) => ownsTheme(id)
     ? { id, html: wallIcon(id), label: t.name }
     : { id, html: '<i class="q">?</i>', label: '???', locked: true }),
   (id) => { state.mazeStyle = id; sfx.pop(); persist(); render(true); },
-  (id) => toast(MAZE_UNLOCKS[id].why));
+  (id) => toast(themeLockText(id)));
 }
 
 let mazeAngle = 0;
@@ -1047,6 +1081,7 @@ function scheduleStep() {
     if (ev === 'deadend') { sfx.wheek(); svgBubble('wheek?'); }
     if (ev === 'treasure') {
       const t = M.claim(state, run.found);
+      state.stats.treasures = (state.stats.treasures || 0) + 1;
       sfx.coin(); svgBubble('ooh!');
       if (t.coins) { floatCoin(t.coins); toast(`Found ${t.coins} coins!`); }
       else if (t.count) toast(`<i class="toast-ico">${Art.veggie(t.filling, 32)}</i> Found +${t.count} ${G.FILLINGS[t.filling].name}!`);
@@ -1092,6 +1127,7 @@ const SHOP_TABS = [
   { id: 'upgrades', name: 'Upgrades', icon: () => Art.upgradeIcon('sun') },
   { id: 'hats',     name: 'Hats',     icon: () => Art.hatIcon('party') },
   { id: 'toys',     name: 'Toys',     icon: () => Art.toyArt('ball') },
+  { id: 'mazes',    name: 'Mazes',    icon: () => Art.mazeIcon() },
 ];
 function shopView() {
   return el(`<section class="shop">
@@ -1101,6 +1137,7 @@ function shopView() {
     <div class="shop-sec" data-sec="upgrades"><div id="items"></div></div>
     <div class="shop-sec" data-sec="hats"><div class="hats panel" id="hats"></div></div>
     <div class="shop-sec" data-sec="toys"><div class="toys panel" id="toys"></div></div>
+    <div class="shop-sec" data-sec="mazes"><div class="toys panel" id="mthemes"></div></div>
     <button class="reset" id="reset">Start over</button>
     <p class="version">version ${VERSION}</p></section>`);
 }
@@ -1115,6 +1152,22 @@ function updateShop() {
     b.onclick = () => { if (state.shopTab !== b.dataset.stab) { state.shopTab = b.dataset.stab; sfx.pop(); persist(); render(); } };
   });
   document.querySelectorAll('.shop-sec').forEach(sec => { sec.hidden = sec.dataset.sec !== stab; });
+  const mt = $('#mthemes');
+  const msig = JSON.stringify([state.mazeThemes, state.coins, state.stats.mazes, state.stats.treasures, state.booksFilled]);
+  if (mt.dataset.sig !== msig) {
+    mt.dataset.sig = msig;
+    mt.innerHTML = `<p class="hint">New looks for the maze! Pick one with the Theme button.</p><div class="toy-grid"></div>`;
+    for (const [id, t] of Object.entries(Art.MAZE_THEMES)) {
+      const u = MAZE_UNLOCKS[id], own = ownsTheme(id);
+      const label = own ? '<span class="price can">Yours!</span>' : u.cost ? price(u.cost) : `<span class="price box">${u.goal} · ${Math.min(u.have(), u.need)}/${u.need}</span>`;
+      const b = el(`<button class="toy-tile tile theme-tile ${own ? 'owned' : ''} ${!own && !u.cost ? 'earn' : ''}">${themePreview(id)}<span>${t.name}</span>${label}</button>`);
+      b.addEventListener('click', () => {
+        if (own) { state.mazeStyle = id; persist(); sfx.pop(); tab = 'maze'; render(true); return; }
+        if (u.cost) buyTheme(id); else { sfx.nope(); toast(themeLockText(id)); }
+      });
+      $('.toy-grid', mt).appendChild(b);
+    }
+  }
   const toys = $('#toys');
   const tsig = JSON.stringify([state.toys, state.coins, G.toyLimit(state), Object.keys(G.TOYS).map(id => Math.ceil(G.toyLeft(state, id) * 4))]);
   if (toys.dataset.sig !== tsig) {
