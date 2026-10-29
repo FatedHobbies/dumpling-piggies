@@ -572,10 +572,12 @@ export function applyAway(state, now = Date.now()) {
   const simulated = Math.min(away, MAX_AWAY);
   const before = state.coins;
   const poopsBefore = state.poops.length;
+  const robot = { scooped: 0, found: false };
   let t = 0;
   while (t < simulated) {
     const step = Math.min(30, simulated - t);
     tick(state, step, state.lastSeen + (t + step) * 1000);
+    if (state.upgrades.autoscoop) robotScoop(state, robot);   // keeps room in the pen for rare ones
     t += step;
   }
   // Neglect never goes below "a bit grumpy": the piggies are never in danger.
@@ -583,18 +585,29 @@ export function applyAway(state, now = Date.now()) {
     p.hunger = Math.max(p.hunger, 15);
     p.fun = Math.max(p.fun, 15);
   }
-  let scooped = 0;
-  if (state.upgrades.autoscoop) {
-    scooped = state.poops.length;
-    for (const poop of state.poops) {
-      if (Math.random() < 1 / 25) Object.assign(poop, { shape: 'sp', color: 'robo' });   // the robot's own find
-      state.compost += poopValue(poop).compost; collect(state, poop);
-    }
-    state.poops = [];
-    state.stats.scooped += scooped;
-  }
+  const scooped = robot.scooped;
+  state.stats.scooped += scooped;
   state.lastSeen = now;
   return { away, coins: state.coins - before, poops: state.poops.length - poopsBefore, scooped };
+}
+
+// The Robo-scooper only takes everyday poops. Glitter, rare and special ones
+// stay in the pen for the kids to find. Now and then (once per time away at
+// most) the robot leaves its own Robo poop behind for them too.
+export const isEveryday = (p) => p.shape !== 'sp' && (p.color === 'brown' || PLAIN_COLORS.includes(p.color));
+function robotScoop(state, robot) {
+  const keep = [];
+  for (const poop of state.poops) {
+    if (!isEveryday(poop)) { keep.push(poop); continue; }
+    if (!robot.found && Math.random() < 1 / 25) {
+      robot.found = true;
+      keep.push(Object.assign(poop, { shape: 'sp', color: 'robo' }));
+      continue;
+    }
+    state.compost += poopValue(poop).compost; collect(state, poop);
+    robot.scooped++;
+  }
+  state.poops = keep;
 }
 
 // Poops come in kinds. The shape is random, the color comes from the last
