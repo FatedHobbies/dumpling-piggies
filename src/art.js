@@ -449,8 +449,10 @@ export function gardenScene(opts = {}) {
 // little burner. The piggy chef holds a wooden spatula in one paw, out in
 // front of its face. The UI overlays the ingredient slots on the counter.
 export function kitchenScene(opts = {}) {
+  // A curly chef mustache between the nose and the mouth (chef only).
+  const stache = `<path class="stache" transform="translate(176 120) scale(1.35) translate(-176 -116)" d="M176 118 Q170 113 164 117 Q160 121 156 118 Q154 112 160 110 Q157 115 162 114 Q168 109 176 114 Q184 109 190 114 Q195 115 192 110 Q198 112 196 118 Q192 121 188 117 Q182 113 176 118Z" fill="#4A2C1A" stroke="#FFF3DF" stroke-width="1.5" stroke-linejoin="round"/>`;
   const toque = `<g class="hat"><path d="M112 72 Q110 48 134 46 Q142 30 160 40 Q178 36 180 56 Q188 70 170 74 Z" fill="#fff" stroke="#D5CDBA" stroke-width="3"/><rect x="118" y="66" width="56" height="12" rx="4" fill="#fff" stroke="#D5CDBA" stroke-width="3"/></g>`;
-  const pig = piggySide({ coat: opts.coat }).replace('<svg viewBox="0 0 200 200"', '<svg viewBox="0 0 200 200" width="200" height="200"').replace('</g>\n  </svg>', toque + '</g></svg>');
+  const pig = piggySide({ coat: opts.coat }).replace('<svg viewBox="0 0 200 200"', '<svg viewBox="0 0 200 200" width="200" height="200"').replace('</g>\n  </svg>', stache + toque + '</g></svg>');
   const tier = (y, h) => `<rect x="240" y="${y}" width="104" height="${h}" rx="6" fill="#E6B566" stroke="#9C6A3A" stroke-width="3"/>
       <path d="M242 ${y + h / 2} H342" stroke="#C98F4B" stroke-width="2.5"/>
       <g stroke="#9C6A3A" stroke-width="2" opacity=".45">${[254, 270, 286, 302, 318, 334].map(x => `<path d="M${x} ${y + 3} V${y + h - 3}"/>`).join('')}</g>`;
