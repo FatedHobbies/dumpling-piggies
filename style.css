@@ -671,16 +671,11 @@ button.pk:active { transform: scale(.95); }
 .pitem.locked span { color: var(--soft); }
 .pitem.locked .count { background: var(--line); color: var(--soft); }
 .pantry .pk-pad { visibility: hidden; }
-/* Counter bar: Dumpling Book on the left, the two filling slots beside Steam it! */
-.counter-bar { position: absolute; left: 3%; right: 3%; bottom: 7%; display: flex; align-items: center; gap: 8px; }
-.dbook-btn { position: relative; flex: none; width: 58px; height: 62px; border-radius: 14px; border: 3px solid var(--panel-edge, #D5CDBA); background: linear-gradient(#FFFFFF, #F1EBDF); box-shadow: 0 3px 0 rgba(0,0,0,.2); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; font: inherit; cursor: pointer; }
-.dbook-btn:active { transform: translateY(2px); box-shadow: none; }
-.dbook-btn svg { width: 38px; height: 38px; display: block; margin-top: -4px; }
-.dbook-btn span { font-family: var(--display); font-size: .72rem; color: var(--wood-dark); line-height: 1; }
+/* Counter bar: the two filling slots and Steam it!, centered on the counter. */
+.counter-bar { position: absolute; left: 3%; right: 3%; bottom: 7%; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.counter-bar .slots { margin-left: 0; }
 /* Keep the counter-bar squares below the countertop's top edge. */
 .counter-bar { bottom: 3.5%; }
-.dbook-btn { height: 56px; width: 56px; }
-.dbook-btn svg { width: 34px; height: 34px; margin-top: -2px; }
 .counter-bar .slot { width: 50px; height: 50px; }
 .counter-bar { bottom: 2.5%; }
 .opt .count.have { background: var(--mint); color: #0E2E25; }

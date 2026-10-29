@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 91;
+const VERSION = 92;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -196,7 +196,6 @@ function render(force = false) {
     popup('New hat!', `<div class="pig-card big">${Art.piggySide({ coat: p.coat, hat: id })}</div><p>You earned the <b>${G.HATS[id].name}</b>! Find it in the Shop under Hats.</p>`, 'Yay!');
   }
   $('#coins').textContent = state.coins;
-  $('#dumpbook').hidden = tab === 'kitchen';   // the kitchen has its own on the counter
   $('#pigname').textContent = p.name;
   const av = $('#avatar');
   const asig = p.id + JSON.stringify(p.coat) + (p.hat || '');
@@ -854,7 +853,6 @@ function kitchenView() {
   const v = el(`<section class="kitchen">
     <div class="kitchen-stage" id="kstage">${Art.kitchenScene({ coat: current().coat })}
       <div class="counter-bar">
-        <button class="dbook-btn" id="dbook" aria-label="Dumpling Book">${Art.dumpling('sp:gold', 40)}<span>Book</span></button>
         <div class="slots"><div class="slot" data-slot="0"></div><span class="plus">+</span><div class="slot" data-slot="1"></div></div>
         <button class="btn btn-red" id="cook">Steam it!</button>
       </div>
@@ -863,7 +861,6 @@ function kitchenView() {
     <p class="seed-hint" id="seedhint"></p>
   </section>`);
   $('#cook', v).addEventListener('click', onCook);
-  $('#dbook', v).addEventListener('click', dumplingBook);
   v.querySelectorAll('.slot').forEach(s => s.addEventListener('click', () => { selected.splice(+s.dataset.slot, 1); render(); }));
   return v;
 }
