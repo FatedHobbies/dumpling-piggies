@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 30;
+const VERSION = 31;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -1053,7 +1053,7 @@ function renameDialog() {
     <div class="ribbon"><span>Rename</span></div>
     <div class="pig-card">${Art.piggySide({ coat: p.coat, hat: p.hat })}</div>
     <p>Costs ${G.RENAME_COST} coins. You have ${state.coins}.</p>
-    <input id="newname" maxlength="16" placeholder="${esc(p.name)}" autocomplete="off">
+    <input id="newname" maxlength="${G.NAME_MAX}" placeholder="${esc(p.name)}" autocomplete="off">
     <div class="row"><button class="btn btn-grey" id="cancel">Cancel</button><button class="btn" id="ok">Rename</button></div>
   </div></div>`);
   document.body.appendChild(box);

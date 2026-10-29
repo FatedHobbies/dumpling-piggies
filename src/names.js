@@ -1,12 +1,20 @@
 // Piggy names: the list random names come from, and the check that keeps
 // player-typed names kind. Everything runs on the device; nothing is sent anywhere.
 
-// Silly, kid-friendly names, 16 letters at most (the rename box limit).
+// Silly, kid-friendly names. One short word each, so a name always fits in
+// the top bar beside the Poop Book and music buttons.
 export const NAMES = [
-  'Bao Bao', 'Sir Wheeksalot', 'Lil Potsticker', 'Mochi', 'Noodle', 'Gyoza', 'Wonton',
-  'Dim Sum', 'Dumpling', 'Princess Squeak', 'Captain Fluff', 'Biscuit', 'Pudding',
-  'Nugget', 'Peanut', 'Jellybean', 'Sprinkles', 'Bok Choy', 'Sweet Pea', 'Marshmallow',
+  'Bao', 'Squeak', 'Princess', 'Wheeks', 'Fluff', 'Mochi', 'Noodle', 'Gyoza', 'Wonton', 'Dimsum',
+  'Biscuit', 'Pudding', 'Nugget', 'Peanut', 'Jelly', 'Sprinkle', 'Pickle', 'Mallow', 'Tofu', 'Bun',
 ];
+// Typed names are cut to this many letters.
+export const NAME_MAX = 10;
+// Older, longer names and the short name each piggy now goes by.
+export const SHORT_NAMES = {
+  'Bao Bao': 'Bao', 'Sir Wheeksalot': 'Wheeks', 'Lil Potsticker': 'Sticker', 'Dim Sum': 'Dimsum', 'Dumpling': 'Bun',
+  'Dumpling Doug': 'Bun', 'Princess Squeak': 'Squeak', 'Captain Fluff': 'Fluff', 'Jellybean': 'Jelly', 'Sprinkles': 'Sprinkle',
+  'Bok Choy': 'Bok', 'Sweet Pea': 'Pea', 'Marshmallow': 'Mallow',
+};
 
 // Words that can't be used. They are scrambled with ROT13 so kids peeking at
 // the code don't read them. `anywhere` blocks the word even inside a longer

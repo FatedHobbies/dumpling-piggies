@@ -2,7 +2,7 @@
 // reads `state`; the save layer serializes `state`. Keeping this file free of
 // platform code is what lets the game move to Reddit later.
 
-import { NAMES, isNiceName } from './names.js';
+import { NAMES, NAME_MAX, SHORT_NAMES, isNiceName } from './names.js';
 
 export const FILLINGS = {
   carrot:     { name: 'Carrot',     color: '#FF9A3C' },
@@ -134,6 +134,7 @@ export function playToy(state, piggyId, id) {
 }
 
 export const RENAME_COST = 30;
+export { NAME_MAX };
 export const ADOPT_COST = [0, 80, 200, 400, 700, 1000];
 export const MAX_PIGGIES = 6;
 
@@ -230,7 +231,7 @@ export function migrate(state) {
       delete state.upgrades.hat;
     }
   }
-  for (const p of (state.piggies || [])) if (p.name === 'Dumpling Doug') p.name = 'Dumpling';
+  for (const p of [...(state.piggies || []), ...(state.offer || [])]) if (SHORT_NAMES[p.name]) p.name = SHORT_NAMES[p.name];
   if (!state.bookPage) {                                   // saves from before the book could be refilled
     state.bookPage = {};
     for (const k of Object.keys(state.poopBook || {})) if (state.poopBook[k] > 0) state.bookPage[k] = true;
@@ -239,7 +240,7 @@ export function migrate(state) {
   if (state.version >= 2) return state;
   const old = state.piggy || {};
   state.piggies = [{
-    id: state.nextId++, name: old.name || 'Bao Bao', coat: { breed: 'american', main: 'ginger', patch: 'white' },
+    id: state.nextId++, name: old.name || 'Bao', coat: { breed: 'american', main: 'ginger', patch: 'white' },
     hunger: old.hunger ?? 70, fun: old.fun ?? 70, effect: old.effect || null, effectUntil: old.effectUntil || 0, x: 0.5, y: 0.5,
   }];
   delete state.piggy;
@@ -573,7 +574,7 @@ export function buy(state, id) {
 
 export function rename(state, piggyId, name) {
   const p = piggy(state, piggyId);
-  name = String(name || '').trim().slice(0, 16);
+  name = String(name || '').trim().slice(0, NAME_MAX);
   if (!p || !name) return { ok: false };
   if (!isNiceName(name)) return { ok: false, reason: 'name' };
   if (state.coins < RENAME_COST) return { ok: false, reason: 'coins' };
