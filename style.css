@@ -135,6 +135,12 @@ h2 { font-family: var(--display); font-size: 1.2rem; margin: 18px 0 8px; }
 .tut-arrow[hidden] { display: none; }
 .tut-arrow.up { transform: translate(-50%, 0) rotate(180deg); animation-name: bounce-up; }
 .tut-arrow svg { width: 100%; height: 100%; }
+/* Tutorial spotlight: everything but the thing to tap is dimmed. */
+.tut-dim { position: fixed; z-index: 15; pointer-events: none; border-radius: 16px; box-shadow: 0 0 0 200vmax rgba(30, 20, 15, .5); transition: left .2s, top .2s, width .2s, height .2s; }
+.tut-dim[hidden] { display: none; }
+body.tut-on .coach { position: relative; z-index: 16; }
+.coach.pop { animation: pop-in .3s; }
+.coach p small { display: block; font-size: .72rem; color: var(--soft); font-weight: 600; }
 @keyframes bounce { from { margin-top: -14px; } to { margin-top: 0; } }
 @keyframes bounce-up { from { margin-top: 14px; } to { margin-top: 0; } }
 .tut-text { font-family: var(--display); font-weight: 600; font-size: 1.15rem; color: var(--ink) !important; }

@@ -118,7 +118,7 @@ function buildShell() {
 const lowNeed = (k) => { const p = current(); if (p[k] >= NEEDY) p[k] = NEEDY - 5; needPig = p.id; };
 const TUTORIAL = [
   null,
-  { tab: 'steamer', on: 'pet',   text: n => `${n} wants a pet! Tap ${n}.`, target: '.piggy', enter: () => lowNeed('fun') },
+  { tab: 'steamer', on: 'pet',   text: n => `${n} wants a pet! Tap ${n}.`, target: () => `.piggy[data-id="${current().id}"]`, enter: () => lowNeed('fun') },
   { tab: 'steamer', on: 'feed',  text: n => `${n} is hungry! Tap the dumpling.`, target: '.dump',
     enter: () => { lowNeed('hunger'); if (!Object.values(state.dumplings).some(c => c > 0)) state.dumplings['carrot+carrot'] = 1; } },
   { tab: 'steamer', on: 'scoop', text: n => `Uh oh, a poop! Tap it to scoop it up.`, target: '.poop', enter: () => { if (!state.poops.length) G.addPoop(state); } },
@@ -132,7 +132,7 @@ const TUTORIAL = [
     target: () => run ? '#mpig' : state.maze.cells.some(c => c) ? '.go' : '.surprise' },
   // The shop is only shown: the arrow rests on her coins, then moves to the
   // Pen tab, and going home ends the tutorial.
-  { tab: 'shop',    on: 'home',  text: n => `Look around the Shop! Then tap Pen to go home.`,
+  { tab: 'shop',    on: 'home',  text: n => `Coins buy piggies, hats and toys here! Tap Pen to go home.`,
     enter: () => { shopLook = 0; },
     target: () => { if (!shopLook && !$('.modal')) { shopLook = Date.now() + 2500; setTimeout(render, 2600); } return !shopLook || Date.now() < shopLook ? '.hud-coins' : '.tab[data-tab="steamer"]'; } },
 ];
@@ -150,64 +150,85 @@ function tut(action) {
   const i = tutStep();
   if (!i || TUTORIAL[i].on !== action) return;
   state.tutorial.step += 1;
+  tutWait = Date.now() + 1400;
   const next = TUTORIAL[state.tutorial.step];
   if (!next) { state.tutorial = { done: true }; save(state); sfx.fanfare(); popup('Piggy pro!', `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div><p>You know everything ${esc(current().name)} needs. Have fun!</p>`, 'Yay!'); return; }
   if (next.on === 'home') {
     state.coins += TUT_REWARD;
     sfx.fanfare();
-    popup('You did it!', `<div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${TUT_REWARD}</span></div><p>Coins buy new piggies, hats and toys!</p>`, 'Yay!');
+    popup('You did it!', `<div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${TUT_REWARD}</span></div><p>Spend them in the Shop!</p>`, 'Yay!');
   } else sfx.ding();
   save(state);
 }
 
-let tutShown = '';   // which instruction popup has been shown, so it shows once per step
 let arrowTarget = ''; // selector the bouncing arrow points at
 let scrolledTo = '';  // target last scrolled into view
-
-let tutEntered = 0;  // the step whose `enter` has run
+let tutEntered = 0;   // the step whose `enter` has run
+let tutWait = 0;      // the next step waits until the last one's animation is done
 
 function updateCoach() {
   const coach = $('#coach');
   const i = tutStep();
   document.querySelectorAll('.hi').forEach(e => e.classList.remove('hi'));
-  if (!i) { coach.hidden = true; arrowTarget = ''; tutEntered = 0; positionArrow(); return; }
+  if (!i) { coach.hidden = true; document.body.classList.remove('tut-on'); arrowTarget = ''; tutEntered = 0; positionArrow(); return; }
   const step = TUTORIAL[i];
+  coach.hidden = false;
+  document.body.classList.add('tut-on');
+  // A short pause after each step so the dumpling can land, the poop can
+  // pop, and so on, before the spotlight moves on.
+  if (Date.now() < tutWait) { arrowTarget = ''; positionArrow(); setTimeout(updateCoach, tutWait - Date.now() + 20); return; }
   if (tutEntered !== i) { tutEntered = i; if (step.enter) { step.enter(); save(state); if (tab === 'steamer') updateSteamer(); } }
   const n = esc(current().name);
-  coach.hidden = false;
   if ($('#coachpig').dataset.id !== String(current().id)) { $('#coachpig').dataset.id = String(current().id); $('#coachpig').innerHTML = Art.piggySide({ coat: current().coat }); }
   const away = step.tab && tab !== step.tab;
-  const go = away ? `Tap ${TAB_NAMES[step.tab]} at the bottom.` : '';
-  const text = away ? go : step.text(n);
+  const text = away ? `Tap ${TAB_NAMES[step.tab]} at the bottom.` : step.text(n);
   const targets = away ? `.tab[data-tab="${step.tab}"]` : typeof step.target === 'function' ? step.target() : step.target;
-  if ($('#coachtext').textContent !== text) $('#coachtext').textContent = text;
+  const html = `<small>Step ${i} of ${TUTORIAL.length - 1}</small>${esc(text)}`;
+  if ($('#coachtext').innerHTML !== html) {
+    $('#coachtext').innerHTML = html;
+    coach.classList.remove('pop'); void coach.offsetWidth; coach.classList.add('pop');
+  }
   document.querySelectorAll(targets).forEach(e => e.classList.add('hi'));
   arrowTarget = targets;
   positionArrow();
-  // The instruction pops up in the middle of the screen once per step, after
-  // any other popup has been closed. If she has to go somewhere first, it
-  // says where.
-  if (tutShown !== String(i) && !$('.modal')) {
-    tutShown = String(i);
-    popup(`Step ${i} of ${TUTORIAL.length - 1}`, `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div>${go ? `<p class="tut-go">First, ${go.charAt(0).toLowerCase() + go.slice(1)}</p>` : ''}<p class="tut-text">${step.text(n)}</p>`, 'OK!');
-  }
 }
 
-// A big bouncing arrow over whatever she should tap next. Targets move
-// (the piggy wanders), so this runs on a timer too.
+// While the tutorial is on, only the thing she should tap can be tapped
+// (plus popups and the skip button). Everything else is dimmed and ignores taps.
+function tutBlock(e) {
+  if (!tutStep() || !(e.target instanceof Element)) return;
+  if (e.target.closest('.modal, #coach, .hi') && (Date.now() >= tutWait || e.target.closest('.modal, #coach'))) return;
+  e.stopPropagation();
+  if (e.type === 'click') e.preventDefault();
+}
+for (const type of ['click', 'pointerdown', 'mousedown']) window.addEventListener(type, tutBlock, true);
+
+// A big bouncing arrow over whatever she should tap next, with the rest of
+// the screen dimmed around it. Targets move (the piggy walks), so this runs
+// on a timer too.
 function positionArrow() {
-  let arrow = $('#arrow');
+  let arrow = $('#arrow'), dim = $('#tutdim');
   if (!arrow) {
     arrow = el(`<div id="arrow" class="tut-arrow" hidden><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 60 L8 30 H22 V6 H42 V30 H56Z" fill="#FFD34D" stroke="#B2342C" stroke-width="4" stroke-linejoin="round"/></svg></div>`);
-    document.body.appendChild(arrow);
+    dim = el(`<div id="tutdim" class="tut-dim" hidden></div>`);
+    document.body.append(dim, arrow);
   }
   const t = arrowTarget && !$('.modal') ? $(arrowTarget) : null;
-  if (!t) { arrow.hidden = true; return; }
-  let r = t.getBoundingClientRect();
-  if (!r.width) { arrow.hidden = true; return; }
+  let r = t && t.getBoundingClientRect();
+  if (!t || !r.width) { arrow.hidden = true; dim.hidden = true; return; }
   // Bring the target on screen once per target (short phones hide the tray).
   const bar = $('.tabs')?.getBoundingClientRect().top || innerHeight;
   if ((r.bottom > bar || r.top < 0) && scrolledTo !== arrowTarget) { scrolledTo = arrowTarget; t.scrollIntoView({ block: 'center' }); r = t.getBoundingClientRect(); }
+  // The spotlight hole wraps every highlighted thing (all the empty plots, say).
+  let L = r.left, T = r.top, R = r.right, B = r.bottom;
+  for (const h of document.querySelectorAll('.hi')) {
+    const q = h.getBoundingClientRect();
+    if (!q.width) continue;
+    L = Math.min(L, q.left); T = Math.min(T, q.top); R = Math.max(R, q.right); B = Math.max(B, q.bottom);
+  }
+  const pad = 6;
+  dim.hidden = false;
+  Object.assign(dim.style, { left: (L - pad) + 'px', top: (T - pad) + 'px', width: (R - L + pad * 2) + 'px', height: (B - T + pad * 2) + 'px' });
   const up = r.top < 90;   // things near the top get an arrow pointing up from below
   arrow.hidden = false;
   arrow.classList.toggle('up', up);
@@ -455,8 +476,21 @@ function peekSize(id, d) {
 function wanderTick() {
   if (tab !== 'steamer' || document.hidden) return;
   const now = Date.now();
+  const held = tutStep() ? current().id : null;
   for (const pig of state.piggies) {
     let w = wander.get(pig.id);
+    // During the tutorial her piggy stands still out in the open, where the
+    // arrow can point at it (no wandering off into the house).
+    if (pig.id === held) {
+      const d = $(`.piggy[data-id="${pig.id}"]`);
+      if (!w || !w.held) {
+        if (!w || w.inside || w.peek || w.hide || w.riding) { pig.x = 0.42; pig.y = 0.55; }
+        w = { tx: pig.x, ty: pig.y, face: 1, front: true, held: true };
+        wander.set(pig.id, w);
+        if (d) { d.classList.remove('walking', 'riding'); syncPose(d, w); placePig(d, pig, w); }
+      }
+      continue;
+    }
     if (!w) { w = { tx: pig.x, ty: pig.y, pause: now + Math.random() * 2000, face: pig.x < 0.5 ? 1 : -1 }; wander.set(pig.id, w); }
     const sleepy = pig.effect === 'sleepy';
     const zoom = pig.effect === 'zoom';
@@ -1828,7 +1862,6 @@ function settings() {
   $('#replay', box).onclick = () => {
     box.remove();
     state.tutorial = { step: 1 };
-    tutShown = '';
     tab = 'steamer'; sfx.ding(); render(true);
   };
   $('#sclose', box).onclick = () => { box.remove(); sfx.pop(); updateCoach(); };
