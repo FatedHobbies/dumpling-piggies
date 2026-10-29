@@ -27,7 +27,13 @@ export function toggleWall(m, x, y, tile = 1) {
   return true;
 }
 
-export function clear(m) { m.cells.fill(0); m.fun = []; }
+export function clear(m) { m.cells.fill(0); m.fun = []; m.treasure = []; }
+
+// Before a run: any treasure her walls have shut off is taken away, so Go can
+// drop fresh goodies where she can reach them.
+export function dropStrandedTreasure(m) {
+  m.treasure = (m.treasure || []).filter(t => reachable(m, t));
+}
 
 export function neighbors(m, x, y) {
   const out = [];
@@ -39,7 +45,8 @@ export function neighbors(m, x, y) {
 }
 
 // Shortest path from a to b, as a list of cells not including a. Null if none.
-export function path(m, a, b) {
+// `avoid` is an optional set of cell indexes to walk around (b is always allowed).
+export function path(m, a, b, avoid = null) {
   const prev = new Map();
   const q = [a];
   prev.set(idx(a.x, a.y), null);
@@ -54,6 +61,7 @@ export function path(m, a, b) {
     }
     for (const n of neighbors(m, c.x, c.y)) {
       const k = idx(n.x, n.y);
+      if (avoid && avoid.has(k) && !same(n, b)) continue;
       if (!prev.has(k)) { prev.set(k, c); q.push(n); }
     }
   }
@@ -61,6 +69,11 @@ export function path(m, a, b) {
 }
 
 export const solvable = (m) => path(m, START, FINISH) !== null;
+
+// Can she walk from the start to c without crossing the dumpling square
+// (stepping on it ends the run)?
+const AT_FINISH = new Set([FINISH.y * COLS + FINISH.x]);
+export const reachable = (m, c) => same(c, START) || !!path(m, START, c, AT_FINISH);
 
 export function hash(m) { return m.cells.join(''); }
 
@@ -103,6 +116,7 @@ export function hideTreasure(m, rng = Math.random, fillings = ['carrot']) {
   const spots = [], ends = [];
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
     if (isWall(m, x, y) || same({ x, y }, START) || same({ x, y }, FINISH) || main.has(idx(x, y))) continue;
+    if (!reachable(m, { x, y })) continue;   // never in a walled-off pocket
     (neighbors(m, x, y).length === 1 ? ends : spots).push({ x, y });
   }
   const shuffle = (a) => a.sort(() => rng() - 0.5);
@@ -123,8 +137,15 @@ export function placeFun(m, kinds, rng = Math.random) {
   const free = [];
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
     if (isWall(m, x, y) || same({ x, y }, START) || same({ x, y }, FINISH) || treasureAt(m, x, y)) continue;
-    if (path(m, START, { x, y })) free.push({ x, y });
+    if (reachable(m, { x, y })) free.push({ x, y });
   }
+  // A tunnel or trampoline square must never be the only way through: with it
+  // walled off, the dumpling and every treasure can still be walked to.
+  const goals = [FINISH, ...(m.treasure || [])].filter(g => reachable(m, g));
+  const notChoke = (c) => {
+    const avoid = new Set([idx(c.x, c.y), idx(FINISH.x, FINISH.y), ...(m.fun || []).filter(f => f.kind !== 'zoom').map(f => idx(f.x, f.y))]);
+    return goals.every(g => path(m, START, g, avoid));
+  };
   const pick = (ok = () => true) => {
     const opts = free.filter(c => ok(c) && !funAt(m, c.x, c.y));
     return opts.length ? opts[Math.floor(rng() * opts.length)] : null;
@@ -133,16 +154,20 @@ export function placeFun(m, kinds, rng = Math.random) {
   for (const kind of kinds) {
     if (kind === 'zoom') { const c = pick(); if (c) m.fun.push({ ...c, kind }); }
     if (kind === 'tunnel') {
-      const a = pick(c => c.y >= ROWS / 2), b = a && pick(c => Math.abs(c.x - a.x) + Math.abs(c.y - a.y) >= 5);
+      const a = pick(c => c.y >= ROWS / 2 && notChoke(c));
+      const b = a && pick(c => Math.abs(c.x - a.x) + Math.abs(c.y - a.y) >= 5 && notChoke(c));
       if (a && b) m.fun.push({ ...a, kind, to: { x: b.x, y: b.y } }, { ...b, kind, to: { x: a.x, y: a.y } });
     }
     if (kind === 'bounce') {
-      // A square next to a wall, with open ground just past the wall that can
-      // still reach the dumpling.
+      // A square next to a wall, landing on open ground just past the wall
+      // that she could also walk to from the start, so a boing is a shortcut
+      // and never strands her away from treasure.
       const spots = [];
       for (const c of free) for (const [dx, dy] of DIRS) {
         const w = { x: c.x + dx, y: c.y + dy }, to = { x: c.x + 2 * dx, y: c.y + 2 * dy };
-        if (inside(to.x, to.y) && isWall(m, w.x, w.y) && !isWall(m, to.x, to.y) && !funAt(m, c.x, c.y) && path(m, to, FINISH)) spots.push({ ...c, to });
+        if (!inside(to.x, to.y) || !isWall(m, w.x, w.y) || isWall(m, to.x, to.y)) continue;
+        if (funAt(m, c.x, c.y) || funAt(m, to.x, to.y) || treasureAt(m, to.x, to.y) || same(to, START) || same(to, FINISH)) continue;
+        if (reachable(m, to) && notChoke(c)) spots.push({ ...c, to });
       }
       if (spots.length) m.fun.push({ ...spots[Math.floor(rng() * spots.length)], kind });
     }
@@ -172,21 +197,28 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
   const { x, y } = run.pos;
   const open = neighbors(m, x, y);
   let next = null;
+  run.used = run.used || {};
+  // When she heads somewhere on purpose she steps around tunnels and
+  // trampolines, so they never whisk her away from a lure or a treasure.
+  const traps = new Set((m.fun || []).filter(f => f.kind !== 'zoom' && !run.used[idx(f.x, f.y)]).map(f => idx(f.x, f.y)));
+  const fin = new Set([idx(FINISH.x, FINISH.y)]);   // and doesn't stumble onto the dumpling on the way to a treasure
+  traps.add(idx(FINISH.x, FINISH.y));
+  const go = (to) => path(m, run.pos, to, traps) || path(m, run.pos, to, fin) || path(m, run.pos, to);
 
   if (run.lure) {
-    const p = path(m, run.pos, run.lure);
+    const p = go(run.lure);
     if (p && p.length) next = p[0];
     else run.lure = null;
   }
   if (!next && (m.treasure || []).length && rng() < 0.7) {
     // Treasure close by smells good too.
-    const near = m.treasure.map(t => path(m, run.pos, t)).filter(p => p && p.length && p.length <= 3).sort((a, b) => a.length - b.length)[0];
+    const near = m.treasure.map(t => go(t)).filter(p => p && p.length && p.length <= 3).sort((a, b) => a.length - b.length)[0];
     if (near) next = near[0];
   }
   if (!next) {
     // After wandering for a while the piggy "smells" the dumpling and heads straight there.
     const smell = run.steps > 30 ? 0.9 : 0.45;
-    const p = path(m, run.pos, FINISH);
+    const p = go(FINISH);
     const fresh = open.filter(n => !run.visited[idx(n.x, n.y)]);
     const notBack = open.filter(n => !(run.lastDir && n.x === x - run.lastDir.x && n.y === y - run.lastDir.y));
     if (p && p.length && rng() < smell) next = p[0];
@@ -204,10 +236,11 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
   // Finishing always wins, even if a carrot was dropped on the dumpling square.
   if (same(run.pos, FINISH)) { run.done = true; run.lure = null; return 'finish'; }
   const f = funAt(m, run.pos.x, run.pos.y);
-  // Each fun tile works once per run, so tunnels can't bounce her back and forth forever.
-  run.used = run.used || {};
+  // Each fun tile works once per run, and a tunnel pair is spent after one
+  // trip, so she can't pop in and out of it.
   if (f && run.landed !== idx(f.x, f.y) && !run.used[idx(f.x, f.y)]) {
     run.used[idx(f.x, f.y)] = 1;
+    if (f.kind === 'tunnel') run.used[idx(f.to.x, f.to.y)] = 1;
     if (f.kind === 'zoom') { run.zoomUntil = now + 3000; run.landed = idx(f.x, f.y); return 'zoom'; }
     run.lure = null;
     run.jump = f.kind;

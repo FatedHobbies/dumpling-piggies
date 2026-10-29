@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 110;
+const VERSION = 111;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -1340,6 +1340,7 @@ function onCheer() {
 function startRun() {
   if (!M.solvable(state.maze)) return;
   // Her own mazes get treasure too: if none is left, two goodies drop in.
+  M.dropStrandedTreasure(state.maze);
   if (!(state.maze.treasure || []).length) M.hideTreasure(state.maze, Math.random, G.unlockedFillings(state));
   if (!(state.maze.fun || []).length) M.placeFun(state.maze, funKinds());
   run = M.newRun();
