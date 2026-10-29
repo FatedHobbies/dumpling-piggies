@@ -808,13 +808,19 @@ export function feed(state, key, piggyId = null, now = Date.now()) {
   return { ok: true, coins: r.coins, effect: r.effect, piggy: p };
 }
 
-export function pet(state, piggyId) {
+// Each piggy pays for petting at most once every few seconds, so spam-tapping
+// still gets wheeks but not a flood of coins.
+export const PET_COOLDOWN = 3000;
+
+export function pet(state, piggyId, now = Date.now()) {
   const p = piggy(state, piggyId) || state.piggies[0];
   const gain = p.fun < 100 ? 12 : 0;
   p.fun = clamp(p.fun + 12, 0, 100);
   state.stats.petted += 1;
   // Petting pays a little only while it is still fun for the piggy.
-  const coins = gain > 0 ? 1 : 0;
+  const ready = !(now - (p.petPaidAt || 0) < PET_COOLDOWN);
+  const coins = gain > 0 && ready ? 1 : 0;
+  if (coins) p.petPaidAt = now;
   state.coins += coins;
   return { ok: true, coins, piggy: p };
 }
