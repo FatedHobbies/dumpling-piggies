@@ -575,16 +575,22 @@ function dropFromPiggy(poop, b) {
   const rearX = f > 0 ? ar.left + ar.width * 0.13 : ar.right - ar.width * 0.13;
   const rearY = ar.top + ar.height * 0.7;
   // If another poop already sits there, scoot this one over a bit so both
-  // stick out (they may still overlap a little).
+  // stick out (they may still overlap a little). Never land where the house
+  // or a toy would cover it: roll forward until it is in plain sight.
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   const x0 = (rearX - f * ar.width * 0.05 - fr.left) / fr.width, y0 = pig.y + 0.01;
   const others = state.poops.filter(o => o !== poop && o.seen);
+  const covers = [...floor.querySelectorAll('.fixture, .toy')].map(c => ({ z: +c.style.zIndex || 0, r: c.getBoundingClientRect() }));
+  const hidden = (x, y) => {
+    const px = fr.left + x * fr.width, py = fr.top + y * fr.height;   // poop is 46px, standing on (px, py)
+    return covers.some(({ z, r }) => z > depth(y) &&
+      Math.max(0, Math.min(px + 23, r.right) - Math.max(px - 23, r.left)) * Math.max(0, Math.min(py, r.bottom) - Math.max(py - 46, r.top)) > 46 * 46 * 0.2);
+  };
+  const crowded = (x, y) => others.some(o => Math.abs((o.x - x) * fr.width) < 22 && Math.abs((o.y - y) * fr.height) < 14);
   const nudges = [[0, 0], [-f * 24, 6], [-f * 10, -14], [-f * 34, -8], [-f * 4, 16], [-f * 46, 4], [-f * 20, -24], [-f * 56, -14]];
-  let x = x0, y = y0;
-  for (const [dx, dy] of nudges) {
-    x = clamp(x0 + dx / fr.width, 0.05, 0.95); y = clamp(y0 + dy / fr.height, 0.05, 0.99);
-    if (!others.some(o => Math.abs((o.x - x) * fr.width) < 22 && Math.abs((o.y - y) * fr.height) < 14)) break;
-  }
+  for (let k = 1; k <= 14; k++) nudges.push([0, k * 16], [-f * 24, k * 16 + 6]);
+  const spots = nudges.map(([dx, dy]) => [clamp(x0 + dx / fr.width, 0.05, 0.95), clamp(y0 + dy / fr.height, 0.05, 0.99)]);
+  const [x, y] = spots.find(([x, y]) => !hidden(x, y) && !crowded(x, y)) || spots.find(([x, y]) => !hidden(x, y)) || spots[0];
   poop.x = x; poop.y = y;
   b.style.setProperty('--x', x.toFixed(3));
   b.style.setProperty('--y', y.toFixed(3));
