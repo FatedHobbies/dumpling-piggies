@@ -489,18 +489,18 @@ function updateSteamer() {
   // Poops
   const poops = new Map([...floor.querySelectorAll('.poop')].map(c => [+c.dataset.id, c]));
   for (const poop of state.poops) {
-    if (!poops.has(poop.id)) {
+    // Every poop drops out of a piggy's behind the first time it shows. One
+    // made while away, on another tab, or while every piggy is busy waits
+    // (unseen) until the Pen is open and a piggy is free, one at a time.
+    if (!poops.has(poop.id) && (poop.seen || dropReady(poop))) {
       const b = el(`<button class="poop ${poop.color || 'brown'}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y};z-index:${depth(poop.y)}">${Art.poop(poop)}</button>`);
       b.addEventListener('click', () => onScoop(poop.id, b));
       floor.appendChild(b);
-      // Poops already there when the game opens just sit there; new ones
-      // drop out of a piggy's behind, or just plop if nobody is out.
-      if (poopsShown && !dropFromPiggy(poop, b)) sfx.plop();
+      if (!poop.seen) { poop.seen = true; if (!dropFromPiggy(poop, b)) sfx.plop(); }
     }
     poops.delete(poop.id);
   }
   for (const [, c] of poops) c.remove();
-  poopsShown = true;
   // Dumpling tray, glowing while somebody is hungry
   const tray = $('#tray');
   tray.classList.toggle('hungry', needKind === 'hunger' && !!needPig);
@@ -531,12 +531,27 @@ function updateSteamer() {
 // A new poop falls out of the back end of the piggy that made it (or any
 // piggy out in the open), lands behind them with a squish, and says "plop!".
 // The piggy stops and gives a little wiggle. Returns false if nobody can.
-let poopsShown = false;
+let lastDrop = 0, poopWait = 0;
+function dropReady(poop) {
+  const now = Date.now();
+  if (tab !== 'steamer' || document.hidden || !$('#floor').offsetWidth) { poopWait = 0; return false; }
+  if (now - lastDrop < 900) return false;   // one plop at a time
+  poopWait = poopWait || now;
+  // A free piggy does it; if nobody is free for a long while, it just plops.
+  if (!freePooper(poop) && now - poopWait < 15000) return false;
+  lastDrop = now; poopWait = 0;
+  return true;
+}
+function freePooper(poop) {
+  const free = state.piggies.filter(p => {
+    const w = wander.get(p.id), d = $(`.piggy[data-id="${p.id}"]`);
+    return w && d && !d.classList.contains('pooping') && !w.inside && !w.peek && !w.riding && !w.using && !w.act;   // sleeping piggies poop too
+  });
+  return free.find(p => p.id === poop.by) || free[Math.floor(Math.random() * free.length)];
+}
 function dropFromPiggy(poop, b) {
   const floor = $('#floor');
-  if (tab !== 'steamer' || !floor.offsetWidth) return false;
-  const free = state.piggies.filter(p => { const w = wander.get(p.id); return w && !w.inside && !w.peek && !w.riding && !w.using && !w.act && !w.flop; });
-  const pig = free.find(p => p.id === poop.by) || free[Math.floor(Math.random() * free.length)];
+  const pig = freePooper(poop);
   const d = pig && $(`.piggy[data-id="${pig.id}"]`, floor);
   if (!d) return false;
   const w = wander.get(pig.id);
@@ -560,7 +575,7 @@ function dropFromPiggy(poop, b) {
   d.classList.add('pooping');
   setTimeout(() => {
     sfx.plop();
-    const word = el(`<span class="plop-word" style="--x:${Math.min(0.92, Math.max(0.08, x - f * 0.07)).toFixed(3)};--y:${y.toFixed(3)}">plop!</span>`);
+    const word = el(`<span class="plop-word" style="--x:${x.toFixed(3)};--y:${y.toFixed(3)};--dx:${x < 0.15 ? 26 : x > 0.85 ? -26 : -f * 26}px">plop!</span>`);
     floor.appendChild(word);
     setTimeout(() => word.remove(), 1200);
   }, 520);

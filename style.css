@@ -389,7 +389,7 @@ button.pk:active { transform: scale(.95); }
 }
 .piggy.pooping .pig-art { transform-origin: 50% 90%; animation: poop-wiggle .5s ease-in-out 2; }
 @keyframes poop-wiggle { 0%, 100% { transform: scaleX(var(--f)); } 25% { transform: scaleX(var(--f)) rotate(-5deg) scaleY(.94); } 75% { transform: scaleX(var(--f)) rotate(5deg) scaleY(.94); } }
-.plop-word { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); z-index: 501; pointer-events: none; font-family: var(--display); font-weight: 700; font-size: 1.05rem; color: #7A4A21; -webkit-text-stroke: 4px #fff; paint-order: stroke fill; transform: translate(-50%, -150%); animation: plop-word 1.2s ease-out both; }
+.plop-word { position: absolute; left: calc(var(--x) * 100% + var(--dx, 0px)); top: calc(var(--y) * 100%); z-index: 501; pointer-events: none; font-family: var(--display); font-weight: 700; font-size: 1.05rem; color: #7A4A21; -webkit-text-stroke: 4px #fff; paint-order: stroke fill; transform: translate(-50%, -150%); animation: plop-word 1.2s ease-out both; }
 @keyframes plop-word { 0% { opacity: 0; transform: translate(-50%, -150%) scale(.4); } 20% { opacity: 1; transform: translate(-50%, -230%) scale(1.15); } 70% { opacity: 1; transform: translate(-50%, -270%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -320%) scale(1); } }
 .poop-card svg { width: 120px; height: 120px; }
 .odds { font-size: 13px; color: #6A4524; margin: -6px 0 8px; }
