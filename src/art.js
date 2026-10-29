@@ -768,9 +768,19 @@ export const MAZE_THEMES = {
   },
   snow: {
     side: '#6FA9CF', name: 'Snow day', board: '#BFE3F7', floor: '#F6FBFF', seen: '#E1F0FA', start: '#BDF0D0', startEdge: '#6CC48E', post: '#8FB8D6', postEdge: '#5A86A8',
-    wall: (px, py) => `<rect x="${px + 3}" y="${py + 7}" width="${C - 6}" height="${C - 11}" rx="8" fill="#A9DDF7" stroke="#5FA9D6" stroke-width="3"/>
-      <path d="M${px + 10} ${py + 34} L${px + 22} ${py + 16} M${px + 18} ${py + 38} L${px + 26} ${py + 26}" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
-      <path d="M${px + 2} ${py + 12} Q${px + 6} ${py + 1} ${px + 16} ${py + 5} Q${px + 24} ${py - 1} ${px + 32} ${py + 5} Q${px + 42} ${py + 1} ${px + 46} ${py + 12} Q${px + 24} ${py + 16} ${px + 2} ${py + 12}Z" fill="#fff" stroke="#CFE6F5" stroke-width="1.5"/>`,
+    // An ice block seen from above: the whole top face is a snow pile that
+    // drips a little over the front edge, and the front face is clear ice.
+    cube: true,
+    wall: (px, py) => {
+      const l = px + 3, r = px + 45, t = py + 1, e = py + 32, b = py + 47;
+      return `<rect x="${l}" y="${t}" width="${r - l}" height="${b - t}" rx="7" fill="#8CCBEE" stroke="#3F86B5" stroke-width="2.5"/>
+        <path d="M${l + 7} ${e + 5} L${l + 14} ${b - 4} M${l + 17} ${e + 5} L${l + 21} ${b - 7}" stroke="#E6F6FF" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M${l + 1.5} ${e + 2} V${t + 7} Q${l + 1.5} ${t + 1.5} ${l + 7} ${t + 1.5} H${r - 7} Q${r - 1.5} ${t + 1.5} ${r - 1.5} ${t + 7} V${e + 2}
+          Q${r - 5} ${e + 7} ${r - 9} ${e + 2} Q${r - 14} ${e + 5} ${r - 18} ${e + 1} Q${px + 22} ${e + 8} ${l + 14} ${e + 2} Q${l + 8} ${e + 6} ${l + 1.5} ${e + 2}Z" fill="#FFFFFF"/>
+        <path d="M${l + 6} ${e - 4} Q${px + 24} ${e - 1} ${r - 6} ${e - 5}" stroke="#D8ECF8" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="${px + 16}" cy="${py + 10}" rx="6" ry="2.5" fill="#EEF8FF"/>
+        <rect x="${l}" y="${t}" width="${r - l}" height="${b - t}" rx="7" fill="none" stroke="#3F86B5" stroke-width="2.5"/>`;
+    },
     deco: (px, py, i) => { const x = px + 12 + jit(i, 1) * 24, y = py + 12 + jit(i, 2) * 24; return `<path d="M${x - 4} ${y} H${x + 4} M${x} ${y - 4} V${y + 4} M${x - 3} ${y - 3} L${x + 3} ${y + 3} M${x + 3} ${y - 3} L${x - 3} ${y + 3}" stroke="#B9DDF2" stroke-width="1.4" stroke-linecap="round"/>`; },
   },
   sea: {
