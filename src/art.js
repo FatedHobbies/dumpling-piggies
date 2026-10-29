@@ -530,12 +530,6 @@ const SPECIAL_ART = {
     <ellipse cx="52" cy="45" rx="4" ry="9" fill="#A8714A" stroke="${BRD}" stroke-width="2"/>${pface(30, 45, .9)}`,
   pellets: () => [[16, 52], [28, 53], [40, 52], [52, 53], [22, 43], [34, 43], [46, 43], [28, 34], [40, 34], [34, 25]]
     .map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="6" ry="4.6" fill="${BR}" stroke="${BRD}" stroke-width="1.8"/>`).join('') + pface(34, 43, .55, { noBlush: true }),
-  heart: () => `<path d="M32 58 C10 44 6 30 14 22 C21 15 30 19 32 26 C34 19 43 15 50 22 C58 30 54 44 32 58Z" fill="${BR}" stroke="${BRD}" stroke-width="2.5" stroke-linejoin="round"/>
-    <path d="M18 26 Q20 22 24 23" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/>${pface(32, 36)}`,
-  star: () => `<path d="M32 6 L39.5 22 L57 24 L44 36 L47.5 54 L32 45 L16.5 54 L20 36 L7 24 L24.5 22Z" fill="${BR}" stroke="${BRD}" stroke-width="2.5" stroke-linejoin="round"/>${pface(32, 32, .85)}`,
-  cube: () => `<path d="M14 26 L26 16 H52 L52 44 L40 56 H14Z" fill="#6E4428" stroke="${BRD}" stroke-width="2.5" stroke-linejoin="round"/>
-    <rect x="14" y="26" width="26" height="30" rx="3" fill="${BR}" stroke="${BRD}" stroke-width="2.5"/>
-    <path d="M14 26 L26 16 H52 L40 26Z" fill="#A8714A" stroke="${BRD}" stroke-width="2.5" stroke-linejoin="round"/>${pface(27, 40, .7)}`,
   donut: () => `<ellipse cx="32" cy="44" rx="25" ry="15" fill="${BR}" stroke="${BRD}" stroke-width="2.5"/>
     <ellipse cx="32" cy="41" rx="9" ry="4.5" fill="#FFF8EE" stroke="${BRD}" stroke-width="2"/>${pface(32, 51, .65, { noBlush: true })}`,
   tower: () => `<path d="M14 56 Q14 49 22 48 H42 Q50 49 50 56 Q50 60 32 60 Q14 60 14 56Z" fill="${BR}" stroke="${BRD}" stroke-width="2.3"/>
@@ -544,13 +538,6 @@ const SPECIAL_ART = {
     <path d="M24 32 Q24 26 29 25 H35 Q40 26 40 32Z" fill="${BR}" stroke="${BRD}" stroke-width="2.3"/>
     <path d="M27 25 Q27 14 33 5 Q34 13 37 16 Q39 20 37 25Z" fill="${BR}" stroke="${BRD}" stroke-width="2.3" stroke-linejoin="round"/>${pface(32, 53, .6)}`,
   tiny: () => `<g transform="translate(18 26) scale(.45)">${swirlBody(BR, BRD, 4)}${pface(32, 49)}</g>${spark(14, 30, 4, '#FFF3B0', '#D9A21B')}`,
-  pancake: () => `<ellipse cx="32" cy="54" rx="27" ry="6" fill="${BR}" stroke="${BRD}" stroke-width="2.3"/>
-    <ellipse cx="32" cy="47" rx="24" ry="6" fill="${BR}" stroke="${BRD}" stroke-width="2.3"/>
-    <ellipse cx="32" cy="40" rx="21" ry="6" fill="${BR}" stroke="${BRD}" stroke-width="2.3"/>
-    <path d="M24 37 Q28 32 33 36 Q36 32 40 36" fill="#FFD34D" stroke="#D9A21B" stroke-width="1.5"/>${pface(32, 47, .55, { noBlush: true })}`,
-  squiggle: () => `<path d="M8 48 Q16 30 26 44 Q34 58 42 42 Q48 30 56 36" stroke="${BRD}" stroke-width="13" fill="none" stroke-linecap="round"/>
-    <path d="M8 48 Q16 30 26 44 Q34 58 42 42 Q48 30 56 36" stroke="${BR}" stroke-width="8.5" fill="none" stroke-linecap="round"/>
-    <circle cx="53" cy="33" r="1.6" fill="${INK}"/><circle cx="58" cy="35" r="1.6" fill="${INK}"/>`,
   // ---- Patterns ----
   polka: () => patterned('#FF8FB8', '#D45A8C', [[16, 50], [28, 44], [44, 46], [38, 56], [22, 34], [36, 34], [30, 22], [48, 54], [12, 56]]
     .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.2" fill="#fff"/>`).join('')),
@@ -567,14 +554,8 @@ const SPECIAL_ART = {
     <path d="M30 22 Q32 16 34 22" fill="#8A5634" stroke="${BRD}" stroke-width="1.5"/>${pface(32, 46)}`,
   carrot: () => `<path d="M24 16 Q20 6 26 4 Q28 10 30 14 Q30 4 36 4 Q38 10 34 16 Q40 8 44 12 Q40 16 36 18Z" fill="#6FCF4F" stroke="#3C8A2E" stroke-width="2" stroke-linejoin="round"/>
     ${swirlBody('#FF9A3C', '#D9652B')}<path d="M14 46 H20 M44 50 H50 M20 34 H25 M40 34 H44" stroke="#D9652B" stroke-width="2" stroke-linecap="round"/>${pface(32, 49)}`,
-  ghost: () => `<path d="M12 58 V34 Q12 12 32 12 Q52 12 52 34 V58 L46 53 L40 58 L34 53 L28 58 L22 53 L16 58Z" fill="#fff" stroke="#B8B3A4" stroke-width="2.5" stroke-linejoin="round" opacity=".92"/>
-    <path d="M24 12 Q30 6 32 12" stroke="#B8B3A4" stroke-width="2" fill="#fff"/>${pface(32, 32, 1, { o: true })}`,
   bubblegum: () => `${swirlBody('#FF8FB8', '#D45A8C')}<circle cx="47" cy="44" r="11" fill="#FFC2DA" stroke="#D45A8C" stroke-width="2" opacity=".9"/><path d="M42 39 Q44 36 47 37" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
     <circle cx="22" cy="48" r="2.5" fill="${INK}"/><circle cx="32" cy="48" r="2.5" fill="${INK}"/><ellipse cx="16" cy="52" rx="3" ry="1.8" fill="#FF5C9A" opacity=".5"/>`,
-  snowman: () => `<circle cx="32" cy="46" r="14" fill="#fff" stroke="#9FB4C8" stroke-width="2.5"/><circle cx="32" cy="24" r="10" fill="#fff" stroke="#9FB4C8" stroke-width="2.5"/>
-    <path d="M32 26 L42 28 L32 29Z" fill="#FF9A3C"/><circle cx="28" cy="22" r="1.8" fill="${INK}"/><circle cx="36" cy="22" r="1.8" fill="${INK}"/>
-    <path d="M18 42 L8 34 M46 42 L56 34" stroke="${BR}" stroke-width="2.5" stroke-linecap="round"/><path d="M22 14 H42 L38 8 H26Z M24 14 H40" fill="#F0543F" stroke="#A32E20" stroke-width="1.5"/>
-    <circle cx="32" cy="42" r="1.8" fill="${INK}"/><circle cx="32" cy="50" r="1.8" fill="${INK}"/>`,
   cactus: () => `${swirlBody('#6FCF4F', '#3C8A2E')}${[[14, 46], [50, 48], [18, 36], [46, 34], [26, 20], [40, 24], [22, 56], [44, 56]].map(([x, y]) => `<path d="M${x - 2} ${y} l-3 -1 M${x + 2} ${y} l3 -1" stroke="#2B6A22" stroke-width="1.2" stroke-linecap="round"/>`).join('')}
     <circle cx="33" cy="11" r="4" fill="#FF8FB8" stroke="#D45A8C" stroke-width="1.5"/><circle cx="33" cy="11" r="1.4" fill="#FFD34D"/>${pface(32, 49)}`,
   galaxy: () => `<defs><radialGradient id="galaxyPoop" cx=".4" cy=".6" r=".8"><stop offset="0" stop-color="#9B5BD8"/><stop offset=".55" stop-color="#3B2A8E"/><stop offset="1" stop-color="#15123E"/></radialGradient></defs>
@@ -589,15 +570,23 @@ const SPECIAL_ART = {
     ${pface(32, 49, 1, { closed: true })}<text x="50" y="12" font-family="sans-serif" font-weight="bold" font-size="10" fill="#6FB4F0">z</text><text x="56" y="6" font-family="sans-serif" font-weight="bold" font-size="7" fill="#6FB4F0">z</text>`,
   cool: () => `${swirlBody(BR, BRD)}<path d="M15 45 H49" stroke="${INK}" stroke-width="2.5"/><path d="M17 45 H30 Q30 52 24 52 Q17 52 17 45Z M34 45 H47 Q47 52 41 52 Q34 52 34 45Z" fill="${INK}"/>
     <path d="M20 47 L23 46" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M29 55 Q33 57 37 54" stroke="${INK}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
-  icecream: () => `<path d="M18 40 L32 62 L46 40Z" fill="#F2CE7E" stroke="#C98F4B" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 44 L36 58 M28 42 L40 52 M42 44 L28 58" stroke="#C98F4B" stroke-width="1.3" opacity=".7"/>
-    <g transform="translate(9 -12) scale(.72)">${swirlBody('#FFE4C2', '#D9A86E', 3)}${pface(32, 49)}</g>`,
   jelly: () => `<path d="M10 52 Q10 41 21 40 H43 Q54 41 54 52 Q54 59 32 59 Q10 59 10 52Z M16 40 Q16 30 26 29 H39 Q48 30 48 40Z M22 29 Q22 20 31 13 Q33 19 39 21 Q43 24 42 29Z" fill="#7FE0A8" fill-opacity=".75" stroke="#2EA86A" stroke-width="2.5"/>
     <path d="M18 46 Q20 42 24 43 M24 34 Q26 31 29 32" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".8"/><circle cx="44" cy="52" r="2" fill="#fff" opacity=".7"/>${pface(32, 49)}`,
   // ---- Legendary ----
   unicorn: () => `<defs><linearGradient id="uniPoop" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FFB8D8"/><stop offset=".5" stop-color="#E8D8FF"/><stop offset="1" stop-color="#B8E8FF"/></linearGradient></defs>
-    ${swirlBody('url(#uniPoop)', '#B48CE0')}<path d="M31 14 L36 0 L38 15Z" fill="#FFD34D" stroke="#D9A21B" stroke-width="1.5" stroke-linejoin="round"/><path d="M32 11 L37 9 M33 7 L37 5" stroke="#D9A21B" stroke-width="1"/>
+    ${swirlBody('url(#uniPoop)', '#B48CE0')}<path d="M27.5 17 L31.5 1 L35.5 17Z" fill="#FFD34D" stroke="#D9A21B" stroke-width="1.5" stroke-linejoin="round"/><path d="M29 12 L34 10.5 M30 7 L33.5 6" stroke="#D9A21B" stroke-width="1.2" stroke-linecap="round"/>
     <path d="M42 26 Q52 22 50 32 Q56 34 52 40" stroke="#FF8FB8" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M44 28 Q54 28 52 38" stroke="#7FB8F5" stroke-width="2.5" fill="none" stroke-linecap="round"/>
     ${pface(32, 49)}${spark(10, 22, 5, '#fff', '#C96AD6')}${spark(56, 52, 3.5, '#fff', '#7FB8F5')}`,
+  goldicorn: () => `<defs><linearGradient id="goldiPoop" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#E8A820"/><stop offset=".45" stop-color="#FFD34D"/><stop offset=".7" stop-color="#FFF0A0"/><stop offset="1" stop-color="#FFC93A"/></linearGradient></defs>
+    ${swirlBody('url(#goldiPoop)', '#B57D10')}<path d="M18 46 Q24 42 28 47 M38 33 Q43 30 46 35" stroke="#FFF6C8" stroke-width="2" fill="none" stroke-linecap="round" opacity=".9"/>
+    <path d="M27.5 17 L31.5 1 L35.5 17Z" fill="#FFF3B0" stroke="#B57D10" stroke-width="1.5" stroke-linejoin="round"/><path d="M29 12 L34 10.5 M30 7 L33.5 6" stroke="#B57D10" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M42 26 Q52 22 50 32 Q56 34 52 40" stroke="#FF9A3D" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M44 28 Q54 28 52 38" stroke="#FFE680" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    ${pface(32, 49)}${spark(10, 22, 5, '#FFF3B0', '#D9A21B')}${spark(56, 52, 4, '#FFF3B0', '#D9A21B')}${spark(54, 8, 3, '#fff', '#D9A21B')}`,
+  diamond: () => `<defs><linearGradient id="diaPoop" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#BFF0FF"/><stop offset=".35" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#CFE0FF"/><stop offset="1" stop-color="#F2E8FF"/></linearGradient></defs>
+    ${swirlBody('url(#diaPoop)', '#5FA8E0')}<path d="M18 45 L26 52 M40 43 L48 50 M24 31 L30 38 M38 31 L34 38 M14 54 L20 50" stroke="#fff" stroke-width="1.8" opacity=".9" fill="none" stroke-linecap="round"/>
+    <path d="M27.5 17 L31.5 1 L35.5 17Z" fill="#E8F7FF" stroke="#5FA8E0" stroke-width="1.5" stroke-linejoin="round"/><path d="M29 12 L34 10.5 M30 7 L33.5 6" stroke="#5FA8E0" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M42 26 Q52 22 50 32 Q56 34 52 40" stroke="#9FD9FF" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M44 28 Q54 28 52 38" stroke="#D8C8FF" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    ${pface(32, 49)}${spark(10, 22, 5, '#fff', '#5FA8E0')}${spark(56, 52, 4, '#fff', '#9B8CF0')}${spark(54, 8, 3, '#fff', '#5FA8E0')}`,
   royal: () => `${swirlBody('#FFD34D', '#D9A21B')}<path d="M22 20 L22 8 L27 13 L32 5 L37 13 L42 8 L42 20Z" fill="#FFD34D" stroke="#B57D10" stroke-width="2" stroke-linejoin="round"/>
     <circle cx="32" cy="15" r="2" fill="#F0543F"/><circle cx="26" cy="17" r="1.4" fill="#6FB4F0"/><circle cx="38" cy="17" r="1.4" fill="#8FD07A"/>
     <path d="M10 52 Q32 62 54 52 L54 58 Q32 66 10 58Z" fill="#B23A5E" opacity=".9"/>${pface(32, 47)}${spark(56, 12, 4, '#FFF3B0', '#D9A21B')}`,
@@ -618,8 +607,28 @@ const SPECIAL_ART = {
     ${[[14, 50], [50, 50], [20, 35], [44, 35]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.4" fill="#6E7A8A"/>`).join('')}
     <rect x="21" y="45" width="22" height="8" rx="3" fill="#2A3340"/><circle cx="27" cy="49" r="2" fill="#7FE0FF"/><circle cx="37" cy="49" r="2" fill="#7FE0FF"/>`,
 };
-export function specialPoopArt(id) {
-  return `<svg viewBox="0 0 64 64" aria-hidden="true">${(SPECIAL_ART[id] || SPECIAL_ART.log)()}</svg>`;
+// Where glitter specks go on each special (inside its body); swirl-based ones use the swirl's.
+const SPECK_SP = {
+  log: [[12, 42], [18, 50], [36, 39], [44, 51], [26, 52], [40, 46], [22, 40], [48, 40]],
+  pellets: [[14, 51], [27, 52], [41, 51], [52, 53], [21, 42], [35, 43], [47, 42], [28, 33], [41, 34], [33, 24]],
+  donut: [[14, 44], [20, 52], [44, 53], [50, 44], [24, 35], [40, 35], [32, 55], [12, 49]],
+  tower: [[18, 56], [44, 56], [22, 45], [41, 45], [25, 37], [38, 37], [28, 29], [35, 29], [31, 18]],
+  tiny: [[24, 46], [30, 41], [36, 46], [27, 36], [32, 33]],
+};
+// color is 'id', 'id.tint', 'id.g' or 'id.tint.g' (see specialVariant in game.js).
+export function specialPoopArt(color) {
+  const [id, a, b] = String(color).split('.');
+  const tint = a && a !== 'g' ? a : 'brown', sparkly = a === 'g' || b === 'g';
+  let art = (SPECIAL_ART[id] || SPECIAL_ART.log)();
+  if (tint !== 'brown' && POOP_FILL[tint]) {
+    const [fill, dark] = POOP_FILL[tint];
+    art = art.replaceAll(BR, fill).replaceAll(BRD, dark).replaceAll('#A8714A', fill).replaceAll('#6E4428', dark);
+  }
+  if (sparkly) {
+    art += (SPECK_SP[id] || SPECK.swirl).map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${i % 3 === 0 ? 1.4 : 1}" fill="#fff" opacity="${i % 2 ? .95 : .75}"/>`).join('')
+      + spark(57, 10, 5, '#FFF3B0', '#D9A21B') + spark(7, 26, 3.5, '#fff', '#C96AD6');
+  }
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${art}</svg>`;
 }
 
 // Grey silhouette of a poop kind for the Poop Book.

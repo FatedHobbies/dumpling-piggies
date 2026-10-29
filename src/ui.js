@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 70;
+const VERSION = 71;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -638,7 +638,7 @@ function onScoop(id, btn) {
   setTimeout(() => btn.remove(), 250);
   floatCoin(r.coins);
   const c = r.poop.color;
-  const sp = G.isSpecialPoop(r.poop) && G.SPECIAL_POOPS[c];
+  const sp = G.isSpecialPoop(r.poop) && G.parseSpecial(c).def;
   if (c === 'rainbow' || c === 'gold' || c === 'crystal' || (sp && (r.isNew || (sp.page !== 'shapes' && sp.page !== 'patterns')))) {
     sfx.fanfare();
     const title = !sp ? (c === 'gold' ? 'A golden poop!' : c === 'crystal' ? 'A crystal poop!' : 'A rainbow poop!')
@@ -1183,7 +1183,7 @@ function poopBook() {
       <div class="pager"><button class="arrow" data-step="-1" aria-label="Previous page">‹</button>
         <h4><span>${t.label}</span><b class="${have === ks.length ? 'done' : ''}">${have} / ${ks.length}</b></h4>
         <button class="arrow" data-step="1" aria-label="Next page">›</button></div>
-      <small class="tier-odds">${t.odds}</small>
+      <small class="tier-odds">${t.odds}${ks[0] && ks[0].shape === 'sp' && ks.length > 1 ? '<br>Any color or sparkle fills its spot in the book. The rest are bonus!' : ''}</small>
       <div class="pk-grid">${ks.map(tile).join('')}</div>
       <div class="dots">${G.POOP_TIERS.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}<span>Page ${i + 1} of ${n}</span></div></div>`;
   }).join('');
@@ -1191,7 +1191,7 @@ function poopBook() {
     const won = !!(state.achievements || {})[a.id];
     return `<div class="ach ${won ? 'got' : ''}"><span class="badge">${won ? Art.badgeIcon() : Art.badgeIcon(true)}</span><span class="txt"><b>${a.name}</b><small>${a.desc}</small></span><span class="price ${won ? 'can' : ''}">${won ? 'Done!' : `${a.coins} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></div>`;
   }).join('');
-  popup(`Poop Book`, `<div class="book-tabs"><button class="on" data-pane="poops">Poops <small>${found} / ${kinds.length}</small></button><button data-pane="badges">Badges <small>${got} / ${G.ACHIEVEMENTS.length}</small></button></div>
+  popup(`Poop Book`, `<div class="book-tabs"><button class="on" data-pane="poops">Poops <small>${found} / ${G.bookSlots().length}</small></button><button data-pane="badges">Badges <small>${got} / ${G.ACHIEVEMENTS.length}</small></button></div>
     <div class="book-pane swipe" data-pane="poops">
       <div class="book-prize">${filled ? `<span class="books-filled">${Art.poopBookArt(true)}<span>Filled <b>${filled}</b> ${filled === 1 ? 'time' : 'times'}</span></span>` : ''}
         <span class="next-prize">Fill it: <b>${G.bookReward(filled)}</b> <i class="coin-sm">${Art.coinIcon()}</i></span></div>
@@ -1254,8 +1254,8 @@ function poopDetail(key) {
   const onPage = !!(state.bookPage || {})[key];
   const name = G.poopName(k);
   const tier = G.POOP_TIERS.find(t => t.colors.includes(k.color));
-  const odds = ((G.SPECIAL_POOPS[k.color] && k.shape === 'sp') ? G.SPECIAL_POOPS[k.color] : G.POOP_ODDS.find(o => o.label === G.POOP_COLORS[k.color]) || tier).odds || tier.odds;
-  const v = G.POOP_VALUE[k.color] || G.POOP_VALUE.brown;
+  const odds = ((k.shape === 'sp' && G.parseSpecial(k.color).def) || G.POOP_ODDS.find(o => o.label === G.POOP_COLORS[k.color]) || tier).odds || tier.odds;
+  const v = G.poopValue(k);
   const body = n
     ? `<div class="pig-card poop-card">${Art.poop(k)}</div>
        <div class="poop-facts"><span><b>${n}</b> scooped</span><span>${tier.label} · ${odds}</span><span>Worth <b>${v.coins}</b> <i class="coin-sm">${Art.coinIcon()}</i> and <b>${v.compost}</b> compost</span></div>

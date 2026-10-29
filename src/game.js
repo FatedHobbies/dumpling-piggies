@@ -379,6 +379,7 @@ export function migrate(state) {
     }
   }
   for (const p of [...(state.piggies || []), ...(state.offer || [])]) if (SHORT_NAMES[p.name]) p.name = SHORT_NAMES[p.name];
+  for (const poop of state.poops || []) if (poop.shape === 'sp' && !parseSpecial(poop.color).def) Object.assign(poop, { shape: 'swirl', color: 'brown' });
   if (!state.bookPage) {                                   // saves from before the book could be refilled
     state.bookPage = {};
     for (const k of Object.keys(state.poopBook || {})) if (state.poopBook[k] > 0) state.bookPage[k] = true;
@@ -518,7 +519,7 @@ export function applyAway(state, now = Date.now()) {
     scooped = state.poops.length;
     for (const poop of state.poops) {
       if (Math.random() < 1 / 25) Object.assign(poop, { shape: 'sp', color: 'robo' });   // the robot's own find
-      state.compost += (POOP_VALUE[poop.color] || POOP_VALUE.brown).compost; collect(state, poop);
+      state.compost += poopValue(poop).compost; collect(state, poop);
     }
     state.poops = [];
     state.stats.scooped += scooped;
@@ -559,14 +560,9 @@ export const SPECIAL_POOPS = {
   // Funny shapes, 1 in 6 altogether.
   log:       { name: 'Log',        page: 'shapes',    coins: 4 },
   pellets:   { name: 'Pellet pile', page: 'shapes',   coins: 4 },
-  heart:     { name: 'Heart',      page: 'shapes',    coins: 4 },
-  star:      { name: 'Star',       page: 'shapes',    coins: 4 },
-  cube:      { name: 'Cube',       page: 'shapes',    coins: 4 },
   donut:     { name: 'Donut',      page: 'shapes',    coins: 4 },
   tower:     { name: 'Tower',      page: 'shapes',    coins: 4 },
   tiny:      { name: 'Teeny',      page: 'shapes',    coins: 4 },
-  pancake:   { name: 'Pancake',    page: 'shapes',    coins: 4 },
-  squiggle:  { name: 'Squiggle',   page: 'shapes',    coins: 4 },
   // Patterns, 1 in 10 altogether.
   polka:     { name: 'Polka dot',  page: 'patterns',  coins: 6 },
   candy:     { name: 'Candy stripe', page: 'patterns', coins: 6 },
@@ -578,19 +574,18 @@ export const SPECIAL_POOPS = {
   // Silly ones, 1 in 12 altogether.
   dumpling:  { name: 'Dumpling',   page: 'silly',     coins: 10 },
   carrot:    { name: 'Carrot',     page: 'silly',     coins: 10 },
-  ghost:     { name: 'Ghost',      page: 'silly',     coins: 10 },
   bubblegum: { name: 'Bubblegum',  page: 'silly',     coins: 10 },
-  snowman:   { name: 'Snowman',    page: 'silly',     coins: 10 },
   cactus:    { name: 'Cactus',     page: 'silly',     coins: 10 },
   galaxy:    { name: 'Galaxy',     page: 'silly',     coins: 10 },
   cupcake:   { name: 'Cupcake',    page: 'silly',     coins: 10 },
   sleepy:    { name: 'Sleepy',     page: 'silly',     coins: 10 },
   cool:      { name: 'Cool',       page: 'silly',     coins: 10 },
-  icecream:  { name: 'Ice cream',  page: 'silly',     coins: 10 },
   jelly:     { name: 'Jelly',      page: 'silly',     coins: 10 },
   // Legendary: very rare, or only after something special happens.
-  unicorn:   { name: 'Unicorn',    page: 'legend',    coins: 60, odds: '1 in 300' },
-  royal:     { name: 'Royal',      page: 'legend',    coins: 50, odds: '1 in 200' },
+  unicorn:   { name: 'Unicorn',    page: 'legend',    coins: 60, odds: '1 in 500' },
+  goldicorn: { name: 'Gold unicorn', page: 'legend',   coins: 80, odds: '1 in 750' },
+  diamond:   { name: 'Diamond unicorn', page: 'legend', coins: 100, odds: '1 in 1000' },
+  royal:     { name: 'Royal',      page: 'legend',    coins: 50, odds: '1 in 300' },
   moon:      { name: 'Moon',       page: 'legend',    coins: 30, odds: 'only at night' },
   champ:     { name: 'Maze champ', page: 'legend',    coins: 30, odds: 'after a maze run' },
   hay:       { name: 'Hay bale',   page: 'legend',    coins: 30, odds: 'after eating hay' },
@@ -598,37 +593,78 @@ export const SPECIAL_POOPS = {
   robo:      { name: 'Robo',       page: 'legend',    coins: 30, odds: 'Robo-scooper finds it' },
 };
 const specialsOn = (page) => Object.keys(SPECIAL_POOPS).filter(id => SPECIAL_POOPS[id].page === page);
-for (const [id, sp] of Object.entries(SPECIAL_POOPS)) POOP_VALUE[id] = { coins: sp.coins, compost: sp.coins >= 30 ? 5 : sp.coins >= 10 ? 3 : 2 };
+// Kinds Ryan took out of the game. Any still lying in a pen become plain swirls.
+export const RETIRED_POOPS = ['heart', 'star', 'cube', 'pancake', 'squiggle', 'ghost', 'snowman', 'icecream'];
+// Variations: funny shapes come in every everyday color, and every special
+// except the legendary ones can come out sparkly. A variation is written into
+// the color: 'log', 'log.pink', 'log.pink.g' (sparkly pink log), 'polka.g'.
+export const SHAPE_TINTS = ['brown', ...PLAIN_COLORS];
+export function specialVariant(id, tint = 'brown', sparkly = false) {
+  return id + (tint !== 'brown' ? '.' + tint : '') + (sparkly ? '.g' : '');
+}
+export function parseSpecial(color) {
+  const [id, a, b] = String(color).split('.');
+  return { id, tint: a && a !== 'g' ? a : 'brown', sparkly: a === 'g' || b === 'g', def: SPECIAL_POOPS[id] };
+}
+function variantsOf(id) {
+  const page = SPECIAL_POOPS[id].page;
+  if (page === 'legend') return [id];
+  const tints = page === 'shapes' ? SHAPE_TINTS : ['brown'];
+  return [false, true].flatMap(g => tints.map(t => specialVariant(id, t, g)));
+}
 POOP_TIERS.push(
-  { label: 'Funny shapes', odds: '1 in 60 each', colors: specialsOn('shapes') },
-  { label: 'Patterns', odds: '1 in 70 each', colors: specialsOn('patterns') },
-  { label: 'Silly', odds: '1 in 140 each', colors: specialsOn('silly') },
+  ...specialsOn('shapes').map(id => ({ label: SPECIAL_POOPS[id].name, odds: 'all colors: 1 in 125 · sparkly 1 in 6 of those', colors: variantsOf(id) })),
+  { label: 'Patterns', odds: '1 in 350 each · sparkly 1 in 6 of those', colors: specialsOn('patterns').flatMap(variantsOf) },
+  { label: 'Silly', odds: '1 in 720 each · sparkly 1 in 6 of those', colors: specialsOn('silly').flatMap(variantsOf) },
   { label: 'Legendary', odds: 'super rare, or after something special', colors: specialsOn('legend') },
 );
 export const isSpecialPoop = (p) => p.shape === 'sp';
-export function poopName(p) {
-  return isSpecialPoop(p) ? SPECIAL_POOPS[p.color].name : `${POOP_COLORS[p.color]} ${POOP_SHAPES[p.shape].toLowerCase()}`;
+export function poopValue(p) {
+  if (!isSpecialPoop(p)) return POOP_VALUE[p.color] || POOP_VALUE.brown;
+  const { def, sparkly } = parseSpecial(p.color);
+  const coins = (def ? def.coins : 4) * (sparkly ? 2 : 1);
+  return { coins, compost: coins >= 30 ? 5 : coins >= 10 ? 3 : 2 };
 }
+export function poopName(p) {
+  if (!isSpecialPoop(p)) return `${POOP_COLORS[p.color]} ${POOP_SHAPES[p.shape].toLowerCase()}`;
+  const { def, tint, sparkly } = parseSpecial(p.color);
+  const words = [sparkly && 'Sparkly', tint !== 'brown' && POOP_COLORS[tint], def ? def.name : 'Poop'].filter(Boolean).join(' ');
+  return words.charAt(0) + words.slice(1).toLowerCase();
+}
+// The color a meal gives a poop: after one of its veggies, or now and then a
+// surprise everyday color. null means plain brown.
+function foodColor(food, rng) {
+  food = food.replace(/^shiny:/, '');
+  const veg = food.split('+').filter(f => FILLINGS[f]);
+  if (veg.length) return FILLINGS[veg[Math.floor(rng() * veg.length)]].poop;
+  if (food.startsWith('sp:') || rng() < 0.25) return PLAIN_COLORS[Math.floor(rng() * PLAIN_COLORS.length)];
+  return null;
+}
+
 // Event and super-rare poops first, then the odd shapes, patterns and silly ones.
 function specialPoop(state, pooper, rng) {
   const food = pooper && pooper.lastFood ? pooper.lastFood : '';
   const pick = (page) => { const ids = specialsOn(page); return ids[Math.floor(rng() * ids.length)]; };
   if ((state.stats.mazes || 0) > (state.mazePoopSeen || 0)) {
     state.mazePoopSeen = state.stats.mazes;
-    if (!(state.poopBook || {})['sp-champ'] || rng() < 0.3) return 'champ';
+    if (!(state.poopBook || {})['sp-champ'] || rng() < 0.15) return 'champ';
   }
-  if (food.includes('hay') && rng() < 0.2) return 'hay';
+  if (food.includes('hay') && rng() < 0.1) return 'hay';
   if (food.startsWith('sp:') && rng() < (SPECIALS[food.slice(3)] && SPECIALS[food.slice(3)].tier === 'secret' ? 0.5 : 0.12)) return 'mystery';
   const hour = new Date().getHours();
-  if ((hour >= 20 || hour < 6) && rng() < 1 / 40) return 'moon';
+  if ((hour >= 20 || hour < 6) && rng() < 1 / 80) return 'moon';
   const r = rng();
-  if (r < 1 / 300) return 'unicorn';
-  if (r < 1 / 300 + 1 / 200) return 'royal';
+  if (r < 1 / 1000) return 'diamond';
+  if (r < 1 / 1000 + 1 / 750) return 'goldicorn';
+  if (r < 1 / 1000 + 1 / 750 + 1 / 500) return 'unicorn';
+  if (r < 1 / 1000 + 1 / 750 + 1 / 500 + 1 / 300) return 'royal';
+  // Shapes 1 in 25, patterns 1 in 50, silly 1 in 80; 1 in 6 of those sparkle.
   const r2 = rng();
-  if (r2 < 1 / 12) return pick('silly');
-  if (r2 < 1 / 12 + 1 / 10) return pick('patterns');
-  if (r2 < 1 / 12 + 1 / 10 + 1 / 6) return pick('shapes');
-  return null;
+  const page = r2 < 1 / 80 ? 'silly' : r2 < 1 / 80 + 1 / 50 ? 'patterns' : r2 < 1 / 80 + 1 / 50 + 1 / 25 ? 'shapes' : null;
+  if (!page) return null;
+  const sparkly = rng() < 1 / 6;
+  const tint = page === 'shapes' ? (foodColor(food, rng) || 'brown') : 'brown';
+  return specialVariant(pick(page), tint, sparkly);
 }
 
 export function poopKind(state, rng = Math.random) {
@@ -640,9 +676,7 @@ export function poopKind(state, rng = Math.random) {
   let color = 'brown';
   // Recipes color the poop after one of their veggies; specials give a surprise color.
   const food = (pooper && pooper.lastFood ? pooper.lastFood : '').replace(/^shiny:/, '');
-  const veg = food.split('+').filter(f => FILLINGS[f]);
-  if (veg.length) color = FILLINGS[veg[Math.floor(rng() * veg.length)]].poop;
-  else if (food.startsWith('sp:') || rng() < 0.25) color = PLAIN_COLORS[Math.floor(rng() * PLAIN_COLORS.length)];
+  color = foodColor(food, rng) || color;
   const r = rng();
   // Rare ones: crystal 1 in 250, golden 1 in 100, rainbow 1 in 33, glitter 1 in 12.
   if (r < 0.004) color = 'crystal';
@@ -671,22 +705,22 @@ function collect(state, poop) {
 export function poopKinds() {
   const out = [];
   for (const color of Object.keys(POOP_COLORS)) for (const shape of Object.keys(POOP_SHAPES)) out.push({ shape, color, key: shape + '-' + color });
-  for (const id of Object.keys(SPECIAL_POOPS)) out.push({ shape: 'sp', color: id, key: 'sp-' + id });
+  for (const t of POOP_TIERS) for (const c of t.colors) if (!POOP_COLORS[c]) out.push({ shape: 'sp', color: c, key: 'sp-' + c });
   return out;
 }
-export function poopsFound(state) {
-  return poopKinds().filter(k => (state.poopBook || {})[k.key] > 0).length;
-}
-
-export function pageFound(state) {
-  return poopKinds().filter(k => (state.bookPage || {})[k.key]).length;
-}
+// What fills the book: each everyday/glitter/super rare kind, plus one of each
+// special in any color or sparkle (the variations are bonus collectibles).
+export const bookSlot = (k) => k.shape === 'sp' ? 'sp-' + parseSpecial(k.color).id : k.key;
+export function bookSlots() { return [...new Set(poopKinds().map(bookSlot))]; }
+const slotsIn = (have) => new Set(poopKinds().filter(k => have[k.key]).map(bookSlot)).size;
+export function poopsFound(state) { return slotsIn(state.poopBook || {}); }
+export function pageFound(state) { return slotsIn(state.bookPage || {}); }
 
 // Filling every spot on the page pays a big prize (bigger each time, up to a
 // cap), adds one to the books-filled counter, and starts a fresh page.
 export const bookReward = (filled) => Math.min(1000 + 200 * filled, 2000);
 export function checkBookFull(state) {
-  if (pageFound(state) < poopKinds().length) return null;
+  if (pageFound(state) < bookSlots().length) return null;
   const coins = bookReward(state.booksFilled || 0);
   state.booksFilled = (state.booksFilled || 0) + 1;
   state.coins += coins;
@@ -703,7 +737,7 @@ export const ACHIEVEMENTS = [
   { id: 'glitter',  name: 'Glitter getter',   desc: 'Find a glitter poop.',               coins: 15,  test: s => poopKinds().some(k => ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple'].includes(k.color) && (s.poopBook || {})[k.key]) },
   { id: 'crystal',  name: 'Crystal gazer',    desc: 'Find a crystal poop.',               coins: 75,  test: s => poopKinds().some(k => k.color === 'crystal' && (s.poopBook || {})[k.key]) },
   { id: 'five',     name: 'Collector',        desc: 'Collect 5 different kinds of poop.', coins: 20,  test: s => poopsFound(s) >= 5 },
-  { id: 'all',      name: 'Poop professor',   desc: 'Fill the whole Poop Book.',          coins: 100, test: s => poopsFound(s) >= poopKinds().length },
+  { id: 'all',      name: 'Poop professor',   desc: 'Fill the whole Poop Book.',          coins: 100, test: s => poopsFound(s) >= bookSlots().length },
   { id: 'scoop50',  name: 'Scooper',          desc: 'Scoop 50 poops.',                    coins: 20,  test: s => s.stats.scooped >= 50 },
   { id: 'scoop250', name: 'Super scooper',    desc: 'Scoop 250 poops.',                   coins: 60,  test: s => s.stats.scooped >= 250 },
 ];
@@ -750,7 +784,7 @@ export function scoop(state, id) {
   const i = state.poops.findIndex(p => p.id === id);
   if (i < 0) return { ok: false };
   const poop = state.poops.splice(i, 1)[0];
-  const v = POOP_VALUE[poop.color] || POOP_VALUE.brown;
+  const v = poopValue(poop);
   state.compost += v.compost;
   state.coins += v.coins;
   state.stats.scooped += 1;
