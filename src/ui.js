@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 108;
+const VERSION = 109;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -782,7 +782,7 @@ function rideSlide(pig, w, d) {
   const tw = toy.offsetWidth, th = toy.offsetHeight;
   const tl = G.TOYS.slide.x * fw - tw / 2, tt = G.TOYS.slide.y * fh - th * 0.94;
   const at = (px, py) => [(tl + px / 120 * tw) / fw, (tt + py / 100 * th) / fh];
-  const ride = Math.min(0.6, tw / d.offsetWidth * 0.6);
+  const ride = Math.min(0.8, tw / d.offsetWidth * 0.85);
   const path = SLIDE_PATH.map(([t, px, py, rot]) => [t, ...at(px, py), rot]);
   const dur = 3400, start = performance.now();
   w.riding = true; w.front = false; w.face = -1;
