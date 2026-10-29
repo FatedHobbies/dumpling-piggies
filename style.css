@@ -358,7 +358,7 @@ button.pk:active { transform: scale(.95); }
 .mcell { cursor: pointer; }
 .mcell .floor { fill: #D9F0B8; transition: fill .15s; }
 .mcell.seen .floor { fill: #C2E39B; }
-.mcell.start .floor { fill: #FFF3DF; }
+.mcell.start .floor { fill: #8ED46A; stroke: #4FA33A; stroke-width: 3.5; }
 .mcell .bale { display: none; }
 .mcell.wall .bale { display: block; }
 .mpig { transition: transform .5s linear; cursor: pointer; }
