@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 66;
+const VERSION = 67;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -1018,18 +1018,21 @@ const SHOP_TABS = [
 ];
 function shopView() {
   return el(`<section class="shop">
-    <div class="scene-top">${Art.shopScene()}</div>
-    <div class="shop-tabs">${SHOP_TABS.map(t => `<button class="stab" data-stab="${t.id}">${t.icon()}<span>${t.name}</span></button>`).join('')}</div>
-    <div class="shop-sec" data-sec="piggies"><div class="ribbon"><span>Adopt a piggy</span></div><div class="adopt panel" id="adopt"></div></div>
-    <div class="shop-sec" data-sec="upgrades"><div class="ribbon"><span>Upgrades</span></div><div id="items"></div></div>
-    <div class="shop-sec" data-sec="hats"><div class="ribbon"><span>Hats</span></div><div class="hats panel" id="hats"></div></div>
-    <div class="shop-sec" data-sec="toys"><div class="ribbon"><span>Pen toys</span></div><div class="toys panel" id="toys"></div></div>
+    <div class="shop-head"><div class="awning">${Art.shopScene()}</div>
+      <div class="shop-tabs">${SHOP_TABS.map(t => `<button class="stab" data-stab="${t.id}">${t.icon()}<span>${t.name}</span></button>`).join('')}</div></div>
+    <div class="shop-sec" data-sec="piggies"><div class="adopt panel" id="adopt"></div></div>
+    <div class="shop-sec" data-sec="upgrades"><div id="items"></div></div>
+    <div class="shop-sec" data-sec="hats"><div class="hats panel" id="hats"></div></div>
+    <div class="shop-sec" data-sec="toys"><div class="toys panel" id="toys"></div></div>
     <div class="row center"><button class="btn btn-grey" id="replay">Replay tutorial</button></div>
     <button class="reset" id="reset">Start over</button>
     <p class="version">version ${VERSION}</p></section>`);
 }
 
 function updateShop() {
+  // The hat picker pins just under the shop's awning and tabs.
+  const head = $('.shop-head');
+  if (head) $('.shop').style.setProperty('--headh', head.offsetHeight + 'px');
   const stab = SHOP_TABS.some(t => t.id === state.shopTab) ? state.shopTab : 'piggies';
   document.querySelectorAll('.stab').forEach(b => {
     b.classList.toggle('active', b.dataset.stab === stab);
@@ -1101,12 +1104,12 @@ function updateShop() {
   if (hats.dataset.sig !== hsig) {
     hats.dataset.sig = hsig;
     // Who the hats are for, big and clear, with a row of faces to switch piggy.
-    hats.innerHTML = `<div class="hat-for">
+    hats.innerHTML = `<div class="hat-pin"><div class="hat-for">
         <div class="hat-model">${Art.piggySide({ coat: p.coat, hat: showing })}</div>
         <div class="hat-who"><small>Hats for</small><b>${esc(p.name)}</b>
-          ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}. Tap it again to buy!</em>` : state.piggies.length > 1 ? '<em>Tap a face to pick another piggy</em>' : ''}</div>
-      </div>
-      ${state.piggies.length > 1 ? `<div class="hat-pigs">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div>` : ''}
+          ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}. Tap it again to buy!</em>` : ''}
+          ${state.piggies.length > 1 ? `<div class="hat-pigs">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div>` : ''}</div>
+      </div></div>
       <p class="hint">Buy a hat once and any piggy can wear it. Tap a hat to try it on.</p><div class="hat-grid"></div>`;
     hats.querySelectorAll('.hat-pigs .face').forEach(f => f.addEventListener('click', () => { selectedPig = +f.dataset.id; tryHat = null; sfx.pop(); render(); }));
     const grid = $('.hat-grid', hats);
