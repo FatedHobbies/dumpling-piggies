@@ -1532,14 +1532,14 @@ function updateShop() {
   const hsig = JSON.stringify([state.hats, state.coins, p.id, p.hat, tryHat, state.piggies.map(q => [q.id, q.name, q.hat])]);
   if (hats.dataset.sig !== hsig) {
     hats.dataset.sig = hsig;
-    // Who the hats are for, big and clear, with a row of faces to switch piggy.
-    // Its name on the left, the piggy being dressed in the middle, every piggy's face on the right.
+    // "Fancy hats for [name]" across the top, the piggy being dressed below it,
+    // and every piggy's face on the right to switch who is dressing up.
     const others = state.piggies.filter(q => q.id !== p.id);
     hats.innerHTML = `<div class="hat-pin"><div class="hat-for">
-        ${others.length ? `<div class="hat-pigs ${state.piggies.length > 2 ? 'two' : ''}">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div>` : ''}
+        ${others.length ? `<div class="hat-side"><span class="hat-tip">Tap a face to switch</span><div class="hat-pigs ${state.piggies.length > 2 ? 'two' : ''}">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div></div>` : ''}
         <div class="hat-model">${Art.piggySide({ coat: p.coat, hat: showing })}</div>
-        <div class="hat-who"><small>Hats for</small><b>${esc(p.name)}</b>
-          ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}. ${G.HATS[tryHat.id].goal ? `${G.HATS[tryHat.id].goal} to earn it!` : 'Tap it again to buy!'}</em>` : others.length ? '<em>Tap a face to switch</em>' : ''}</div>
+        <div class="hat-who"><span class="hat-title"><small>Fancy hats for</small><b>${esc(p.name)}</b></span>
+          ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}. ${G.HATS[tryHat.id].goal ? `${G.HATS[tryHat.id].goal} to earn it!` : 'Tap it again to buy!'}</em>` : ''}</div>
       </div></div>
       <p class="hint small">Tap a hat to try it on. Hats you own fit every piggy.</p><div class="hat-grid"></div>`;
     hats.querySelectorAll('.hat-pigs .face').forEach(f => f.addEventListener('click', () => { selectedPig = +f.dataset.id; tryHat = null; sfx.pop(); render(); }));
