@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 87;
+const VERSION = 88;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -740,7 +740,7 @@ function updateGarden() {
     const g = state.garden[i];
     const prog = G.plantProgress(state, i);
     const psig = g ? `${g.filling}:${Math.round(prog * 20)}` : '';
-    if (b.dataset.sig !== psig) { b.dataset.sig = psig; $('.plant', b).innerHTML = g ? Art.sprout(prog, g.filling) : ''; }
+    if (b.dataset.sig !== psig) { b.dataset.sig = psig; const pl = $('.plant', b); pl.classList.remove('pulled'); pl.innerHTML = g ? Art.sprout(prog, g.filling) : ''; }
     $('.ring i', b).style.width = (prog * 100) + '%';
     $('.ring', b).style.visibility = g && prog < 1 ? 'visible' : 'hidden';
     $('.lbl', b).textContent = !g ? 'Plant' : prog >= 1 ? 'Harvest!' : G.FILLINGS[g.filling].name;
