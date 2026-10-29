@@ -1541,7 +1541,7 @@ function updateShop() {
         <div class="hat-who"><span class="hat-title"><b>${esc(p.name)}</b></span>
           ${tryHat ? `<em>${G.HATS[tryHat.id].goal ? `${G.HATS[tryHat.id].name}! ${G.HATS[tryHat.id].goal} to earn it!` : `Trying on the ${G.HATS[tryHat.id].name}! Like ${/s$/.test(G.HATS[tryHat.id].name) ? 'them' : 'it'}? Press Buy!`}</em>` : ''}</div>
       </div></div>
-      <p class="hint small">Tap a hat to try it on. Hats you own fit every piggy.</p><div class="hat-grid"></div>`;
+      <p class="hint small">Tap a fancy hat to try it on. Hats you own fit every piggy.</p><div class="hat-grid"></div>`;
     hats.querySelectorAll('.hat-pigs .face').forEach(f => f.addEventListener('click', () => { selectedPig = +f.dataset.id; tryHat = null; sfx.pop(); render(); }));
     const grid = $('.hat-grid', hats);
     for (const [id, h] of Object.entries(G.HATS)) {
