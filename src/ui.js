@@ -466,6 +466,8 @@ function updateSteamer() {
     placePig(d, pig, w);
   }
   for (const [, c] of have) c.remove();
+  const house = $('.fixture[data-fix="house"]', floor), hy = houseY();
+  if (house && house.dataset.y !== hy.toFixed(3)) { house.dataset.y = hy.toFixed(3); house.style.setProperty('--y', hy); house.style.zIndex = depth(hy); }
   // Toys sit on the floor; tapping one sends the picked piggy over to play.
   for (const [id, t] of Object.entries(G.TOYS)) {
     let d = $(`.toy[data-toy="${id}"]`, floor);
@@ -576,6 +578,20 @@ function placePig(d, pig, w) {
 function depth(y) { return Math.round(y * 100) + 10; }
 function fixtureY(f) { return (f.y - 108) / 192; }   // the floor covers pen-scene y 108 to 300
 
+// The house is drawn wider than tall phones' floors are deep, so a fixed spot
+// leaves its roof just kissing the back wall on some phones. Instead its roof
+// sits a set share of its own height away from the wall, measured on screen.
+const HOUSE_ROOF = 0.2;    // roof top, as a share of the house picture's height
+const HOUSE_GAP = 0.1;     // roof below the wall (less than 0 tucks it in front of the wall)
+function houseY() {
+  const floor = $('#floor'), sky = $('.pen-sky');
+  if (!floor || !floor.offsetHeight) return fixtureY(Art.PEN_FIXTURES.house);
+  const [, , bw, bh] = Art.PEN_FIXTURES.house.box.split(' ').map(Number);
+  const h = floor.offsetWidth * bw / 400 * bh / bw;
+  const wall = sky ? sky.getBoundingClientRect().bottom - floor.getBoundingClientRect().top : 0;
+  return (wall + (1 - HOUSE_ROOF + HOUSE_GAP) * h) / floor.offsetHeight;
+}
+
 function syncPose(d, w) {
   if (!d || !w) return;
   d.classList.toggle('front', !!w.front && !w.inside && !w.peek && !w.riding);
@@ -683,7 +699,7 @@ function wanderTick() {
 const HIDES = { house: { door: 60, doorW: 0.5 }, hut: { door: 60, doorW: 0.3 }, tunnel: { door: 22, exit: 118, doorW: 0.28 } };
 
 function toySpot(id) {
-  if (id === 'house') { const f = Art.PEN_FIXTURES.house; return { x: f.x / 400, y: fixtureY(f) }; }
+  if (id === 'house') return { x: Art.PEN_FIXTURES.house.x / 400, y: houseY() };
   return G.toySpot(state, id);
 }
 
