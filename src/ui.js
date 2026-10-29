@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 15;
+const VERSION = 16;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -803,7 +803,7 @@ function renameDialog() {
   $('#cancel', box).onclick = () => box.remove();
   $('#ok', box).onclick = () => {
     const r = G.rename(state, p.id, $('#newname', box).value);
-    if (!r.ok) { sfx.nope(); toast(r.reason === 'coins' ? 'Not enough coins yet' : 'Type a name first'); return; }
+    if (!r.ok) { sfx.nope(); toast(r.reason === 'coins' ? 'Not enough coins yet' : r.reason === 'name' ? 'Try a different name' : 'Type a name first'); return; }
     sfx.fanfare(); box.remove(); tut('rename'); render(); toast(`Hello, ${esc(p.name)}!`, 'big');
   };
   setTimeout(() => $('#newname', box).focus(), 50);

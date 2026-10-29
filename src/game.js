@@ -2,6 +2,8 @@
 // reads `state`; the save layer serializes `state`. Keeping this file free of
 // platform code is what lets the game move to Reddit later.
 
+import { NAMES, isNiceName } from './names.js';
+
 export const FILLINGS = {
   carrot:     { name: 'Carrot',     color: '#FF9A3C' },
   cabbage:    { name: 'Cabbage',    color: '#8FD07A' },
@@ -86,10 +88,6 @@ export const COLORS = {
   grey:      '#A8A09A',
   lilac:     '#C9B8D6',
 };
-
-const NAMES = ['Bao Bao', 'Sir Wheeksalot', 'Little Potsticker', 'Mochi', 'Noodle', 'Peanut',
-  'Dumpling Doug', 'Princess Squeak', 'Gyoza', 'Biscuit', 'Captain Fluff', 'Wonton', 'Pudding', 'Tofu',
-  'Nugget', 'Pickles', 'Waffles', 'Sprout', 'Marshmallow', 'Buttons'];
 
 export const GROW_TIME = 90;        // seconds for a plant to be ready
 export const MAX_AWAY = 8 * 3600;   // away-time progress is capped at 8 hours
@@ -445,6 +443,7 @@ export function rename(state, piggyId, name) {
   const p = piggy(state, piggyId);
   name = String(name || '').trim().slice(0, 16);
   if (!p || !name) return { ok: false };
+  if (!isNiceName(name)) return { ok: false, reason: 'name' };
   if (state.coins < RENAME_COST) return { ok: false, reason: 'coins' };
   state.coins -= RENAME_COST;
   p.name = name;
