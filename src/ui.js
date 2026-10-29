@@ -404,6 +404,8 @@ function updateSteamer() {
   if (!asking || !needOf(asking)) {
     const next = state.piggies.filter(needOf).sort((a, b) => Math.min(a.hunger, a.fun) - Math.min(b.hunger, b.fun))[0];
     needPig = next ? next.id : null;
+    // The next piggy that asks gets picked, so the Feed card and bars follow it.
+    if (next && !tutStep()) { selectedPig = next.id; render(); return; }
   }
   // In the tutorial only her piggy asks for things, so the bubbles match the steps.
   if (tutStep()) needPig = needOf(current()) ? current().id : null;
