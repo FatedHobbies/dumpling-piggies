@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 35;
+const VERSION = 36;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -750,7 +750,14 @@ function placeMazePig(pos, dir) {
   } else if (!run) mazeAngle = 0;
   const zoom = run && Date.now() < run.zoomUntil;
   pig.style.transitionDuration = run ? (zoom ? '.17s' : '.52s') : '0s';
-  pig.style.transform = `translate(${pos.x * CELL + CELL / 2}px, ${pos.y * CELL + CELL / 2}px)`;
+  // Never draw the piggy off the board, whatever the run says.
+  const ok = pos && Number.isFinite(pos.x) && Number.isFinite(pos.y);
+  const cx = ok ? Math.min(M.COLS - 1, Math.max(0, Math.round(pos.x))) : M.START.x;
+  const cy = ok ? Math.min(M.ROWS - 1, Math.max(0, Math.round(pos.y))) : M.START.y;
+  // 'zoomy', not 'cheer': the Poop Book's .cheer class animates transform,
+  // which overrode this translate and parked the piggy in the top-left corner.
+  pig.classList.toggle('zoomy', !!zoom);
+  pig.style.transform = `translate(${cx * CELL + CELL / 2}px, ${cy * CELL + CELL / 2}px)`;
   $('#mrot').style.transform = `rotate(${mazeAngle}deg) scale(.3)`;
 }
 
@@ -768,8 +775,6 @@ function onCheer() {
   if (!run || run.done) { if (!run) startRun(); return; }
   M.cheer(run);
   sfx.wheek();
-  const pig = $('#mpig');
-  pig.classList.remove('cheer'); void pig.offsetWidth; pig.classList.add('cheer');
   render();
 }
 
