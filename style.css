@@ -96,8 +96,8 @@ h2 { font-family: var(--display); font-size: 1.2rem; margin: 18px 0 8px; }
 .hud-name { font-family: var(--display); font-weight: 600; color: #fff; font-size: 1.05rem; text-shadow: 0 2px 0 rgba(0,0,0,.35); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hud-name::after { content: " ✎"; opacity: .8; font-size: .85em; }
 .hud-coins { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; background: rgba(40, 60, 80, .55); border: 2px solid rgba(255,255,255,.4); border-radius: 999px; padding: 4px 14px 4px 6px; font-family: var(--display); font-weight: 600; color: #fff; font-size: 1.15rem; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
-.hud-book { position: relative; margin-left: auto; width: 46px; height: 46px; flex: 0 0 auto; border-radius: 14px; background: #fff; border: 3px solid var(--wood-dark); box-shadow: 0 3px 0 #6A4524; padding: 2px; display: grid; place-items: center; }
-.hud-book svg { width: 34px; height: 34px; }
+.hud-book { position: relative; margin-left: auto; height: 46px; flex: 0 0 auto; display: flex; align-items: center; gap: 2px; border-radius: 999px; background: #fff; border: 3px solid var(--wood-dark); box-shadow: 0 3px 0 #6A4524; padding: 0 10px 0 3px; font-family: var(--display); font-weight: 600; font-size: .72rem; line-height: 1; color: var(--wood-dark); text-align: left; }
+.hud-book svg { width: 30px; height: 30px; flex: 0 0 auto; }
 .hud-book:active { transform: translateY(2px); box-shadow: none; }
 .hud-book .book-count { position: absolute; top: -8px; right: -10px; }
 .hud-music { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 50%; background: rgba(40, 60, 80, .55); border: 2px solid rgba(255,255,255,.4); box-shadow: inset 0 -3px 0 rgba(0,0,0,.25); font-size: 1.3rem; line-height: 1; padding: 0; }
