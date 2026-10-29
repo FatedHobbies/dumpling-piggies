@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 101;
+const VERSION = 102;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -911,6 +911,49 @@ function kitchenView() {
   return v;
 }
 
+// Drag a veggie card onto a counter slot (tapping still works too).
+// Dropping on a full slot swaps that veggie out.
+function dragFill(card, f) {
+  card.addEventListener('pointerdown', (e) => {
+    if (e.button > 0) return;
+    const x0 = e.clientX, y0 = e.clientY;
+    let ghost = null, over = null;
+    const slotAt = (x, y) => [...document.querySelectorAll('.counter-bar .slot')].find(s => {
+      const r = s.getBoundingClientRect();
+      return x > r.left - 18 && x < r.right + 18 && y > r.top - 18 && y < r.bottom + 18;
+    });
+    const move = (ev) => {
+      if (!ghost) {
+        if (Math.hypot(ev.clientX - x0, ev.clientY - y0) < 8) return;
+        ghost = el(`<div class="drag-ghost">${Art.veggie(f, 52)}</div>`);
+        document.body.appendChild(ghost);
+        card.classList.add('dragging');
+      }
+      ghost.style.transform = `translate(${ev.clientX - 34}px, ${ev.clientY - 34}px)`;
+      const s = slotAt(ev.clientX, ev.clientY);
+      if (s !== over) { over?.classList.remove('hover'); s?.classList.add('hover'); over = s; }
+    };
+    const up = (ev) => {
+      card.removeEventListener('pointermove', move);
+      card.removeEventListener('pointerup', up);
+      card.removeEventListener('pointercancel', up);
+      if (!ghost) return;
+      ghost.remove(); card.classList.remove('dragging'); over?.classList.remove('hover');
+      card.dataset.dragged = '1';
+      setTimeout(() => delete card.dataset.dragged, 0);
+      const s = ev.type === 'pointerup' && slotAt(ev.clientX, ev.clientY);
+      if (!s) return;
+      const i = +s.dataset.slot;
+      if (selected[i]) selected[i] = f; else if (selected.length < 2) selected.push(f); else return;
+      sfx.pop(); render();
+    };
+    card.setPointerCapture(e.pointerId);
+    card.addEventListener('pointermove', move);
+    card.addEventListener('pointerup', up);
+    card.addEventListener('pointercancel', up);
+  });
+}
+
 function updateKitchen() {
   const slots = document.querySelectorAll('.slot');
   slots.forEach((s, i) => { s.innerHTML = selected[i] ? Art.veggie(selected[i], 48) : ''; s.classList.toggle('filled', !!selected[i]); });
@@ -925,7 +968,8 @@ function updateKitchen() {
       if (!open.includes(f)) { fl.appendChild(lockedCrop(f)); continue; }
       const have = (state.pantry[f] || 0) - selected.filter(x => x === f).length;
       const b = el(`<button class="fill pitem tile" ${have < 1 ? 'disabled' : ''}>${Art.veggie(f, 44)}<b class="count">${Math.max(0, have)}</b><span>${G.FILLINGS[f].name}</span></button>`);
-      b.addEventListener('click', () => { if (selected.length < 2) { selected.push(f); sfx.pop(); render(); } });
+      b.addEventListener('click', () => { if (b.dataset.dragged) { delete b.dataset.dragged; return; } if (selected.length < 2) { selected.push(f); sfx.pop(); render(); } });
+      if (have > 0) dragFill(b, f);
       fl.appendChild(b);
     }
   }
