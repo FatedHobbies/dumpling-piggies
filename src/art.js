@@ -230,6 +230,16 @@ export function poop(p = {}) {
   return `<svg viewBox="0 0 64 64" aria-hidden="true">${defs}${body}${shine}</svg>`;
 }
 
+// Grey silhouette of a poop kind for the Poop Book.
+export function poopShadow(p = {}) {
+  return poop(p).replace(/fill="(?!none)[^"]*"/g, 'fill="#D5CDBA"').replace(/stroke="[^"]*"/g, 'stroke="#B7AC94"').replace(/<defs>.*?<\/defs>/, '');
+}
+
+export function badgeIcon(locked = false) {
+  const c = locked ? ['#D5CDBA', '#B7AC94', '#E6DCC8'] : ['#FFD34D', '#E0941C', '#FFF3B0'];
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 38 L14 60 L32 50 L50 60 L44 38Z" fill="${locked ? '#B7AC94' : '#F2544A'}"/><circle cx="32" cy="28" r="22" fill="${c[0]}" stroke="${c[1]}" stroke-width="3"/><path d="M32 14 l4.5 9 10 1.5 -7 7 1.5 10 -9 -4.8 -9 4.8 1.5 -10 -7 -7 10 -1.5z" fill="${c[2]}" stroke="${c[1]}" stroke-width="2" stroke-linejoin="round"/></svg>`;
+}
+
 export function compostIcon() {
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 22 H50 L46 56 H18Z" fill="#B9824A"/><rect x="10" y="16" width="44" height="8" rx="3" fill="#8A5634"/><path d="M24 36 Q32 28 40 36" stroke="#5FAE4E" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
 }

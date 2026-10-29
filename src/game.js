@@ -273,7 +273,7 @@ export function applyAway(state, now = Date.now()) {
   let scooped = 0;
   if (state.upgrades.autoscoop) {
     scooped = state.poops.length;
-    for (const poop of state.poops) state.compost += (POOP_VALUE[poop.color] || POOP_VALUE.brown).compost;
+    for (const poop of state.poops) { state.compost += (POOP_VALUE[poop.color] || POOP_VALUE.brown).compost; collect(state, poop); }
     state.poops = [];
     state.stats.scooped += scooped;
   }
@@ -304,9 +304,43 @@ export function poopKind(state, rng = Math.random) {
 export function addPoop(state) {
   const kind = poopKind(state);
   state.poops.push({ id: state.nextId++, x: 0.1 + Math.random() * 0.8, y: 0.2 + Math.random() * 0.75, ...kind });
+}
+
+// The Poop Book counts every kind scooped (by hand or by the robot).
+export const POOP_SHAPES = { beans: 'Beans', swirl: 'Swirly' };
+export const poopKey = (p) => (p.shape || 'beans') + '-' + (p.color || 'brown');
+function collect(state, poop) {
   state.poopBook = state.poopBook || {};
-  const key = kind.shape + '-' + kind.color;
-  state.poopBook[key] = (state.poopBook[key] || 0) + 1;
+  state.poopBook[poopKey(poop)] = (state.poopBook[poopKey(poop)] || 0) + 1;
+}
+export function poopKinds() {
+  const out = [];
+  for (const color of Object.keys(POOP_COLORS)) for (const shape of Object.keys(POOP_SHAPES)) out.push({ shape, color, key: shape + '-' + color });
+  return out;
+}
+export function poopsFound(state) {
+  return poopKinds().filter(k => (state.poopBook || {})[k.key] > 0).length;
+}
+
+// Achievements for the Poop Book. Each pays coins once.
+export const ACHIEVEMENTS = [
+  { id: 'first',    name: 'First scoop',      desc: 'Scoop your very first poop.',        coins: 5,   test: s => s.stats.scooped >= 1 },
+  { id: 'swirly',   name: 'Swirly spotter',   desc: 'Collect a swirly poop.',             coins: 10,  test: s => Object.keys(s.poopBook || {}).some(k => k.startsWith('swirl')) },
+  { id: 'rainbow',  name: 'Rainbow hunter',   desc: 'Find a rainbow poop.',               coins: 25,  test: s => poopKinds().some(k => k.color === 'rainbow' && (s.poopBook || {})[k.key]) },
+  { id: 'gold',     name: 'Golden touch',     desc: 'Find a golden poop.',                coins: 50,  test: s => poopKinds().some(k => k.color === 'gold' && (s.poopBook || {})[k.key]) },
+  { id: 'five',     name: 'Collector',        desc: 'Collect 5 different kinds of poop.', coins: 20,  test: s => poopsFound(s) >= 5 },
+  { id: 'all',      name: 'Poop professor',   desc: 'Fill the whole Poop Book.',          coins: 100, test: s => poopsFound(s) >= poopKinds().length },
+  { id: 'scoop50',  name: 'Scooper',          desc: 'Scoop 50 poops.',                    coins: 20,  test: s => s.stats.scooped >= 50 },
+  { id: 'scoop250', name: 'Super scooper',    desc: 'Scoop 250 poops.',                   coins: 60,  test: s => s.stats.scooped >= 250 },
+];
+
+export function checkAchievements(state) {
+  state.achievements = state.achievements || {};
+  const won = [];
+  for (const a of ACHIEVEMENTS) {
+    if (!state.achievements[a.id] && a.test(state)) { state.achievements[a.id] = true; state.coins += a.coins; won.push(a); }
+  }
+  return won;
 }
 
 export function feed(state, key, piggyId = null, now = Date.now()) {
@@ -346,6 +380,7 @@ export function scoop(state, id) {
   state.compost += v.compost;
   state.coins += v.coins;
   state.stats.scooped += 1;
+  collect(state, poop);
   return { ok: true, coins: v.coins, compost: v.compost, poop };
 }
 

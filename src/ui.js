@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 12;
+const VERSION = 13;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -204,6 +204,7 @@ function steamerView() {
       ${Art.penScene()}
       <div class="floor" id="floor"></div>
       <span class="pen-count" id="pencount"></span>
+      <button class="book-btn" id="poopbook" aria-label="Poop Book">${Art.poop({ shape: 'swirl', color: 'brown' })}<span>Poop Book</span></button>
     </div>
     <div class="tray panel" id="tray"></div>
   </section>`);
@@ -212,6 +213,7 @@ function steamerView() {
 
 function updateSteamer() {
   const p = current();
+  $('#poopbook').onclick = poopBook;
   $('[data-need="hunger"] i').style.width = p.hunger + '%';
   $('[data-need="fun"] i').style.width = p.fun + '%';
   $('[data-need="clean"] i').style.width = Math.max(0, 100 - state.poops.length / G.MAX_POOPS * 100) + '%';
@@ -349,6 +351,9 @@ function onScoop(id, btn) {
     popup(c === 'gold' ? 'A golden poop!' : 'A rainbow poop!', `<div class="pig-card poop-card">${Art.poop(r.poop)}</div><p>Wow! That's worth <b>${r.coins} coins</b> and <b>${r.compost} compost</b>.</p>`, 'Wow!');
   } else if (c !== 'brown') toast(`${G.POOP_COLORS[c]} poop! +${r.coins} coins`);
   tut('scoop');
+  for (const a of G.checkAchievements(state)) {
+    setTimeout(() => { sfx.fanfare(); floatCoin(a.coins); popup('Achievement!', `<div class="badge">${Art.badgeIcon()}</div><p><b>${a.name}</b><br>${a.desc}<br>+${a.coins} coins</p>`, 'Nice!'); }, 400);
+  }
   render();
 }
 
@@ -765,6 +770,25 @@ function updateShop() {
   };
 }
 
+function poopBook() {
+  const book = state.poopBook || {};
+  const kinds = G.poopKinds();
+  const found = G.poopsFound(state);
+  const grid = kinds.map(k => {
+    const n = book[k.key] || 0;
+    return `<div class="pk ${n ? '' : 'unknown'}">${n ? Art.poop(k) : Art.poopShadow(k)}<span>${n ? `${G.POOP_COLORS[k.color]} ${G.POOP_SHAPES[k.shape].toLowerCase()}` : '???'}</span><b class="count">${n ? n : '?'}</b></div>`;
+  }).join('');
+  const ach = G.ACHIEVEMENTS.map(a => {
+    const got = !!(state.achievements || {})[a.id];
+    return `<div class="ach ${got ? 'got' : ''}"><span class="badge">${got ? Art.badgeIcon() : Art.badgeIcon(true)}</span><span class="txt"><b>${a.name}</b><small>${a.desc}</small></span><span class="price ${got ? 'can' : ''}">${got ? 'Done!' : `${a.coins} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></div>`;
+  }).join('');
+  popup(`Poop Book ${found} / ${kinds.length}`, `<p>Scoop every kind of poop to fill the book. Rare ones are worth more!</p>
+    <div class="pk-grid">${grid}</div>
+    <div class="ribbon"><span>Achievements</span></div>
+    <div class="ach-list">${ach}</div>`, 'Close');
+  sfx.pop();
+}
+
 // ---------- Dialogs & effects ----------
 function renameDialog() {
   const p = current();
@@ -785,11 +809,17 @@ function renameDialog() {
   setTimeout(() => $('#newname', box).focus(), 50);
 }
 
+// Popups show one at a time; extra ones wait their turn.
+const popupQueue = [];
 function popup(title, html, button = 'OK', onClose = null) {
+  if ($('.modal')) { popupQueue.push([title, html, button, onClose]); return; }
   const box = el(`<div class="modal"><div class="card panel">
     <div class="ribbon"><span>${title}</span></div>${html}
     <div class="row center"><button class="btn big">${button}</button></div></div></div>`);
-  $('.btn', box).onclick = () => { box.remove(); sfx.pop(); if (onClose) onClose(); updateCoach(); };
+  $('.btn', box).onclick = () => {
+    box.remove(); sfx.pop(); if (onClose) onClose();
+    if (popupQueue.length) popup(...popupQueue.shift()); else updateCoach();
+  };
   document.body.appendChild(box);
 }
 
