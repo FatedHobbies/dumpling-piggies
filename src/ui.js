@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 14;
+const VERSION = 15;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -239,7 +239,7 @@ function updateSteamer() {
     d.classList.toggle('mood-' + m, true);
     for (const c of [...d.classList]) if (c.startsWith('mood-') && c !== 'mood-' + m) d.classList.remove(c);
     for (const c of ['sparkle', 'sleepy', 'zoom']) d.classList.toggle(c, pig.effect === c);
-    d.classList.toggle('selected', pig.id === selectedPig && state.piggies.length > 1);
+    d.classList.toggle('selected', pig.id === selectedPig);
     placePig(d, pig, w);
   }
   for (const [, c] of have) c.remove();

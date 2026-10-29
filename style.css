@@ -197,10 +197,10 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .piggy.mood-stinky::before { content: "🪰"; position: absolute; top: 0; left: 0; font-size: 1.2rem; animation: fly 2s infinite; }
 @keyframes fly { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(20px, -10px); } 50% { transform: translate(5px, 10px); } 75% { transform: translate(-15px, -5px); } }
 .piggy .tag {
-  position: absolute; left: 50%; top: -22px; transform: translateX(-50%); background: rgba(58,42,34,.6); color: #fff; font-family: var(--display);
-  font-size: .72rem; padding: 1px 8px; border-radius: 999px; white-space: nowrap; opacity: 0; transition: opacity .2s; pointer-events: none;
+  position: absolute; left: 50%; top: 10%; transform: translateX(-50%); background: #FFF8EC; color: var(--ink); font-family: var(--display); font-weight: 600;
+  font-size: .72rem; padding: 1px 9px; border-radius: 999px; white-space: nowrap; pointer-events: none; border: 2px solid var(--wood-dark); box-shadow: 0 2px 0 rgba(0,0,0,.2);
 }
-.piggy.selected .tag { opacity: 1; background: var(--blue); border: 2px solid #fff; }
+.piggy.selected .tag { background: var(--blue); color: #fff; border-color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.3); }
 .piggy .need-bubble { position: absolute; left: 50%; top: -52px; transform: translateX(-50%); font-size: 1.1rem; background: #fff; border-radius: 50%; width: 32px; height: 32px; display: grid; place-items: center; box-shadow: 0 2px 0 rgba(0,0,0,.2); animation: bob 1s infinite alternate; pointer-events: none; }
 .piggy .need-bubble:empty { display: none; }
 @keyframes bob { to { transform: translate(-50%, -6px); } }
