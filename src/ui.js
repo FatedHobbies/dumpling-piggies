@@ -349,8 +349,8 @@ function steamerView() {
       </div>
       <div class="faces" id="faces"></div>
       <span class="pen-count" id="pencount"></span>
-      <div class="feed-badge"><span class="wf"></span><i>Feed</i><b></b></div>
     </div>
+    <div class="feed-anchor"><div class="feed-badge"><span class="wf"></span><i>Feed</i><b></b></div></div>
     <div class="tray panel" id="tray"></div>
   </section>`);
   for (const b of v.querySelectorAll('.spot-hit')) b.addEventListener('click', () => goToSpot(current(), b.dataset.spot));
