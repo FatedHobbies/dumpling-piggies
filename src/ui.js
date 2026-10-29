@@ -830,15 +830,16 @@ function surpriseReveal(r) {
 const CELL = 48;
 function mazeView() {
   const w = M.COLS * CELL, h = M.ROWS * CELL;
+  const th = Art.MAZE_THEMES[mazeTheme()];
   const v = el(`<section class="maze">
     <div class="maze-bar panel">
-      <div class="maze-top"><p class="maze-hint" id="mhint"></p><button class="btn btn-grey mstyle" id="mstyle">Style</button></div>
+      <div class="maze-top"><p class="maze-hint" id="mhint"></p><button class="btn btn-grey mstyle" id="mstyle">Theme</button></div>
       <div class="maze-btns" id="mbtns"></div>
       <div class="maze-tray" id="mtray"></div>
     </div>
     <div class="maze-wrap">
       <svg id="mgrid" viewBox="-10 -10 ${w + 20} ${h + 20}" class="maze-svg">
-        <rect x="-10" y="-10" width="${w + 20}" height="${h + 20}" rx="18" fill="#A7DB8C"/>
+        <rect x="-10" y="-10" width="${w + 20}" height="${h + 20}" rx="18" fill="${th.board}"/>
         <g id="mcells"></g>
         <g id="mfence"></g>
         <g id="mtreasure"></g>
@@ -855,16 +856,17 @@ function mazeView() {
     const px = x * CELL, py = y * CELL;
     html += `<g class="mcell" data-x="${x}" data-y="${y}">
       <rect class="floor" x="${px + 2}" y="${py + 2}" width="${CELL - 4}" height="${CELL - 4}" rx="8"/>
-      <g class="bale"><rect x="${px + 3}" y="${py + 6}" width="${CELL - 6}" height="${CELL - 10}" rx="9" fill="#E6B566" stroke="#9C6A3A" stroke-width="3"/>
-        <path d="M${px + 10} ${py + 14} h${CELL - 20} M${px + 10} ${py + 24} h${CELL - 20} M${px + 10} ${py + 34} h${CELL - 20}" stroke="#C98F4B" stroke-width="3" stroke-linecap="round"/>
-        <path d="M${px + 16} ${py + 8} v${CELL - 14} M${px + CELL - 16} ${py + 8} v${CELL - 14}" stroke="#9C6A3A" stroke-width="2.5" opacity=".6"/></g>
-      <g class="vwall" transform="translate(${px + 2} ${py + 2})"></g>
+      <g class="deco">${th.deco(px, py, y * M.COLS + x)}</g>
+      <g class="vwall"></g>
     </g>`;
   }
   cells.innerHTML = html;
   cells.querySelectorAll('.mcell').forEach(r => r.addEventListener('click', () => onCell(+r.dataset.x, +r.dataset.y)));
   let fence = '';
-  for (let x = -6; x <= w + 6; x += 48) fence += `<rect x="${x - 4}" y="-12" width="8" height="14" rx="3" fill="#C9935A" stroke="#8A5634" stroke-width="2"/><rect x="${x - 4}" y="${h - 2}" width="8" height="14" rx="3" fill="#C9935A" stroke="#8A5634" stroke-width="2"/>`;
+  for (let x = -6; x <= w + 6; x += 48) fence += `<rect x="${x - 4}" y="-12" width="8" height="14" rx="3" fill="${th.post}" stroke="${th.postEdge}" stroke-width="2"/><rect x="${x - 4}" y="${h - 2}" width="8" height="14" rx="3" fill="${th.post}" stroke="${th.postEdge}" stroke-width="2"/>`;
+  const g = $('#mgrid', v);
+  g.style.setProperty('--floor', th.floor); g.style.setProperty('--seen', th.seen);
+  g.style.setProperty('--start', th.start); g.style.setProperty('--start-edge', th.startEdge);
   $('#mfence', v).innerHTML = fence;
   $('#mfinish', v).innerHTML = `<g transform="translate(-20 -20) scale(.62)">${Art.dumpling('cabbage+carrot', 64)}</g>`;
   $('#mrot', v).innerHTML = Art.piggyTop({ hat: current().hat, coat: current().coat });
@@ -881,12 +883,12 @@ function updateMaze() {
   $('.maze-bar').classList.toggle('running', !!run);
   for (const r of document.querySelectorAll('.mcell')) {
     const x = +r.dataset.x, y = +r.dataset.y;
-    const wall = M.isWall(m, x, y), style = state.mazeStyle || 'hay';
-    r.classList.toggle('wall', wall && style === 'hay');
-    const vw = r.querySelector('.vwall'), vsig = wall && style !== 'hay' ? style : '';
+    const theme = mazeTheme(), vw = r.querySelector('.vwall');
+    const vsig = M.isWall(m, x, y) ? theme : '';
+    r.classList.toggle('wall', !!vsig);
     if (vw.dataset.sig !== vsig) {
       vw.dataset.sig = vsig;
-      vw.innerHTML = vsig && G.FILLINGS[vsig] ? Art.veggieWall(vsig, G.FILLINGS[vsig].color).replace('<svg ', `<svg width="${CELL - 4}" height="${CELL - 4}" `) : '';
+      vw.innerHTML = vsig ? Art.mazeWall3d(theme, x * CELL, y * CELL, M.idx(x, y)) : '';
     }
     r.classList.toggle('start', x === M.START.x && y === M.START.y);
     r.classList.toggle('seen', !!(run && run.visited[M.idx(x, y)]));
@@ -936,10 +938,23 @@ function btn(label, onClick, cls = '') {
 // which show as "?" until they're unlocked. The Style button picks the look.
 let mazeTile = 1;
 const FUN_TILES = 4;
-const wallIcon = (style) => style === 'hay' ? Art.hayWallIcon() : Art.veggieWall(style, G.FILLINGS[style].color);
+// Maze themes change the board, floor and walls. Hay barn is always there;
+// the rest unlock from the other parts of the game.
+const MAZE_UNLOCKS = {
+  hay: { why: '', ok: () => true },
+  pumpkin: { why: 'Grow pumpkins to unlock!', ok: () => G.unlockedFillings(state).includes('pumpkin') },
+  galaxy: { why: 'Steam a Galaxy Bao to unlock!', ok: () => !!(state.recipeBook || {})['sp:galaxy'] },
+  unicorn: { why: 'Scoop a Unicorn poop to unlock!', ok: () => Object.keys(state.poopBook || {}).some(k => /^sp-(unicorn|goldicorn|diamond)/.test(k)) },
+  kitchen: { why: 'Find 20 recipes to unlock!', ok: () => (state.discovered || []).length >= 20 },
+  snow: { why: 'Find 30 recipes to unlock!', ok: () => (state.discovered || []).length >= 30 },
+  sea: { why: 'Find 40 recipes to unlock!', ok: () => (state.discovered || []).length >= 40 },
+  poop: { why: 'Fill the Poop Book to unlock!', ok: () => (state.booksFilled || 0) > 0 },
+};
+const mazeTheme = () => Art.MAZE_THEMES[state.mazeStyle] && MAZE_UNLOCKS[state.mazeStyle].ok() ? state.mazeStyle : 'hay';
+const wallIcon = (theme) => `<svg viewBox="-2 -12 52 62" aria-hidden="true"><rect x="0" y="0" width="48" height="48" rx="8" fill="${Art.MAZE_THEMES[theme].floor}"/>${Art.mazeWall3d(theme, 0, 0, 0)}</svg>`;
 function updateTray() {
   const tray = $('#mtray');
-  const style = state.mazeStyle || 'hay';
+  const style = mazeTheme();
   const sig = run ? 'run' : `${mazeTile}|${style}`;
   if (tray.dataset.sig === sig) return;
   tray.dataset.sig = sig;
@@ -957,13 +972,11 @@ function updateTray() {
 }
 
 function pickMazeStyle() {
-  const have = G.unlockedFillings(state).filter(f => f !== 'hay');
-  const locked = G.FILLING_ORDER.filter(f => f !== 'hay' && !have.includes(f));
-  picker('Maze style', [
-    { id: 'hay', html: Art.hayWallIcon(), label: 'Hay' },
-    ...have.map(f => ({ id: f, html: wallIcon(f), label: G.FILLINGS[f].name })),
-    ...locked.map(f => ({ id: f, html: '<i class="q">?</i>', label: '???', locked: true })),
-  ], (id) => { state.mazeStyle = id; sfx.pop(); persist(); render(); }, () => toast('Grow new veggies to unlock!'));
+  picker('Maze theme', Object.entries(Art.MAZE_THEMES).map(([id, t]) => MAZE_UNLOCKS[id].ok()
+    ? { id, html: wallIcon(id), label: t.name }
+    : { id, html: '<i class="q">?</i>', label: '???', locked: true }),
+  (id) => { state.mazeStyle = id; sfx.pop(); persist(); render(true); },
+  (id) => toast(MAZE_UNLOCKS[id].why));
 }
 
 let mazeAngle = 0;

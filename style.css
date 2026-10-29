@@ -394,6 +394,8 @@ button.pk:active { transform: scale(.95); }
 .mstyle { padding: 6px 12px; font-size: .9rem; }
 .mstyle[hidden] { display: none; }
 .opt.locked { opacity: .7; }
+.mcell.wall .deco { display: none; }
+.opt > svg { width: 48px; height: 56px; }
 .opt .q { width: 48px; height: 48px; display: grid; place-items: center; background: #E9E2D6; border-radius: 10px; color: #B3A68F; font-style: normal; font-weight: 900; font-size: 1.6rem; }
 .maze-tray { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none; }
 .maze-tray[hidden] { display: none; }
@@ -408,11 +410,9 @@ button.pk:active { transform: scale(.95); }
 .maze-wrap { flex: 1; min-height: 0; display: flex; justify-content: center; }
 .maze-svg { height: 100%; max-height: 560px; width: auto; max-width: 100%; }
 .mcell { cursor: pointer; }
-.mcell .floor { fill: #D9F0B8; transition: fill .15s; }
-.mcell.seen .floor { fill: #C2E39B; }
-.mcell.start .floor { fill: #8ED46A; stroke: #4FA33A; stroke-width: 3.5; }
-.mcell .bale { display: none; }
-.mcell.wall .bale { display: block; }
+.mcell .floor { fill: var(--floor, #D9F0B8); transition: fill .15s; }
+.mcell.seen .floor { fill: var(--seen, #C2E39B); }
+.mcell.start .floor { fill: var(--start, #8ED46A); stroke: var(--start-edge, #4FA33A); stroke-width: 3.5; }
 .mpig { transition: transform .5s linear; cursor: pointer; }
 .mpig-rot { transform-box: fill-box; transform-origin: center; transition: transform .25s ease; }
 .mpig .pawA, .mpig .pawB { transform-box: fill-box; transform-origin: center; }
