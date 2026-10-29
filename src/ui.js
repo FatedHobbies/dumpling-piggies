@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 45;
+const VERSION = 46;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -221,6 +221,7 @@ function steamerView() {
     <div class="stage" id="stage">
       ${Art.penScene()}
       <div class="floor" id="floor">
+        ${Object.entries(Art.PEN_FIXTURES).map(([id, f]) => { const y = fixtureY(f); return `<div class="fixture" data-fix="${id}" style="--x:${f.x / 400};--y:${y.toFixed(3)};--w:${f.box.split(' ')[2] / 4}%;z-index:${depth(y)}">${Art.penFixture(id)}</div>`; }).join('')}
         <button class="spot-hit" data-spot="bowl" aria-label="Food bowl" style="--x:${SPOTS.bowl.x};--y:${SPOTS.bowl.y}"></button>
         <button class="spot-hit" data-spot="bottle" aria-label="Water bottle" style="--x:${SPOTS.bottle.x};--y:${SPOTS.bottle.y}"></button>
       </div>
@@ -266,7 +267,10 @@ function updateSteamer() {
     have.delete(pig.id);
     const m = G.mood(state, pig);
     const face = m + JSON.stringify(pig.coat) + (pig.hat || '');
-    if (d.dataset.face !== face) { d.dataset.face = face; $('.pig-art', d).innerHTML = Art.piggySide({ coat: pig.coat, hat: pig.hat, mood: m }); }
+    if (d.dataset.face !== face) {
+      d.dataset.face = face;
+      $('.pig-art', d).innerHTML = `<div class="pose side">${Art.piggySide({ coat: pig.coat, hat: pig.hat, mood: m })}</div><div class="pose front">${Art.piggyFront({ coat: pig.coat, hat: pig.hat })}</div>`;
+    }
     $('.tag', d).textContent = pig.name;
     const need = pig.hunger < 25 ? 'hunger' : pig.fun < 25 ? 'fun' : '';
     const bub = $('.need-bubble', d);
@@ -276,6 +280,7 @@ function updateSteamer() {
     for (const c of [...d.classList]) if (c.startsWith('mood-') && c !== 'mood-' + m) d.classList.remove(c);
     for (const c of ['sparkle', 'sleepy', 'zoom']) d.classList.toggle(c, pig.effect === c);
     d.classList.toggle('selected', pig.id === selectedPig);
+    syncPose(d, w);
     placePig(d, pig, w);
   }
   for (const [, c] of have) c.remove();
@@ -284,7 +289,7 @@ function updateSteamer() {
     let d = $(`.toy[data-toy="${id}"]`, floor);
     if (state.toys[id] !== 'pen') { if (d) d.remove(); continue; }
     if (!d) {
-      d = el(`<button class="toy" data-toy="${id}" aria-label="${t.name}" style="--x:${t.x};--y:${t.y}"></button>`);
+      d = el(`<button class="toy" data-toy="${id}" aria-label="${t.name}" style="--x:${t.x};--y:${t.y};z-index:${depth(t.y)}"></button>`);
       d.addEventListener('click', () => { toyBounce(id); goToToy(current(), id); });
       floor.appendChild(d);
     }
@@ -295,7 +300,7 @@ function updateSteamer() {
   const poops = new Map([...floor.querySelectorAll('.poop')].map(c => [+c.dataset.id, c]));
   for (const poop of state.poops) {
     if (!poops.has(poop.id)) {
-      const b = el(`<button class="poop ${poop.color || 'brown'}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y}">${Art.poop(poop)}</button>`);
+      const b = el(`<button class="poop ${poop.color || 'brown'}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y};z-index:${depth(poop.y)}">${Art.poop(poop)}</button>`);
       b.addEventListener('click', () => onScoop(poop.id, b));
       floor.appendChild(b);
     }
@@ -322,7 +327,19 @@ function placePig(d, pig, w) {
   d.style.setProperty('--y', pig.y.toFixed(3));
   d.style.setProperty('--s', (0.62 + pig.y * 0.38).toFixed(3));
   d.style.setProperty('--f', w && w.face < 0 ? -1 : 1);
-  d.style.zIndex = Math.round(pig.y * 100) + 10;
+  d.style.zIndex = depth(pig.y);
+}
+
+// Everything on the floor is stacked by how far down it stands, so a piggy
+// further back walks behind a toy and one further forward walks in front.
+function depth(y) { return Math.round(y * 100) + 10; }
+function fixtureY(f) { return (f.y - 108) / 192; }   // the floor covers pen-scene y 108 to 300
+
+function syncPose(d, w) {
+  if (!d || !w) return;
+  d.classList.toggle('front', !!w.front && !w.inside && !w.peek && !w.riding);
+  d.classList.toggle('inside', !!w.inside);
+  d.classList.toggle('peek', !!w.peek);
 }
 
 // Every 100ms each piggy drifts toward a random spot on the floor, pauses, and
@@ -336,7 +353,7 @@ function wanderTick() {
     const sleepy = pig.effect === 'sleepy';
     const zoom = pig.effect === 'zoom';
     const d = $(`.piggy[data-id="${pig.id}"]`);
-    if (sleepy || now < w.pause) { if (d) d.classList.remove('walking'); continue; }
+    if (sleepy || now < w.pause) { if (d) { d.classList.remove('walking'); syncPose(d, w); } continue; }
     if (w.using) stopSpot(w, d);
     const dx = w.tx - pig.x, dy = w.ty - pig.y;
     const dist = Math.hypot(dx, dy);
@@ -344,27 +361,58 @@ function wanderTick() {
     if (dist < speed) {
       pig.x = w.tx; pig.y = w.ty;
       w.pause = now + 1500 + Math.random() * (zoom ? 500 : 4000);
-      if (w.toy) { playAt(pig, w.toy, d); w.toy = null; }
+      w.front = false;
+      if (w.toy) { const id = w.toy; w.toy = null; playAt(pig, id, d); continue; }
       if (w.spot) { useSpot(pig, w, d, now); continue; }
+      w.front = Math.random() < 0.45;   // a resting piggy often turns to look at you
       const owned = G.toysInPen(state);
       const r = Math.random(), eat = pig.hunger < 50 ? 0.3 : 0.1;   // hungry piggies check the bowl more
       if (r < eat && !spotTaken('bowl', pig.id)) aimAtSpot(w, 'bowl');
       else if (r < eat + 0.1 && !spotTaken('bottle', pig.id)) aimAtSpot(w, 'bottle');
       else if (owned.length && Math.random() < 0.35) aimAtToy(w, owned[Math.floor(Math.random() * owned.length)]);
+      else if (Math.random() < 0.12 && !hideTaken('house', pig.id)) aimAtToy(w, 'house');
       else { w.tx = 0.08 + Math.random() * 0.84; w.ty = Math.random(); }
-      if (d) d.classList.remove('walking');
+      if (d) { d.classList.remove('walking'); syncPose(d, w); }
       continue;
     }
     pig.x += dx / dist * speed; pig.y += dy / dist * speed;
     if (Math.abs(dx) > 0.01) w.face = dx > 0 ? 1 : -1;
-    if (d) { d.classList.add('walking'); placePig(d, pig, w); }
+    w.front = dy > 0 && dy > Math.abs(dx) * 2;   // walking toward you, face first
+    if (d) { d.classList.add('walking'); syncPose(d, w); placePig(d, pig, w); }
   }
 }
 
 // Piggies stand just beside a toy, on the side they happen to pick.
+// Hidey places have a door to go in by (and the tunnel a far end to come out
+// of), given as x in the toy picture (0 to 120 wide). The slide is climbed
+// from the ladder. The pen's own house counts as a hidey place too.
+const HIDES = { house: { door: 60 }, hut: { door: 60 }, tunnel: { door: 22, exit: 118 } };
+
+function toySpot(id) {
+  if (id === 'house') { const f = Art.PEN_FIXTURES.house; return { x: f.x / 400, y: fixtureY(f) }; }
+  return G.TOYS[id];
+}
+
+// Floor x of a point in a toy picture, from the toy's drawn size.
+function toyX(id, px) {
+  const t = toySpot(id);
+  const el = id === 'house' ? $('.fixture[data-fix="house"]') : $(`.toy[data-toy="${id}"]`);
+  const floor = $('#floor');
+  const wide = id === 'house' ? 88 : 120;
+  const frac = el && floor && floor.offsetWidth ? el.offsetWidth / floor.offsetWidth : 0.22;
+  return t.x + (px - wide / 2) / wide * frac;
+}
+
+function hideTaken(id, pigId) {
+  for (const [k, w] of wander) if (k !== pigId && (w.toy === id || w.hide === id)) return true;
+  return false;
+}
+
 function aimAtToy(w, id) {
-  const t = G.TOYS[id];
+  const t = toySpot(id);
   w.toy = id;
+  if (HIDES[id]) { w.tx = toyX(id, id === 'house' ? 44 : HIDES[id].door); w.ty = Math.min(1, t.y + 0.01); return; }
+  if (id === 'slide') { w.tx = toyX(id, 20); w.ty = Math.min(1, t.y + 0.005); return; }
   w.tx = Math.min(0.92, Math.max(0.08, t.x + (Math.random() < 0.5 ? -0.13 : 0.13)));
   w.ty = Math.min(1, t.y + 0.02);
 }
@@ -437,9 +485,12 @@ function toyGone(id) {
 }
 
 function playAt(pig, id, d) {
-  if (state.toys[id] !== 'pen') return;
+  if (id !== 'house' && state.toys[id] !== 'pen') return;
+  const w = wander.get(pig.id);
+  if (HIDES[id] && w) return hideIn(pig, id, w);
   toyBounce(id);
   if (G.playToy(state, pig.id, id).gone) toyGone(id);
+  if (id === 'slide' && d && w) return rideSlide(pig, w, d);
   if (d) {
     const w = wander.get(pig.id);
     if (w) { w.face = G.TOYS[id].x > pig.x ? 1 : -1; placePig(d, pig, w); }
@@ -447,6 +498,69 @@ function playAt(pig, id, d) {
     setTimeout(() => d.classList.remove('hop'), 600);
     bubble(d, G.TOYS[id].chew ? 'Nom nom!' : ['Wheee!', 'Fun!', '♥', 'Wheek!'][Math.floor(Math.random() * 4)]);
   }
+}
+
+// The piggy squeezes in the door, sometimes peeks its face out, then pops
+// back out (out the far end, for the tunnel).
+function hideIn(pig, id, w) {
+  const now = Date.now();
+  const stay = 3500 + Math.random() * 2500;
+  if (id !== 'house') { G.playToy(state, pig.id, id); toyBounce(id); }
+  w.hide = id; w.inside = true; w.front = false;
+  w.face = id === 'tunnel' ? 1 : w.face;
+  w.pause = now + stay + 1200;
+  const el = () => $(`.piggy[data-id="${pig.id}"]`);
+  syncPose(el(), w);
+  if (Math.random() < 0.6) {
+    setTimeout(() => { if (w.hide !== id) return; w.inside = false; w.peek = true; syncPose(el(), w); }, 1300 + Math.random() * 900);
+    setTimeout(() => { if (w.hide !== id) return; w.peek = false; w.inside = true; syncPose(el(), w); }, 2600 + Math.random() * 400);
+  }
+  setTimeout(() => {
+    if (w.hide !== id) return;
+    if (HIDES[id].exit) { pig.x = Math.min(0.9, toyX(id, HIDES[id].exit)); w.tx = pig.x; w.ty = pig.y; }
+    w.hide = null; w.inside = false; w.peek = false;
+    const d = el();
+    if (!d) return;
+    syncPose(d, w); placePig(d, pig, w);
+    d.classList.remove('hop'); void d.offsetWidth; d.classList.add('hop');
+    setTimeout(() => d.classList.remove('hop'), 600);
+    bubble(d, ['Peekaboo!', 'Wheek!', 'Boo!'][Math.floor(Math.random() * 3)]);
+  }, stay);
+}
+
+// Wobble up the ladder, whoosh down the slide, land with a bounce. Points are
+// in the slide picture (120 x 100); the piggy rides along at a smaller size.
+const SLIDE_PATH = [
+  [0, 20, 94, 0], [0.1, 22, 76, -9], [0.2, 23, 60, 9], [0.3, 24, 44, -9], [0.4, 26, 28, 7], [0.5, 30, 18, 0],
+  [0.58, 42, 18, 0], [0.7, 66, 46, 36], [0.8, 92, 80, 26], [0.88, 110, 88, 0], [0.94, 120, 82, 0], [1, 126, 94, 0],
+];
+function rideSlide(pig, w, d) {
+  const toy = $('.toy[data-toy="slide"]'), floor = $('#floor');
+  if (!toy || !floor || !d.animate) return;
+  const fr = floor.getBoundingClientRect(), tr = toy.getBoundingClientRect();
+  const ax = pig.x * fr.width, ay = pig.y * fr.height;
+  const at = (px, py) => [tr.left - fr.left + px / 120 * tr.width - ax, tr.top - fr.top + py / 100 * tr.height - ay];
+  const ride = Math.min(0.6, tr.width / d.offsetWidth * 0.6);
+  const frames = SLIDE_PATH.map(([offset, px, py, rot]) => {
+    const [x, y] = at(px, py);
+    const sc = offset === 0 ? 1 : offset === 1 ? 1 : offset > 0.94 ? ride * 1.1 : ride;
+    return { offset, translate: `${x.toFixed(1)}px ${y.toFixed(1)}px`, rotate: `${rot}deg`, scale: `${sc}` };
+  });
+  const dur = 3400;
+  w.riding = true; w.front = false; w.face = 1;
+  w.pause = Date.now() + dur + 900;
+  d.classList.remove('walking'); syncPose(d, w); placePig(d, pig, w);
+  d.style.zIndex = depth(G.TOYS.slide.y) + 1;
+  const anim = d.animate(frames, { duration: dur, easing: 'linear', fill: 'forwards' });
+  setTimeout(() => bubble(d, 'Wheee!'), dur * 0.58);
+  setTimeout(() => {
+    const [lx, ly] = at(126, 94);
+    pig.x = Math.min(0.95, (ax + lx) / fr.width); pig.y = Math.min(1, (ay + ly) / fr.height);
+    w.tx = pig.x; w.ty = pig.y; w.riding = false;
+    const cur = $(`.piggy[data-id="${pig.id}"]`);
+    if (cur) { syncPose(cur, w); placePig(cur, pig, w); }
+    anim.cancel();
+  }, dur);
 }
 
 function pickPig(id) {
@@ -829,6 +943,7 @@ function svgBubble(text) {
 }
 
 // ---------- Shop ----------
+let tryHat = null;   // { id, pig }: a hat being tried on before buying
 // The shop is split into tabs; the last one picked is kept in the save.
 const SHOP_TABS = [
   { id: 'piggies',  name: 'Piggies',  icon: () => Art.upgradeIcon('piggy') },
@@ -915,23 +1030,37 @@ function updateShop() {
   }
   const hats = $('#hats');
   const p = current();
-  const hsig = JSON.stringify([state.hats, state.coins, p.id, p.hat]);
+  if (tryHat && (tryHat.pig !== p.id || state.hats[tryHat.id])) tryHat = null;
+  const showing = tryHat ? tryHat.id : p.hat;
+  const hsig = JSON.stringify([state.hats, state.coins, p.id, p.hat, tryHat, state.piggies.map(q => [q.id, q.name, q.hat])]);
   if (hats.dataset.sig !== hsig) {
     hats.dataset.sig = hsig;
-    hats.innerHTML = `<p class="hint">Buy a hat once and any piggy can wear it. Tap a hat to put it on <b>${esc(p.name)}</b>.</p><div class="hat-grid"></div>`;
+    // Who the hats are for, big and clear, with a row of faces to switch piggy.
+    hats.innerHTML = `<div class="hat-for">
+        <div class="hat-model">${Art.piggySide({ coat: p.coat, hat: showing })}</div>
+        <div class="hat-who"><small>Hats for</small><b>${esc(p.name)}</b>
+          ${tryHat ? `<em>Trying on the ${G.HATS[tryHat.id].name}. Tap it again to buy!</em>` : state.piggies.length > 1 ? '<em>Tap a face to pick another piggy</em>' : ''}</div>
+      </div>
+      ${state.piggies.length > 1 ? `<div class="hat-pigs">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div>` : ''}
+      <p class="hint">Buy a hat once and any piggy can wear it. Tap a hat to try it on.</p><div class="hat-grid"></div>`;
+    hats.querySelectorAll('.hat-pigs .face').forEach(f => f.addEventListener('click', () => { selectedPig = +f.dataset.id; tryHat = null; sfx.pop(); render(); }));
     const grid = $('.hat-grid', hats);
     for (const [id, h] of Object.entries(G.HATS)) {
       const owned = !!state.hats[id];
       const wearing = p.hat === id;
-      const b = el(`<button class="hat tile ${owned ? 'owned' : ''} ${wearing ? 'wearing' : ''}">${Art.hatIcon(id)}<span>${h.name}</span>
-        ${wearing ? '<span class="price can">Wearing</span>' : owned ? '<span class="price">Wear</span>' : price(h.cost)}</button>`);
+      const trying = tryHat && tryHat.id === id;
+      const b = el(`<button class="hat tile ${owned ? 'owned' : ''} ${wearing ? 'wearing' : ''} ${trying ? 'trying' : ''}">${Art.hatIcon(id)}<span>${h.name}</span>
+        ${wearing ? '<span class="price can">Wearing</span>' : owned ? '<span class="price">Wear</span>' : trying ? `<span class="price buy">Buy ${h.cost} <i class="coin-sm">${Art.coinIcon()}</i></span>` : price(h.cost)}</button>`);
       b.addEventListener('click', () => {
         if (!state.hats[id]) {
+          if (!trying) { tryHat = { id, pig: p.id }; sfx.pop(); render(); return; }
           const r = G.buyHat(state, id);
           if (!r.ok) { sfx.nope(); toast(`Need ${h.cost - state.coins} more coins`); return; }
+          tryHat = null;
           sfx.fanfare(); G.wearHat(state, p.id, id);
           popup('New hat!', `<div class="pig-card big">${Art.piggySide({ coat: p.coat, hat: id })}</div><p><b>${esc(p.name)}</b> is wearing the ${h.name}!</p>`, 'Cute!');
         } else {
+          tryHat = null;
           sfx.pop(); G.wearHat(state, p.id, wearing ? null : id);
           toast(wearing ? `${esc(p.name)} took off the ${h.name}` : `${esc(p.name)} put on the ${h.name}`);
         }

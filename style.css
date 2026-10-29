@@ -463,7 +463,7 @@ button.pk:active { transform: scale(.95); }
 .toy-tile .price { font-size: .85rem; margin-top: 2px; }
 .toy-tile.owned { border-color: #B8E39A; background: linear-gradient(#FFFFFF, #F3FBEE); }
 .toy-card svg { width: 150px; height: 125px; margin: 0 auto; }
-.toy { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 24%; max-width: 110px; transform: translate(-50%, -94%); transform-origin: 50% 94%; z-index: 3; }
+.toy { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 24%; max-width: 110px; transform: translate(-50%, -94%); transform-origin: 50% 94%; }
 .toy svg { width: 100%; height: auto; overflow: visible; }
 .toy .toy-move { transform-box: fill-box; transform-origin: 50% 100%; }
 .toy.play .toy-move { animation: toy-jiggle .45s ease-in-out 2; }
@@ -498,3 +498,28 @@ button.pk:active { transform: scale(.95); }
 @keyframes bubble-up { 0% { opacity: 0; transform: translateY(8px); } 30% { opacity: .9; } 100% { opacity: 0; transform: translateY(-36px); } }
 .spot-hit { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 20%; height: 16%; transform: translate(-50%, -70%); background: none; border: 0; padding: 0; z-index: 2; }
 .spot-hit[data-spot="bottle"] { width: 12%; height: 45%; transform: translate(-50%, -85%); }
+
+/* ---- Pen depth, poses, hiding ---- */
+.fixture { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: var(--w); transform: translate(-50%, -100%); pointer-events: none; }
+.fixture svg { width: 100%; height: auto; overflow: visible; }
+.piggy { transition: opacity .35s, scale .35s; }
+.piggy .pose.front { display: none; }
+.piggy.front .pose.side { display: none; }
+.piggy.front .pose.front { display: block; }
+.piggy.inside { opacity: 0; scale: .3; pointer-events: none; }
+.piggy.peek { scale: .8; }
+.piggy.peek .pig-art { clip-path: inset(0 0 0 58%); }
+.piggy.peek .tag, .piggy.peek .need-bubble, .piggy.peek .pick-ring, .piggy.peek .pick-arrow { display: none; }
+
+/* ---- Hats: who they're for ---- */
+.hat-for { display: flex; align-items: center; gap: 12px; background: #fff; border: 3px solid var(--line); border-radius: 16px; padding: 6px 12px 6px 6px; }
+.hat-model { width: 112px; flex: 0 0 auto; }
+.hat-model svg { width: 100%; height: auto; overflow: visible; }
+.hat-who { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.hat-who small { font-family: var(--display); color: var(--soft); font-size: .85rem; }
+.hat-who b { font-family: var(--display); font-weight: 600; font-size: 1.5rem; color: var(--blue-dark); overflow-wrap: anywhere; }
+.hat-who em { font-style: normal; font-size: .75rem; color: var(--soft); margin-top: 2px; }
+.hat-pigs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 8px; }
+.hat-pigs .face { width: 46px; height: 46px; flex: 0 0 46px; }
+.hat.trying { border-color: var(--pink); box-shadow: 0 3px 0 #D9577A; background: #FFF0F4; }
+.price.buy { color: #fff; background: var(--green); border: 2px solid var(--green-dark); border-radius: 999px; padding: 0 8px; }

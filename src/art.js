@@ -494,23 +494,52 @@ export function penScene() {
     <rect x="0" y="104" width="400" height="196" fill="url(#penFloor)"/>
     <rect x="0" y="104" width="400" height="196" fill="url(#hay)"/>
     <ellipse cx="310" cy="150" rx="40" ry="14" fill="#F2CE7E"/><path d="M276 150 Q300 128 332 146 M286 146 Q312 130 342 150" stroke="#D9A84E" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <g>
+  </svg>`;
+}
+
+// The house, water bottle and food bowl stand on the pen floor as their own
+// pictures, so piggies can walk in front of or behind them. Each is drawn in
+// pen-scene coordinates; `box` is its viewBox, `x` its middle, `y` its bottom.
+export const PEN_FIXTURES = {
+  house:  { box: '22 74 88 86', x: 66, y: 158, svg: `<g>
       <path d="M26 156 L26 110 Q66 76 106 110 L106 156Z" fill="#C9935A" stroke="#8A5634" stroke-width="4" stroke-linejoin="round"/>
       <path d="M44 156 V130 Q66 108 88 130 V156Z" fill="#5A3A26"/>
       <path d="M26 110 Q66 76 106 110" fill="none" stroke="#E6B566" stroke-width="6"/>
-    </g>
-    <g class="pen-bottle">
+    </g>` },
+  bottle: { box: '356 92 32 102', x: 372, y: 192, svg: `<g class="pen-bottle">
       <path d="M372 96 V110" stroke="#9AA" stroke-width="4" stroke-linecap="round"/>
       <rect x="362" y="104" width="20" height="62" rx="8" fill="#BFE6F7" stroke="#6FB7D9" stroke-width="3"/>
       <rect x="367" y="118" width="10" height="42" rx="4" fill="#8FD3F2"/>
       <path d="M372 166 L372 184" stroke="#9AA" stroke-width="5" stroke-linecap="round"/>
       <circle class="drip" cx="372" cy="188" r="4" fill="#6FC6F0"/>
       <circle class="bubble-up" cx="372" cy="150" r="2.5" fill="#fff" opacity="0"/>
-    </g>
-    <g class="pen-bowl">
+    </g>` },
+  bowl:   { box: '164 270 72 30', x: 200, y: 299, svg: `<g class="pen-bowl">
       <ellipse cx="200" cy="286" rx="34" ry="12" fill="#7AA6FF" stroke="#4C7FD9" stroke-width="3"/>
       <ellipse cx="200" cy="282" rx="24" ry="6" fill="#B8D0FF"/>
       <g class="kibble"><ellipse cx="190" cy="281" rx="5" ry="3" fill="#FF9A3C"/><ellipse cx="202" cy="279" rx="5" ry="3" fill="#7DC768"/><ellipse cx="212" cy="282" rx="5" ry="3" fill="#E8C27A"/><ellipse cx="197" cy="284" rx="4" ry="2.5" fill="#7DC768"/><ellipse cx="207" cy="285" rx="4" ry="2.5" fill="#FF9A3C"/></g>
+    </g>` },
+};
+export function penFixture(id) {
+  const f = PEN_FIXTURES[id];
+  return `<svg viewBox="${f.box}" aria-hidden="true">${f.svg}</svg>`;
+}
+
+// A piggy facing the camera: a wide loaf of a body behind the face portrait,
+// so long hair from the face falls over the body.
+export function piggyFront(opts = {}) {
+  const coat = opts.coat || DEFAULT_COAT;
+  const skinny = coat.breed === 'skinny';
+  const main = skinny ? '#F2B8A0' : col(coat.main);
+  const patch = skinny ? '#F7CDBB' : col(coat.patch);
+  const face = piggyFace(opts).replace('<svg viewBox="0 0 100 100"', '<svg viewBox="0 0 100 100" x="46" y="52" width="108" height="108"');
+  return `<svg viewBox="0 0 200 200" class="piggy-svg front" aria-hidden="true">
+    <ellipse cx="100" cy="176" rx="66" ry="7" fill="#000" opacity=".12"/>
+    <g class="body">
+      <ellipse cx="100" cy="140" rx="64" ry="34" fill="${main}"/>
+      <ellipse cx="100" cy="150" rx="34" ry="22" fill="${patch}"/>
+      <ellipse cx="80" cy="170" rx="11" ry="7" fill="#F3B9A0"/><ellipse cx="120" cy="170" rx="11" ry="7" fill="#F3B9A0"/>
+      ${face}
     </g>
   </svg>`;
 }
