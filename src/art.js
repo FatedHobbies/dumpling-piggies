@@ -699,6 +699,7 @@ const C = 48;
 export const LIFT = 9;
 export function mazeWall3d(theme, px, py, i) {
   const t = MAZE_THEMES[theme] || MAZE_THEMES.hay;
+  if (t.cube) return `<ellipse cx="${px + 24}" cy="${py + 46}" rx="21" ry="4" fill="#000" opacity=".25"/><g transform="translate(0 ${-LIFT + 2})">${t.wall(px, py, i)}</g>`;
   return `<ellipse cx="${px + 24}" cy="${py + 45}" rx="21" ry="4" fill="#000" opacity=".16"/>
     <rect x="${px + 3}" y="${py + 14}" width="${C - 6}" height="${C - 16}" rx="9" fill="${t.side}"/>
     <rect x="${px + 3}" y="${py + 14}" width="${C - 6}" height="${C - 16}" rx="9" fill="#000" opacity=".12"/>
@@ -724,9 +725,14 @@ export const MAZE_THEMES = {
   },
   galaxy: {
     side: '#3A2A8C', name: 'Galaxy', board: '#17123A', floor: '#2A2468', seen: '#3D368F', start: '#3FBFB0', startEdge: '#9FFFF2', post: '#FFD84D', postEdge: '#B8901A',
-    wall: (px, py, i) => `<rect x="${px + 3}" y="${py + 5}" width="${C - 6}" height="${C - 9}" rx="13" fill="#6A50C8" stroke="#2A1C6E" stroke-width="3"/>
-      <circle cx="${px + 15}" cy="${py + 18}" r="5" fill="#8C74E0"/><circle cx="${px + 31}" cy="${py + 30}" r="7" fill="#8C74E0"/><circle cx="${px + 14}" cy="${py + 34}" r="3" fill="#8C74E0"/>
-      ${i % 3 === 0 ? star4(px + 36, py + 13, 5, '#FFE66B') : ''}`,
+    // A space-rock cube: lit top face, darker front face with its own craters.
+    cube: true,
+    wall: (px, py, i) => `<path d="M${px + 3} ${py + 30} V${py + 45} Q${px + 3} ${py + 49} ${px + 7} ${py + 49} H${px + 41} Q${px + 45} ${py + 49} ${px + 45} ${py + 45} V${py + 30}Z" fill="#3A2A8C" stroke="#1E145A" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="${px + 14}" cy="${py + 41}" r="3" fill="#2A1C6E"/><circle cx="${px + 32}" cy="${py + 43}" r="2.2" fill="#2A1C6E"/>
+      <rect x="${px + 3}" y="${py + 3}" width="${C - 6}" height="${C - 18}" rx="6" fill="#7A60D8" stroke="#1E145A" stroke-width="3"/>
+      <path d="M${px + 7} ${py + 9} Q${px + 7} ${py + 6} ${px + 10} ${py + 6} H${px + 38}" stroke="#B9A8FF" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="${px + 15}" cy="${py + 18}" r="5" fill="#5C45B8"/><circle cx="${px + 31}" cy="${py + 23}" r="4" fill="#5C45B8"/><circle cx="${px + 33}" cy="${py + 12}" r="2" fill="#5C45B8"/>
+      ${i % 3 === 0 ? star4(px + 40, py + 2, 5, '#FFE66B') : ''}`,
     deco: (px, py, i) => star4(px + 8 + jit(i, 1) * 30, py + 8 + jit(i, 2) * 30, 2.6, '#fff') + `<circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1" fill="#C9C2FF"/>`,
   },
   unicorn: {
