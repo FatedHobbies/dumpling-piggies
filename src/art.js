@@ -144,34 +144,42 @@ export function dumpling(key, size = 64, opts = {}) {
   const r = RECIPE_LOOK[key] || {};
   const fill = r.color || tint(a, b);
   const dark = shade(fill);
-  const basket = opts.basket === false ? '' : `
-    <path d="M9 44 Q9 60 32 60 Q55 60 55 44Z" fill="#E6B566" stroke="#9C6A3A" stroke-width="2.5"/>
-    <path d="M14 50 H50 M16 55 H48" stroke="#C98F4B" stroke-width="2" stroke-linecap="round" opacity=".7"/>
-    <ellipse cx="32" cy="44" rx="23" ry="5" fill="#F2CE7E" stroke="#9C6A3A" stroke-width="2.5"/>`;
-  const sparkle = r.glitter ? `<g fill="#fff" opacity=".9"><circle cx="14" cy="28" r="1.4"/><circle cx="44" cy="22" r="1.2"/><circle cx="50" cy="32" r="1.5"/><circle cx="22" cy="26" r="1.1"/><circle cx="36" cy="20" r="1"/><circle cx="30" cy="30" r="1.1"/></g>
-    <path d="M54 12 l1.5 3 3 1.5 -3 1.5 -1.5 3 -1.5 -3 -3 -1.5 3 -1.5z" fill="#fff"/><path d="M9 16 l1 2 2 1 -2 1 -1 2 -1 -2 -2 -1 2 -1z" fill="#fff"/>` : '';
+  // A short bamboo-steamer cylinder: the rim behind the bun, the front wall in
+  // front of it so the dumpling sits down inside.
+  const back = opts.basket === false ? '' : `<ellipse cx="32" cy="36" rx="28" ry="7" fill="#C98F4B" stroke="#9C6A3A" stroke-width="2.5"/>`;
+  const front = opts.basket === false ? '' : `
+    <path d="M4 36 Q32 50 60 36 V53 Q60 59 54 59 H10 Q4 59 4 53Z" fill="#E6B566" stroke="#9C6A3A" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M8 50 Q32 56 56 50" stroke="#C98F4B" stroke-width="2" fill="none" opacity=".8"/>
+    <path d="M4 36 Q32 50 60 36" stroke="#C98F4B" stroke-width="4" fill="none"/>
+    <path d="M4 36 Q32 50 60 36" stroke="#9C6A3A" stroke-width="1.5" fill="none" opacity=".5"/>`;
+  const dy = opts.basket === false ? 8 : 0;
+  const sparkle = r.glitter ? `<g fill="#fff" opacity=".9"><circle cx="17" cy="30" r="1.2"/><circle cx="42" cy="24" r="1.1"/><circle cx="47" cy="33" r="1.3"/><circle cx="24" cy="27" r="1"/><circle cx="36" cy="22" r=".9"/><circle cx="31" cy="29" r="1"/></g>
+    <path d="M53 12 l1.5 3 3 1.5 -3 1.5 -1.5 3 -1.5 -3 -3 -1.5 3 -1.5z" fill="#fff"/><path d="M10 14 l1 2 2 1 -2 1 -1 2 -1 -2 -2 -1 2 -1z" fill="#fff"/>` : '';
   const eyes = r.sleepy
-    ? `<path d="M21 35 Q24 38 27 35 M37 35 Q40 38 43 35" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/><text x="48" y="22" font-size="9" font-weight="700" fill="#4C7FD9" font-family="sans-serif">z</text>`
+    ? `<path d="M23 32 Q26 35 29 32 M35 32 Q38 35 41 32" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/><text x="47" y="20" font-size="9" font-weight="700" fill="#4C7FD9" font-family="sans-serif">z</text>`
     : r.wink
-      ? `<path d="M21 35 Q24 31 27 35 M37 35 Q40 31 43 35" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
-      : `<circle cx="24" cy="35" r="2.6" fill="${INK}"/><circle cx="40" cy="35" r="2.6" fill="${INK}"/><circle cx="25" cy="34" r=".9" fill="#fff"/><circle cx="41" cy="34" r=".9" fill="#fff"/>`;
+      ? `<path d="M23 32 Q26 28 29 32 M35 32 Q38 28 41 32" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+      : `<circle cx="26" cy="32" r="2.4" fill="${INK}"/><circle cx="38" cy="32" r="2.4" fill="${INK}"/><circle cx="27" cy="31" r=".8" fill="#fff"/><circle cx="39" cy="31" r=".8" fill="#fff"/>`;
   const mouth = r.sleepy
-    ? `<ellipse cx="32" cy="41" rx="1.6" ry="1.2" fill="${INK}"/>`
-    : `<path d="M28 40 Q32 45 36 40Z" fill="${INK}"/><path d="M30 42.5 Q32 44 34 42.5" fill="#FF8FA8"/>`;
-  const hat = r.hat ? `<path d="M22 16 Q32 2 44 14 Q36 12 30 16 Q26 18 22 16Z" fill="#FF5C7A"/><circle cx="27" cy="13" r="1.4" fill="#FFF3B0"/><circle cx="35" cy="9" r="1.4" fill="#FFF3B0"/>` : '';
-  const stripes = r.stripes ? `<path d="M10 30 Q32 22 54 30" stroke="${r.stripes}" stroke-width="3" fill="none" opacity=".6"/>` : '';
+    ? `<ellipse cx="32" cy="37" rx="1.5" ry="1.1" fill="${INK}"/>`
+    : `<path d="M28.5 36 Q32 40.5 35.5 36Z" fill="${INK}"/><path d="M30.5 38 Q32 39.5 33.5 38" fill="#FF8FA8"/>`;
+  const hat = r.hat ? `<path d="M23 18 Q32 5 43 16 Q36 14 30 18 Q27 20 23 18Z" fill="#FF5C7A"/><circle cx="28" cy="15" r="1.3" fill="#FFF3B0"/><circle cx="35" cy="11" r="1.3" fill="#FFF3B0"/>` : '';
+  const stripes = r.stripes ? `<path d="M15 29 Q32 23 49 29" stroke="${r.stripes}" stroke-width="2.5" fill="none" opacity=".6"/>` : '';
   // A wide squishy bun: flat bottom, pleats gathered to a little twist on top,
   // the face low on the front.
   return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">
-    ${basket}
-    <path d="M8 46 C3 30 16 15 32 15 C48 15 61 30 56 46 Q32 51 8 46Z" fill="${fill}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>
+    ${back}
+    <g transform="translate(0 ${dy})">
+    <path d="M13 44 C9 30 20 17 32 17 C44 17 55 30 51 44 Q32 48 13 44Z" fill="${fill}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>
     ${stripes}
-    <path d="M32 17 Q22 24 15 38 M32 17 Q27 26 24 42 M32 17 Q32 30 32 44 M32 17 Q37 26 40 42 M32 17 Q42 24 49 38 M32 17 Q18 20 9 30 M32 17 Q46 20 55 30" stroke="${dark}" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".5"/>
-    <path d="M27 16 Q32 10 37 16 Q32 20 27 16Z" fill="${dark}" opacity=".55"/>
-    <ellipse cx="19" cy="24" rx="6" ry="3" transform="rotate(-25 19 24)" fill="#fff" opacity=".55"/>
+    <path d="M32 19 Q24 25 19 36 M32 19 Q28 27 26 40 M32 19 Q32 30 32 42 M32 19 Q36 27 38 40 M32 19 Q40 25 45 36 M32 19 Q21 21 14 30 M32 19 Q43 21 50 30" stroke="${dark}" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".5"/>
+    <path d="M28 18 Q32 12 36 18 Q32 21 28 18Z" fill="${dark}" opacity=".55"/>
+    <ellipse cx="21" cy="25" rx="5" ry="2.6" transform="rotate(-25 21 25)" fill="#fff" opacity=".55"/>
     ${sparkle}
-    <g stroke="#FF6F8E" stroke-width="2" stroke-linecap="round" opacity=".8"><path d="M14 36 l2 4 M18 35 l2 4 M46 35 l2 4 M50 36 l2 4"/></g>
+    <g stroke="#FF6F8E" stroke-width="1.8" stroke-linecap="round" opacity=".8"><path d="M18 33 l1.5 3 M21.5 32 l1.5 3 M41 32 l1.5 3 M44.5 33 l1.5 3"/></g>
     ${eyes}${mouth}${hat}
+    </g>
+    ${front}
   </svg>`;
 }
 
@@ -210,19 +218,25 @@ export function sprout(progress, filling) {
 }
 
 const POOP_FILL = {
-  brown: ['#8A5634', '#7A4A2B'], green: ['#6FCF4F', '#4FA33A'], orange: ['#FF9A3C', '#E07A1F'], pink: ['#FF8FA8', '#E86A86'],
-  gold: ['#FFD34D', '#E0941C'], rainbow: ['url(#rainbowPoop)', '#C96AD6'],
+  brown: ['#8A5634', '#5E3820'], green: ['#8FD07A', '#4F9A3C'], orange: ['#FFAE5C', '#D9772B'], pink: ['#FFA8C0', '#E0668A'],
+  gold: ['#FFD34D', '#D9A21B'], rainbow: ['url(#rainbowPoop)', '#B48CE0'],
 };
 // A poop. `poop` is { shape: 'beans'|'swirl', color } or nothing for a plain one.
 export function poop(p = {}) {
   const [fill, dark] = POOP_FILL[p.color] || POOP_FILL.brown;
-  const defs = p.color === 'rainbow' ? `<defs><linearGradient id="rainbowPoop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6B6B"/><stop offset=".3" stop-color="#FFD166"/><stop offset=".55" stop-color="#6FCF4F"/><stop offset=".8" stop-color="#4FA8F5"/><stop offset="1" stop-color="#C96AD6"/></linearGradient></defs>` : '';
-  const shine = p.color === 'gold' ? `<path d="M30 14 l3 6 6 1 -4 4 1 6 -6 -3 -6 3 1 -6 -4 -4 6 -1z" fill="#fff" opacity=".9"/><circle cx="50" cy="22" r="2.5" fill="#fff"/>` : '';
+  const defs = p.color === 'rainbow' ? `<defs><linearGradient id="rainbowPoop" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF8FA8"/><stop offset=".3" stop-color="#FFD166"/><stop offset=".6" stop-color="#5BC8A8"/><stop offset="1" stop-color="#7AA6FF"/></linearGradient></defs>` : '';
+  // Sparkles sit beside the poop, never on it, so the swirl shape stays clear.
+  const shine = p.color === 'gold' ? `<path d="M54 8 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="#FFF3B0" stroke="#D9A21B" stroke-width="1"/><path d="M8 20 l1.3 3 3 1.3 -3 1.3 -1.3 3 -1.3 -3 -3 -1.3 3 -1.3z" fill="#FFF3B0" stroke="#D9A21B" stroke-width="1"/>`
+    : p.color === 'rainbow' ? `<path d="M55 12 l1.5 3.5 3.5 1.5 -3.5 1.5 -1.5 3.5 -1.5 -3.5 -3.5 -1.5 3.5 -1.5z" fill="#fff" stroke="#C96AD6" stroke-width="1"/>` : '';
+  // The swirly poop is the one from the art page: three stacked tiers with a
+  // curl on top, eyes and blush on the bottom tier.
   const body = p.shape === 'swirl'
-    ? `<path d="M10 54 Q6 36 24 36 Q28 24 40 28 Q44 16 36 14 Q28 12 32 20 Q46 22 46 34 Q58 36 54 48 Q56 56 48 58 H16 Q8 58 10 54Z" fill="${fill}" stroke="${dark}" stroke-width="3" stroke-linejoin="round"/>
-       <path d="M18 50 Q30 44 44 50 M26 38 Q34 34 42 38" stroke="${dark}" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/>
-       <circle cx="24" cy="46" r="3" fill="${INK}"/><circle cx="38" cy="46" r="3" fill="${INK}"/><circle cx="25" cy="45" r="1" fill="#fff"/><circle cx="39" cy="45" r="1" fill="#fff"/>
-       <path d="M27 52 Q31 55 35 52" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/>`
+    ? `<path d="M10 52 Q10 41 21 40 H43 Q54 41 54 52 Q54 59 32 59 Q10 59 10 52Z" fill="${fill}" stroke="${dark}" stroke-width="2.5"/>
+       <path d="M16 40 Q16 30 26 29 H39 Q48 30 48 40Z" fill="${fill}" stroke="${dark}" stroke-width="2.5"/>
+       <path d="M22 29 Q22 20 31 13 Q33 19 39 21 Q43 24 42 29Z" fill="${fill}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>
+       <circle cx="26" cy="49" r="2.6" fill="${INK}"/><circle cx="38" cy="49" r="2.6" fill="${INK}"/>
+       <path d="M29 53 Q32 56 35 53" stroke="${INK}" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+       <ellipse cx="21" cy="53" rx="3" ry="1.8" fill="#FF8FA8" opacity=".6"/><ellipse cx="43" cy="53" rx="3" ry="1.8" fill="#FF8FA8" opacity=".6"/>`
     : `<ellipse cx="22" cy="44" rx="7" ry="11" transform="rotate(-20 22 44)" fill="${fill}" stroke="${dark}" stroke-width="2"/>
        <ellipse cx="36" cy="46" rx="7" ry="11" transform="rotate(15 36 46)" fill="${fill}" stroke="${dark}" stroke-width="2"/>
        <ellipse cx="46" cy="40" rx="6" ry="10" transform="rotate(35 46 40)" fill="${fill}" stroke="${dark}" stroke-width="2"/>
