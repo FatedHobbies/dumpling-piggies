@@ -133,6 +133,8 @@ export function newState(now = Date.now()) {
     discovered: [],                 // recipe keys found so far
     upgrades: {},                   // upgradeId -> true
     hats: {},                       // hatId -> true (owned)
+    bookPage: {},                   // poop kinds found on the current Poop Book page
+    booksFilled: 0,                 // times the Poop Book has been filled
     stats: { fed: 0, scooped: 0, cooked: 0, petted: 0 },
     offer: null,                    // the three piggies up for adoption
     lastSeen: now,
@@ -155,6 +157,11 @@ export function migrate(state) {
     }
   }
   for (const p of (state.piggies || [])) if (p.name === 'Dumpling Doug') p.name = 'Dumpling';
+  if (!state.bookPage) {                                   // saves from before the book could be refilled
+    state.bookPage = {};
+    for (const k of Object.keys(state.poopBook || {})) if (state.poopBook[k] > 0) state.bookPage[k] = true;
+    state.booksFilled = 0;
+  }
   if (state.version >= 2) return state;
   const old = state.piggy || {};
   state.piggies = [{
@@ -295,6 +302,12 @@ export const POOP_ODDS = [
   { label: 'Plain colors', odds: 'common' }, { label: 'Glitter', odds: '1 in 12' }, { label: 'Rainbow', odds: '1 in 33' },
   { label: 'Golden', odds: '1 in 100' }, { label: 'Crystal', odds: '1 in 250' },
 ];
+// The Poop Book groups kinds by how rare they are.
+export const POOP_TIERS = [
+  { label: 'Everyday', odds: 'common', colors: ['brown', ...PLAIN_COLORS] },
+  { label: 'Glitter', odds: '1 in 12', colors: ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple'] },
+  { label: 'Super rare', odds: 'rainbow 1 in 33 · golden 1 in 100 · crystal 1 in 250', colors: ['rainbow', 'gold', 'crystal'] },
+];
 export const POOP_VALUE = { brown: { coins: 2, compost: 1 }, rainbow: { coins: 10, compost: 3 }, gold: { coins: 25, compost: 5 }, crystal: { coins: 50, compost: 8 } };
 for (const c of PLAIN_COLORS) POOP_VALUE[c] = { coins: 3, compost: 1 };
 for (const c of ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple']) POOP_VALUE[c] = { coins: 6, compost: 2 };
@@ -327,9 +340,13 @@ export function addPoop(state) {
 // The Poop Book counts every kind scooped (by hand or by the robot).
 export const POOP_SHAPES = { beans: 'Beans', swirl: 'Swirly' };
 export const poopKey = (p) => (p.shape || 'beans') + '-' + (p.color || 'brown');
+// state.poopBook keeps lifetime counts; state.bookPage is the page being
+// filled right now, which starts fresh each time the book is completed.
 function collect(state, poop) {
   state.poopBook = state.poopBook || {};
   state.poopBook[poopKey(poop)] = (state.poopBook[poopKey(poop)] || 0) + 1;
+  state.bookPage = state.bookPage || {};
+  state.bookPage[poopKey(poop)] = true;
 }
 export function poopKinds() {
   const out = [];
@@ -338,6 +355,22 @@ export function poopKinds() {
 }
 export function poopsFound(state) {
   return poopKinds().filter(k => (state.poopBook || {})[k.key] > 0).length;
+}
+
+export function pageFound(state) {
+  return poopKinds().filter(k => (state.bookPage || {})[k.key]).length;
+}
+
+// Filling every spot on the page pays a big prize (bigger each time, up to a
+// cap), adds one to the books-filled counter, and starts a fresh page.
+export const bookReward = (filled) => Math.min(500 + 100 * filled, 1000);
+export function checkBookFull(state) {
+  if (pageFound(state) < poopKinds().length) return null;
+  const coins = bookReward(state.booksFilled || 0);
+  state.booksFilled = (state.booksFilled || 0) + 1;
+  state.coins += coins;
+  state.bookPage = {};
+  return { coins, filled: state.booksFilled };
 }
 
 // Achievements for the Poop Book. Each pays coins once.

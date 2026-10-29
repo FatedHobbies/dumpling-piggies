@@ -270,6 +270,28 @@ export function badgeIcon(locked = false) {
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 38 L14 60 L32 50 L50 60 L44 38Z" fill="${locked ? '#B7AC94' : '#F2544A'}"/><circle cx="32" cy="28" r="22" fill="${c[0]}" stroke="${c[1]}" stroke-width="3"/><path d="M32 14 l4.5 9 10 1.5 -7 7 1.5 10 -9 -4.8 -9 4.8 1.5 -10 -7 -7 10 -1.5z" fill="${c[2]}" stroke="${c[1]}" stroke-width="2" stroke-linejoin="round"/></svg>`;
 }
 
+// The Poop Book, open, with a few poop stickers and a gold star on the page.
+// Used for the "book filled" celebration and the books-filled counter.
+export function poopBookArt(small = false) {
+  const mini = (x, y, color, shape, sz = 16) => `<g transform="translate(${x} ${y}) scale(${sz / 64})">${poop({ color, shape }).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g>`;
+  const stickers = small ? '' : mini(14, 20, 'brown', 'swirl') + mini(30, 22, 'pink', 'beans') + mini(14, 38, 'green', 'beans') + mini(68, 20, 'rainbow', 'swirl') + mini(86, 22, 'orange', 'swirl') + mini(70, 38, 'gold', 'beans');
+  return `<svg viewBox="0 0 120 80" aria-hidden="true">
+    <ellipse cx="60" cy="74" rx="50" ry="5" fill="#000" opacity=".12"/>
+    <path d="M6 14 Q6 8 12 8 Q36 6 58 14 V70 Q36 62 12 66 Q6 66 6 60Z" fill="#5BA8F0" stroke="#2F6FB8" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M114 14 Q114 8 108 8 Q84 6 62 14 V70 Q84 62 108 66 Q114 66 114 60Z" fill="#5BA8F0" stroke="#2F6FB8" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M11 12 Q34 10 58 17 V64 Q34 57 11 61Z" fill="#FFF9EC" stroke="#E2D3B5" stroke-width="2"/>
+    <path d="M109 12 Q86 10 62 17 V64 Q86 57 109 61Z" fill="#FFF9EC" stroke="#E2D3B5" stroke-width="2"/>
+    <path d="M58 14 Q60 12 62 14 V70 Q60 72 58 70Z" fill="#2F6FB8"/>
+    ${stickers}
+    <g transform="translate(${small ? 34 : 42} ${small ? 18 : 40}) scale(${small ? 0.8 : 0.55})">
+      <path d="M32 6 l7 14 15.5 2.2 -11.2 11 2.6 15.4 -13.9 -7.3 -13.9 7.3 2.6 -15.4 -11.2 -11 15.5 -2.2z" fill="#FFD34D" stroke="#E0941C" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="27" cy="27" r="2.2" fill="${INK}"/><circle cx="37" cy="27" r="2.2" fill="${INK}"/>
+      <path d="M29 32 Q32 35 35 32" stroke="${INK}" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    </g>
+    <path d="M18 70 V80 L22 76 L26 80 V70Z" fill="#F2544A"/>
+  </svg>`;
+}
+
 export function compostIcon() {
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 22 H50 L46 56 H18Z" fill="#B9824A"/><rect x="10" y="16" width="44" height="8" rx="3" fill="#8A5634"/><path d="M24 36 Q32 28 40 36" stroke="#5FAE4E" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
 }

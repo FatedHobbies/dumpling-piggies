@@ -150,10 +150,55 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .pk-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .pk { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 6px 2px 4px; font-size: .62rem; font-weight: 700; text-align: center; color: var(--ink); }
 .pk svg { width: 44px; height: 44px; }
-.pk.unknown { color: var(--soft); background: #FBF7EE; }
+.pk.unknown { color: var(--soft); background: #F4EEE0; }
 .pk .count { position: absolute; right: -4px; top: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--mint); color: #0E2E25; border: 2px solid #fff; font-family: var(--display); font-size: .7rem; display: grid; place-items: center; }
 .pk.unknown .count { background: var(--line); color: var(--soft); }
 .card .ribbon + .ach-list { margin-top: 0; }
+.pk { justify-content: flex-start; } .pk span { line-height: 1.1; }
+.book-tabs { display: flex; gap: 6px; background: var(--line); padding: 4px; border-radius: 999px; }
+.book-tabs button { flex: 1; border: 0; border-radius: 999px; padding: 8px 6px; background: transparent; font-family: var(--display); font-weight: 600; font-size: 1rem; color: var(--soft); }
+.book-tabs button small { font-size: .72rem; opacity: .8; }
+.book-tabs button.on { background: #fff; color: var(--wood-dark); box-shadow: 0 2px 0 rgba(106, 69, 36, .25); }
+.book-pane { display: flex; flex-direction: column; gap: 10px; }
+.book-pane[hidden] { display: none; }
+.card p.book-hint { margin: -4px 0 0; font-size: .85rem; }
+.tier { background: #FBF7EE; border: 2px solid var(--line); border-radius: 16px; padding: 8px 8px 10px; }
+.tier[hidden] { display: none; }
+.pager { display: flex; align-items: center; gap: 8px; }
+.pager h4 { flex: 1; justify-content: center; gap: 8px; }
+.pager .arrow { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; border: 3px solid #2F6FB8; background: linear-gradient(#7EC0FF, #4A97E8); color: #fff; font-family: var(--display); font-size: 1.6rem; line-height: 1; padding: 0 0 4px; box-shadow: 0 3px 0 #2F6FB8; }
+.pager .arrow:active { transform: translateY(2px); box-shadow: none; }
+.tier-odds { text-align: center; }
+.dots { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); } .dots i.on { background: #4A97E8; }
+.dots span { font-size: .68rem; color: var(--soft); margin-left: 4px; }
+.tier h4 { display: flex; justify-content: space-between; align-items: center; margin: 0; font-family: var(--display); font-size: 1rem; color: var(--wood-dark); }
+.tier h4 b { font-size: .75rem; background: var(--line); color: var(--soft); border-radius: 999px; padding: 1px 8px; }
+.tier h4 b.done { background: var(--mint); color: #0E2E25; }
+.tier-odds { display: block; font-size: .68rem; color: var(--soft); margin: 4px 0 10px; }
+.tier .pk-grid { row-gap: 10px; }
+.pk.unknown span { color: var(--soft); }
+.book-btn { padding-right: 8px; } .book-btn > span { margin-right: 2px; }
+.book-count { background: #FFD34D; color: #6A4524; border: 2px solid #E0941C; border-radius: 999px; padding: 0 6px; font-size: .72rem; line-height: 1.3; }
+.book-count[hidden] { display: none; }
+.book-prize { display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap; }
+.books-filled, .next-prize { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 3px solid var(--line); border-radius: 999px; padding: 3px 12px 3px 6px; font-family: var(--display); font-weight: 600; font-size: .9rem; color: var(--wood-dark); }
+.books-filled svg { width: 36px; height: 26px; }
+.books-filled b { color: #2F6FB8; font-size: 1.15em; }
+.next-prize { padding-left: 12px; } .next-prize b { color: #E0941C; }
+.next-prize .coin-sm svg { width: 20px; height: 20px; vertical-align: middle; }
+.celebrate { position: relative; display: flex; justify-content: center; align-items: flex-end; height: 150px; }
+.book-pop { width: 190px; animation: book-pop .7s cubic-bezier(.3, 1.6, .5, 1) both, wobble 2.4s 0.7s ease-in-out infinite; }
+.book-pop svg { width: 100%; height: auto; display: block; }
+.cheer { position: absolute; right: 2px; bottom: -6px; width: 92px; animation: cheer .5s ease-in-out infinite alternate; }
+.cheer svg { width: 100%; height: auto; }
+@keyframes book-pop { from { transform: scale(.2) rotate(-20deg); opacity: 0; } }
+@keyframes cheer { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(-14px) rotate(4deg); } }
+.card:has(.confetti) { position: relative; }
+.confetti { position: absolute; inset: 0 0 auto; height: 230px; overflow: hidden; border-radius: inherit; pointer-events: none; z-index: 2; }
+.confetti i { position: absolute; top: -40px; left: var(--l); width: 26px; height: 26px; animation: confetti 2.6s var(--d) linear infinite; }
+.confetti i svg { width: 100%; height: 100%; }
+@keyframes confetti { 0% { transform: translateY(0) rotate(0); opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(230px) rotate(var(--r)); opacity: 0; } }
 .ach-list { display: flex; flex-direction: column; gap: 6px; }
 .ach { display: flex; align-items: center; gap: 8px; background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; }
 .ach .badge svg, .card .badge svg { width: 36px; height: 36px; }

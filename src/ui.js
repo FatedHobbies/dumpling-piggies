@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 19;
+const VERSION = 20;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -64,6 +64,7 @@ function loop() {
     if (e.type === 'coin') floatCoin();
     if (e.type === 'poop') sfx.plop();
   }
+  bookCheck();
   render();
 }
 
@@ -210,7 +211,7 @@ function steamerView() {
       ${Art.penScene()}
       <div class="floor" id="floor"></div>
       <span class="pen-count" id="pencount"></span>
-      <button class="book-btn" id="poopbook" aria-label="Poop Book">${Art.poop({ shape: 'swirl', color: 'brown' })}<span>Poop Book</span></button>
+      <button class="book-btn" id="poopbook" aria-label="Poop Book">${Art.poop({ shape: 'swirl', color: 'brown' })}<span>Poop Book</span><b class="book-count" id="bookcount" hidden></b></button>
     </div>
     <div class="tray panel" id="tray"></div>
   </section>`);
@@ -220,6 +221,8 @@ function steamerView() {
 function updateSteamer() {
   const p = current();
   $('#poopbook').onclick = poopBook;
+  $('#bookcount').hidden = !state.booksFilled;
+  $('#bookcount').textContent = `★${state.booksFilled}`;
   $('[data-need="hunger"] i').style.width = p.hunger + '%';
   $('[data-need="fun"] i').style.width = p.fun + '%';
   $('[data-need="clean"] i').style.width = Math.max(0, 100 - state.poops.length / G.MAX_POOPS * 100) + '%';
@@ -360,6 +363,7 @@ function onScoop(id, btn) {
   for (const a of G.checkAchievements(state)) {
     setTimeout(() => { sfx.fanfare(); floatCoin(a.coins); popup('Achievement!', `<div class="badge">${Art.badgeIcon()}</div><p><b>${a.name}</b><br>${a.desc}<br>+${a.coins} coins</p>`, 'Nice!'); }, 400);
   }
+  bookCheck(450);
   render();
 }
 
@@ -778,22 +782,83 @@ function updateShop() {
 
 function poopBook() {
   const book = state.poopBook || {};
+  const page = state.bookPage || {};
   const kinds = G.poopKinds();
-  const found = G.poopsFound(state);
-  const grid = kinds.map(k => {
+  const found = G.pageFound(state);
+  const filled = state.booksFilled || 0;
+  const got = G.ACHIEVEMENTS.filter(a => (state.achievements || {})[a.id]).length;
+  // Kinds on this page show in color. Kinds found on an earlier page show as a
+  // silhouette with their name, so you know what to hunt for again.
+  const tile = k => {
     const n = book[k.key] || 0;
-    return `<div class="pk ${n ? '' : 'unknown'}">${n ? Art.poop(k) : Art.poopShadow(k)}<span>${n ? `${G.POOP_COLORS[k.color]} ${G.POOP_SHAPES[k.shape].toLowerCase()}` : '???'}</span><b class="count">${n ? n : '?'}</b></div>`;
+    const name = `${G.POOP_COLORS[k.color]} ${G.POOP_SHAPES[k.shape].toLowerCase()}`;
+    if (page[k.key]) return `<div class="pk">${Art.poop(k)}<span>${name}</span><b class="count">${n}</b></div>`;
+    return `<div class="pk unknown">${Art.poopShadow(k)}<span>${n ? name : '???'}</span><b class="count">${n || '?'}</b></div>`;
+  };
+  // One page per rarity group, flipped with the arrows.
+  const n = G.POOP_TIERS.length;
+  const tiers = G.POOP_TIERS.map((t, i) => {
+    const ks = kinds.filter(k => t.colors.includes(k.color));
+    const have = ks.filter(k => page[k.key]).length;
+    return `<div class="tier" data-page="${i}" ${i === bookPageIdx ? '' : 'hidden'}>
+      <div class="pager"><button class="arrow" data-step="-1" aria-label="Previous page">‹</button>
+        <h4><span>${t.label}</span><b class="${have === ks.length ? 'done' : ''}">${have} / ${ks.length}</b></h4>
+        <button class="arrow" data-step="1" aria-label="Next page">›</button></div>
+      <small class="tier-odds">${t.odds}</small>
+      <div class="pk-grid">${ks.map(tile).join('')}</div>
+      <div class="dots">${G.POOP_TIERS.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}<span>Page ${i + 1} of ${n}</span></div></div>`;
   }).join('');
   const ach = G.ACHIEVEMENTS.map(a => {
-    const got = !!(state.achievements || {})[a.id];
-    return `<div class="ach ${got ? 'got' : ''}"><span class="badge">${got ? Art.badgeIcon() : Art.badgeIcon(true)}</span><span class="txt"><b>${a.name}</b><small>${a.desc}</small></span><span class="price ${got ? 'can' : ''}">${got ? 'Done!' : `${a.coins} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></div>`;
+    const won = !!(state.achievements || {})[a.id];
+    return `<div class="ach ${won ? 'got' : ''}"><span class="badge">${won ? Art.badgeIcon() : Art.badgeIcon(true)}</span><span class="txt"><b>${a.name}</b><small>${a.desc}</small></span><span class="price ${won ? 'can' : ''}">${won ? 'Done!' : `${a.coins} <i class="coin-sm">${Art.coinIcon()}</i>`}</span></div>`;
   }).join('');
-  const odds = G.POOP_ODDS.map(o => `${o.label}: <b>${o.odds}</b>`).join(' · ');
-  popup(`Poop Book ${found} / ${kinds.length}`, `<p>Scoop every kind of poop to fill the book. Rare ones are worth more!</p><p class="odds">${odds}</p>
-    <div class="pk-grid">${grid}</div>
-    <div class="ribbon"><span>Achievements</span></div>
-    <div class="ach-list">${ach}</div>`, 'Close');
+  popup(`Poop Book`, `<div class="book-tabs"><button class="on" data-pane="poops">Poops <small>${found} / ${kinds.length}</small></button><button data-pane="badges">Badges <small>${got} / ${G.ACHIEVEMENTS.length}</small></button></div>
+    <div class="book-pane" data-pane="poops">
+      <div class="book-prize">${filled ? `<span class="books-filled">${Art.poopBookArt(true)}<span>Filled <b>${filled}</b> ${filled === 1 ? 'time' : 'times'}</span></span>` : ''}
+        <span class="next-prize">Fill it: <b>${G.bookReward(filled)}</b> <i class="coin-sm">${Art.coinIcon()}</i></span></div>
+      <p class="book-hint">${filled ? 'A fresh page! Find every kind again.' : 'Scoop every kind of poop to fill the book.'}</p>
+      ${tiers}
+    </div>
+    <div class="book-pane" data-pane="badges" hidden><div class="ach-list">${ach}</div></div>`, 'Close');
   sfx.pop();
+}
+
+// Poop Book tabs (Poops / Badges) and page arrows. Delegated, since popups can be queued.
+let bookPageIdx = 0;
+document.addEventListener('click', (e) => {
+  const arrow = e.target.closest('.pager .arrow');
+  if (arrow) {
+    const pages = [...arrow.closest('.book-pane').querySelectorAll('.tier')];
+    bookPageIdx = (bookPageIdx + Number(arrow.dataset.step) + pages.length) % pages.length;
+    pages.forEach((p, i) => { p.hidden = i !== bookPageIdx; });
+    sfx.pop();
+    return;
+  }
+  const b = e.target.closest('.book-tabs button');
+  if (!b) return;
+  const card = b.closest('.card');
+  for (const t of card.querySelectorAll('.book-tabs button')) t.classList.toggle('on', t === b);
+  for (const p of card.querySelectorAll('.book-pane')) p.hidden = p.dataset.pane !== b.dataset.pane;
+  sfx.pop();
+});
+
+// When every kind is on the page: big prize, a celebration, and a fresh page.
+function bookCheck(delay = 0) {
+  const r = G.checkBookFull(state);
+  if (!r) return;
+  const bits = Array.from({ length: 16 }, (_, i) => {
+    const art = i % 3 === 0 ? Art.coinIcon() : Art.poop({ shape: i % 2 ? 'swirl' : 'beans', color: ['pink', 'gold', 'rainbow', 'green', 'orange'][i % 5] });
+    return `<i style="--l:${(i * 37) % 100}%;--d:${(i * 0.23) % 1.6}s;--r:${(i % 2 ? 1 : -1) * (180 + i * 20)}deg">${art}</i>`;
+  }).join('');
+  setTimeout(() => {
+    sfx.fanfare(); floatCoin(r.coins);
+    popup('Book filled!', `<div class="confetti">${bits}</div>
+      <div class="celebrate"><div class="book-pop">${Art.poopBookArt()}</div><div class="cheer">${Art.piggySide({ coat: current().coat, hat: current().hat })}</div></div>
+      <p>You found <b>every kind</b> of poop!</p>
+      <div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${r.coins}</span></div>
+      <div class="book-prize"><span class="books-filled">${Art.poopBookArt(true)}<span>Filled <b>${r.filled}</b> ${r.filled === 1 ? 'time' : 'times'}</span></span></div>
+      <p>The book gets a fresh page. Fill it again for <b>${G.bookReward(r.filled)}</b> coins!</p>`, 'Fill it again!');
+  }, delay);
 }
 
 // ---------- Dialogs & effects ----------
