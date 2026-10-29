@@ -281,14 +281,18 @@ export function dumpling(key, size = 64, opts = {}) {
   const r = lookFor(key);
   const fill = r.color;
   const dark = r.dark || shade(fill);
-  // A short bamboo-steamer cylinder: the rim behind the bun, the front wall in
-  // front of it so the dumpling sits down inside.
-  // Plain tan cylinder with a slightly wider lip, seen from a little above.
-  const back = opts.basket === false ? '' : `<ellipse cx="32" cy="37" rx="30" ry="7" fill="#C98F4B" stroke="#B9824A" stroke-width="2.5"/>`;
+  // A round bamboo steamer seen from a little above: straight sides, the dark
+  // inside and back rim behind the bun, the front wall with a woven band in
+  // front of it so the bun sits down inside.
+  const back = opts.basket === false ? '' : `<ellipse cx="32" cy="38" rx="26" ry="8" fill="#F2D59A" stroke="#9C6A3A" stroke-width="2.5"/>
+    <ellipse cx="32" cy="38.5" rx="22" ry="5.8" fill="#B5823F"/>`;
   const front = opts.basket === false ? '' : `
-    <path d="M6 44 Q32 57 58 44 V55 Q58 61 52 61 H12 Q6 61 6 55Z" fill="#E8B27A" stroke="#B9824A" stroke-width="2.5" stroke-linejoin="round"/>
-    <path d="M2 37 Q32 51 62 37 V43 Q32 57 2 43Z" fill="#EFC08C" stroke="#B9824A" stroke-width="2.5" stroke-linejoin="round"/>`;
-  const dy = opts.basket === false ? 6 : 2;
+    <path d="M6 38 Q32 54 58 38 V51 Q32 67 6 51Z" fill="#E8C27A" stroke="#9C6A3A" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M6 44.5 Q32 60.5 58 44.5" stroke="#9C6A3A" stroke-width="2" fill="none"/>
+    <path d="M9 48 Q32 62 55 48" stroke="#D9A85A" stroke-width="1.2" fill="none" opacity=".8"/>
+    <path d="M10.5 43 V50" stroke="#F6DDA4" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M6 38 Q32 54 58 38" stroke="#9C6A3A" stroke-width="2.5" fill="none"/>`;
+  const dy = opts.basket === false ? 6 : 1;
   const sparkle = r.glitter ? `<g fill="#fff" opacity=".9"><circle cx="17" cy="30" r="1.2"/><circle cx="42" cy="24" r="1.1"/><circle cx="47" cy="33" r="1.3"/><circle cx="24" cy="27" r="1"/><circle cx="36" cy="22" r=".9"/><circle cx="31" cy="29" r="1"/></g>
     <path d="M53 12 l1.5 3 3 1.5 -3 1.5 -1.5 3 -1.5 -3 -3 -1.5 3 -1.5z" fill="#fff"/><path d="M10 14 l1 2 2 1 -2 1 -1 2 -1 -2 -2 -1 2 -1z" fill="#fff"/>` : '';
   const eyes = r.sleepy
@@ -311,7 +315,7 @@ export function dumpling(key, size = 64, opts = {}) {
   return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">${defs}
     ${back}
     <g transform="translate(0 ${dy})">${behind}
-    <path d="M13 44 C9 30 20 17 32 17 C44 17 55 30 51 44 Q32 48 13 44Z" fill="${fill}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M11 45 C8 31 18 19 32 19 C46 19 56 31 53 45 Q32 50 11 45Z" fill="${fill}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>
     ${stripes}${pattern}
     <path d="M32 19 Q24 25 19 36 M32 19 Q28 27 26 40 M32 19 Q32 30 32 42 M32 19 Q36 27 38 40 M32 19 Q40 25 45 36 M32 19 Q21 21 14 30 M32 19 Q43 21 50 30" stroke="${dark}" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".5"/>
     <path d="M28 18 Q32 12 36 18 Q32 21 28 18Z" fill="${dark}" opacity=".55"/>
