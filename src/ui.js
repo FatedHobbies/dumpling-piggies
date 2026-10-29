@@ -5,7 +5,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 133;
+const VERSION = 134;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -1298,7 +1298,7 @@ function onPlot(i) {
     if (G.plantProgress(state, i) < 1) { sfx.pop(); toast('Still growing...'); tut('plant'); return; }
     gardenerRun(i, () => {
       const r = G.harvest(state, i);
-      if (r.ok) { sfx.coin(); toast(`+2 ${G.FILLINGS[r.filling].name}`); floatCoin(1); tut('harvest'); render(); }
+      if (r.ok) { sfx.pop(); toast(`+2 ${G.FILLINGS[r.filling].name}`); tut('harvest'); render(); }
     }, () => { const pl = $(`.plot[data-plot="${i}"] .plant`); if (pl) pl.classList.add('pulled'); });
     return;
   }
@@ -1514,7 +1514,7 @@ function updateMaze() {
   if (run) {
     btns.appendChild(btn('Stop', () => { stopRun(); render(); }, 'btn-grey'));
   } else {
-    btns.appendChild(btn('Surprise me', () => { M.randomize(m, Math.random, G.unlockedFillings(state)); M.placeFun(m, funKinds()); sfx.pop(); render(); }, 'btn-grey surprise'));
+    btns.appendChild(btn('Surprise me', () => { M.randomize(m, Math.random, G.unlockedFillings(state), M.mazeCoinsLeft(state) > 0); M.placeFun(m, funKinds()); sfx.pop(); render(); }, 'btn-grey surprise'));
     btns.appendChild(btn('Clear', () => { M.clear(m); sfx.pop(); render(); }, 'btn-grey'));
     const go = btn('Go!', startRun, 'btn-green go');
     go.disabled = !ok;
@@ -1535,10 +1535,10 @@ let mazeTile = 1;
 // are sold in the Shop's Mazes tab and three are earned by playing.
 const MAZE_UNLOCKS = {
   hay: {},
-  pumpkin: { cost: 150 },
-  kitchen: { cost: 250 },
-  snow: { cost: 350 },
-  sea: { cost: 400 },
+  pumpkin: { cost: 450 },
+  kitchen: { cost: 750 },
+  snow: { cost: 1050 },
+  sea: { cost: 1200 },
   galaxy: { goal: 'Find 10 treasures', have: () => state.stats.treasures || 0, need: 10 },
   unicorn: { goal: 'Finish 25 mazes', have: () => state.stats.mazes || 0, need: 25 },
   poop: { goal: 'Fill the Poop Book', have: () => state.booksFilled || 0, need: 1 },
@@ -1657,7 +1657,7 @@ function startRun() {
   if (!M.solvable(state.maze)) return;
   // Her own mazes get treasure too: if none is left, two goodies drop in.
   M.dropStrandedTreasure(state.maze);
-  if (!(state.maze.treasure || []).length) M.hideTreasure(state.maze, Math.random, G.unlockedFillings(state));
+  if (!(state.maze.treasure || []).length) M.hideTreasure(state.maze, Math.random, G.unlockedFillings(state), M.mazeCoinsLeft(state) > 0);
   if (!(state.maze.fun || []).length) M.placeFun(state.maze, funKinds());
   run = M.newRun();
   sfx.ding();
@@ -1693,8 +1693,8 @@ function scheduleStep() {
       const r = M.reward(state, state.maze, run);
       sfx.fanfare();
       pig.classList.add('popcorn');
-      floatCoin(r.coins);
-      toast(r.first ? `New maze finished! +${r.coins} coins` : `Dumpling! +${r.coins} coins`, 'big');
+      if (r.coins) floatCoin(r.coins);
+      toast(!r.coins ? 'Wheee! Maze coins are back tomorrow.' : r.first ? `New maze finished! +${r.coins} coins` : `Dumpling! +${r.coins} coins`, 'big');
       setTimeout(() => { stopRun(); tut('maze'); render(); }, 2200);
       return;
     }

@@ -30,16 +30,16 @@ export const FILLING_ORDER = Object.keys(FILLINGS);
 // The first ten recipes keep their hand-picked names and effects. Every other
 // pair of veggies (order doesn't matter) is a recipe too, named from its parts.
 const CLASSIC = {
-  'carrot+carrot':         { name: 'Carrot Crunch',   effect: null,      hunger: 35, coins: 4 },
-  'cabbage+cabbage':       { name: 'Cabbage Bao',     effect: null,      hunger: 35, coins: 4 },
-  'pea+pea':               { name: 'Pea Puff',        effect: null,      hunger: 30, coins: 4 },
-  'strawberry+strawberry': { name: 'Berry Bun',       effect: 'sparkle', hunger: 25, coins: 6 },
-  'cabbage+carrot':        { name: 'Garden Dumpling', effect: null,      hunger: 40, coins: 5 },
-  'carrot+pea':            { name: 'Sunny Dumpling',  effect: null,      hunger: 40, coins: 5 },
-  'cabbage+pea':           { name: 'Nap Bao',         effect: 'sleepy',  hunger: 40, coins: 5 },
-  'carrot+strawberry':     { name: 'Sunset Dumpling', effect: 'zoom',    hunger: 30, coins: 7 },
-  'cabbage+strawberry':    { name: 'Pink Bao',        effect: 'sparkle', hunger: 30, coins: 6 },
-  'pea+strawberry':        { name: 'Confetti Dumpling', effect: 'zoom',  hunger: 30, coins: 7 },
+  'carrot+carrot':         { name: 'Carrot Crunch',   effect: null,      hunger: 35, coins: 2 },
+  'cabbage+cabbage':       { name: 'Cabbage Bao',     effect: null,      hunger: 35, coins: 2 },
+  'pea+pea':               { name: 'Pea Puff',        effect: null,      hunger: 30, coins: 2 },
+  'strawberry+strawberry': { name: 'Berry Bun',       effect: 'sparkle', hunger: 25, coins: 3 },
+  'cabbage+carrot':        { name: 'Garden Dumpling', effect: null,      hunger: 40, coins: 3 },
+  'carrot+pea':            { name: 'Sunny Dumpling',  effect: null,      hunger: 40, coins: 3 },
+  'cabbage+pea':           { name: 'Nap Bao',         effect: 'sleepy',  hunger: 40, coins: 3 },
+  'carrot+strawberry':     { name: 'Sunset Dumpling', effect: 'zoom',    hunger: 30, coins: 4 },
+  'cabbage+strawberry':    { name: 'Pink Bao',        effect: 'sparkle', hunger: 30, coins: 3 },
+  'pea+strawberry':        { name: 'Confetti Dumpling', effect: 'zoom',  hunger: 30, coins: 4 },
 };
 // A small steady hash so each recipe always gets the same little quirks.
 export function hash(str) {
@@ -58,7 +58,7 @@ FILLING_ORDER.forEach((b, j) => FILLING_ORDER.slice(0, j + 1).forEach(a => {
     name: `${FILLINGS[first].adj} ${FILLINGS[second].noun}`,
     effect: fx.length ? fx[h % fx.length] : null,
     hunger: 30 + (h % 3) * 5,
-    coins: 4 + (h % 4),
+    coins: 2 + (h % 2),
   };
 }));
 
@@ -82,9 +82,9 @@ export function nextSeed(state) {
 // recipes with a certain veggie (`from`).
 export const DUMPLING_TIERS = [
   { id: 'shiny',  label: 'Shiny',      odds: '1 in 10',  chance: 1 / 10,  coins: 2 },
-  { id: 'rare',   label: 'Rare',       odds: '1 in 30',  chance: 1 / 30,  coins: 15, prize: 100 },
-  { id: 'super',  label: 'Super rare', odds: '1 in 120', chance: 1 / 120, coins: 30, prize: 250 },
-  { id: 'secret', label: 'Secret',     odds: '1 in 500', chance: 1 / 500, coins: 60, prize: 500 },
+  { id: 'rare',   label: 'Rare',       odds: '1 in 30',  chance: 1 / 30,  coins: 8, prize: 100 },
+  { id: 'super',  label: 'Super rare', odds: '1 in 120', chance: 1 / 120, coins: 15, prize: 250 },
+  { id: 'secret', label: 'Secret',     odds: '1 in 500', chance: 1 / 500, coins: 30, prize: 500 },
 ];
 export const SPECIALS = {
   polka:   { name: 'Polka Dot Bao',  tier: 'rare',   from: null,         effect: 'sparkle' },
@@ -171,53 +171,53 @@ export function checkDumplingPages(state) {
 }
 
 export const UPGRADES = {
-  plot4:    { name: 'Fourth garden plot', desc: 'One more plot to grow veggies in.',             cost: 60,  icon: 'plot' },
-  sunlamp:  { name: 'Sun lamp',           desc: 'Veggies grow twice as fast.',                    cost: 90,  icon: 'sun' },
-  autoscoop:{ name: 'Robo-scooper',       desc: 'A tiny robot scoops poop while you are away.',   cost: 150, icon: 'robot' },
-  bigbowl:  { name: 'Big bowl',           desc: 'Your piggies stay full for longer.',             cost: 120, icon: 'bowl' },
-  pen2:     { name: 'Bigger pen',         desc: 'Room for two more piggies and one more toy.',   cost: 300, icon: 'pen' },
+  plot4:    { name: 'Fourth garden plot', desc: 'One more plot to grow veggies in.',             cost: 120,  icon: 'plot' },
+  sunlamp:  { name: 'Sun lamp',           desc: 'Veggies grow twice as fast.',                    cost: 180,  icon: 'sun' },
+  autoscoop:{ name: 'Robo-scooper',       desc: 'A tiny robot scoops poop while you are away.',   cost: 300, icon: 'robot' },
+  bigbowl:  { name: 'Big bowl',           desc: 'Your piggies stay full for longer.',             cost: 240, icon: 'bowl' },
+  pen2:     { name: 'Bigger pen',         desc: 'Room for two more piggies and one more toy.',   cost: 600, icon: 'pen' },
 };
 
 // Hats are bought once and any piggy can wear one. Each piggy has `hat`.
 export const HATS = {
-  hay:        { name: 'Hay hat',         cost: 30 },
-  bow:        { name: 'Pink bow',        cost: 40 },
-  bee:        { name: 'Bee buzzers',     cost: 40 },
-  carrot:     { name: 'Carrot hat',      cost: 45 },
-  poop:       { name: 'Poop hat',        cost: 50 },
-  kitty:      { name: 'Kitty ears',      cost: 50 },
-  cap:        { name: 'Ball cap',        cost: 55 },
-  strawberry: { name: 'Strawberry hat',  cost: 60 },
-  flower:     { name: 'Daisy',           cost: 60 },
-  bunny:      { name: 'Bunny ears',      cost: 60 },
-  mushroom:   { name: 'Mushroom cap',    cost: 65 },
-  party:      { name: 'Party hat',       cost: 70 },
-  flowers:    { name: 'Flower crown',    cost: 70 },
-  banana:     { name: 'Banana peel',     cost: 75 },
-  icecream:   { name: 'Ice cream hat',   cost: 80 },
-  cowboy:     { name: 'Cowboy hat',      cost: 85 },
-  beanie:     { name: 'Cozy beanie',     cost: 90 },
-  sunhat:     { name: 'Sun hat',         cost: 90 },
-  pumpkin:    { name: 'Pumpkin hat',     cost: 90 },
-  frog:       { name: 'Froggy hat',      cost: 95 },
-  chef:       { name: 'Chef hat',        cost: 100 },
-  santa:      { name: 'Santa hat',       cost: 100 },
-  pot:        { name: 'Cooking pot',     cost: 105 },
-  cupcake:    { name: 'Cupcake hat',     cost: 110 },
-  dumpling:   { name: 'Dumpling hat',    cost: 120 },
-  propeller:  { name: 'Propeller hat',   cost: 120 },
-  steamer:    { name: 'Steamer hat',     cost: 130 },
-  dino:       { name: 'Dino spikes',     cost: 140 },
-  pirate:     { name: 'Pirate hat',      cost: 145 },
-  topper:     { name: 'Top hat',         cost: 150 },
-  viking:     { name: 'Viking helmet',   cost: 160 },
-  grad:       { name: 'Smarty cap',      cost: 170 },
-  crown:      { name: 'Royal crown',     cost: 180 },
-  halo:       { name: 'Halo',            cost: 190 },
-  tiara:      { name: 'Tiara',           cost: 200 },
-  wizard:     { name: 'Wizard hat',      cost: 220 },
-  unicorn:    { name: 'Unicorn horn',    cost: 240 },
-  rainbow:    { name: 'Rainbow cloud',   cost: 260 },
+  hay:        { name: 'Hay hat',         cost: 90 },
+  bow:        { name: 'Pink bow',        cost: 120 },
+  bee:        { name: 'Bee buzzers',     cost: 120 },
+  carrot:     { name: 'Carrot hat',      cost: 135 },
+  poop:       { name: 'Poop hat',        cost: 150 },
+  kitty:      { name: 'Kitty ears',      cost: 150 },
+  cap:        { name: 'Ball cap',        cost: 165 },
+  strawberry: { name: 'Strawberry hat',  cost: 180 },
+  flower:     { name: 'Daisy',           cost: 180 },
+  bunny:      { name: 'Bunny ears',      cost: 180 },
+  mushroom:   { name: 'Mushroom cap',    cost: 195 },
+  party:      { name: 'Party hat',       cost: 210 },
+  flowers:    { name: 'Flower crown',    cost: 210 },
+  banana:     { name: 'Banana peel',     cost: 225 },
+  icecream:   { name: 'Ice cream hat',   cost: 240 },
+  cowboy:     { name: 'Cowboy hat',      cost: 255 },
+  beanie:     { name: 'Cozy beanie',     cost: 270 },
+  sunhat:     { name: 'Sun hat',         cost: 270 },
+  pumpkin:    { name: 'Pumpkin hat',     cost: 270 },
+  frog:       { name: 'Froggy hat',      cost: 285 },
+  chef:       { name: 'Chef hat',        cost: 300 },
+  santa:      { name: 'Santa hat',       cost: 300 },
+  pot:        { name: 'Cooking pot',     cost: 315 },
+  cupcake:    { name: 'Cupcake hat',     cost: 330 },
+  dumpling:   { name: 'Dumpling hat',    cost: 360 },
+  propeller:  { name: 'Propeller hat',   cost: 360 },
+  steamer:    { name: 'Steamer hat',     cost: 390 },
+  dino:       { name: 'Dino spikes',     cost: 420 },
+  pirate:     { name: 'Pirate hat',      cost: 435 },
+  topper:     { name: 'Top hat',         cost: 450 },
+  viking:     { name: 'Viking helmet',   cost: 480 },
+  grad:       { name: 'Smarty cap',      cost: 510 },
+  crown:      { name: 'Royal crown',     cost: 540 },
+  halo:       { name: 'Halo',            cost: 570 },
+  tiara:      { name: 'Tiara',           cost: 600 },
+  wizard:     { name: 'Wizard hat',      cost: 660 },
+  unicorn:    { name: 'Unicorn horn',    cost: 720 },
+  rainbow:    { name: 'Rainbow cloud',   cost: 780 },
   // Earned, never bought: they turn up once she reaches the goal.
   laurel:     { name: 'Champ wreath',    goal: 'Finish 10 mazes',     need: 10, have: s => s.stats.mazes || 0 },
   planet:     { name: 'Planet hat',      goal: 'Find the Galaxy Bao', need: 1,  have: s => ((s.recipeBook || {})['sp:galaxy'] ? 1 : 0) },
@@ -252,12 +252,12 @@ export function wearHat(state, piggyId, id) {
 // (owned but put away); only TOY_LIMIT fit in the pen at once. Chews get
 // nibbled away (`state.toyWear`, 0 to 100) and must be bought again.
 export const TOYS = {
-  ball:   { name: 'Bouncy ball',  desc: 'Piggies love to nose it around.',  cost: 30,  x: 0.50, y: 0.58 },
-  chew:   { name: 'Chew sticks',  desc: 'A crunchy bundle to nibble on. Gets eaten up!', cost: 25, chew: true },
-  carrot: { name: 'Carrot chew',  desc: 'A wooden carrot to gnaw. Gets eaten up!',      cost: 20, chew: true },
-  tunnel: { name: 'Fuzzy tunnel', desc: 'Run in one end and out the other!', cost: 80,  x: 0.76, y: 0.86 },
-  hut:    { name: 'Dumpling hut', desc: 'A cozy hidey house shaped like a dumpling.', cost: 120 },
-  slide:  { name: 'Tiny slide',   desc: 'Wheee! Down the slide.',            cost: 160 },
+  ball:   { name: 'Bouncy ball',  desc: 'Piggies love to nose it around.',  cost: 90,  x: 0.50, y: 0.58 },
+  chew:   { name: 'Chew sticks',  desc: 'A crunchy bundle to nibble on. Gets eaten up!', cost: 75, chew: true },
+  carrot: { name: 'Carrot chew',  desc: 'A wooden carrot to gnaw. Gets eaten up!',      cost: 60, chew: true },
+  tunnel: { name: 'Fuzzy tunnel', desc: 'Run in one end and out the other!', cost: 240,  x: 0.76, y: 0.86 },
+  hut:    { name: 'Dumpling hut', desc: 'A cozy hidey house shaped like a dumpling.', cost: 360 },
+  slide:  { name: 'Tiny slide',   desc: 'Wheee! Down the slide.',            cost: 480 },
 };
 
 // The ball always sits in the middle of the floor; the other toys in the pen
@@ -332,7 +332,7 @@ export function playToy(state, piggyId, id) {
 
 export const RENAME_COST = 30;
 export { NAME_MAX };
-export const ADOPT_COST = [0, 80, 200, 400, 700, 1000];
+export const ADOPT_COST = [0, 150, 400, 800, 1400, 2000];
 export const MAX_PIGGIES = 6;
 export const PEN_MAX = 4;          // more than this and the pen gets too busy to follow
 const HUGE_PEN_COST = 800;         // the old Huge pen upgrade, refunded in version 94
@@ -554,9 +554,9 @@ export function tick(state, dt, now = Date.now()) {
   // Chews in the pen slowly get nibbled even when nobody is watching.
   for (const id of toysInPen(state)) if (TOYS[id].chew) wearToy(state, id, CHEW_DAY * dt, events);
 
-  // Each happy piggy earns a trickle: 1 coin every 20 seconds, double while sparkling.
+  // Each happy piggy earns a trickle: 1 coin every 90 seconds, double while sparkling.
   if (happy > 0) {
-    state.trickle = (state.trickle || 0) + happy / 20 * dt;
+    state.trickle = (state.trickle || 0) + happy / 90 * dt;
     while (state.trickle >= 1) {
       state.trickle -= 1;
       state.coins += 1;
@@ -645,48 +645,48 @@ export const POOP_TIERS = [
   { label: 'Glitter', odds: '1 in 12', colors: ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple'] },
   { label: 'Super rare', odds: 'rainbow 1 in 33 · golden 1 in 100 · crystal 1 in 250', colors: ['rainbow', 'gold', 'crystal'] },
 ];
-export const POOP_VALUE = { brown: { coins: 2, compost: 1 }, rainbow: { coins: 10, compost: 3 }, gold: { coins: 25, compost: 5 }, crystal: { coins: 50, compost: 8 } };
-for (const c of PLAIN_COLORS) POOP_VALUE[c] = { coins: 3, compost: 1 };
-for (const c of ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple']) POOP_VALUE[c] = { coins: 6, compost: 2 };
+export const POOP_VALUE = { brown: { coins: 1, compost: 1 }, rainbow: { coins: 5, compost: 3 }, gold: { coins: 25, compost: 5 }, crystal: { coins: 50, compost: 8 } };
+for (const c of PLAIN_COLORS) POOP_VALUE[c] = { coins: 1, compost: 1 };
+for (const c of ['gred', 'ggreen', 'gpink', 'silver', 'aqua', 'purple']) POOP_VALUE[c] = { coins: 3, compost: 2 };
 
 // Special poops each have their own drawing. They are stored as
 // { shape: 'sp', color: id }, so their book key is 'sp-<id>'.
 // `odds` is per poop for the random ones; `how` explains the event ones.
 export const SPECIAL_POOPS = {
   // Funny shapes, 1 in 6 altogether.
-  log:       { name: 'Log',        page: 'shapes',    coins: 4 },
-  pellets:   { name: 'Pellet pile', page: 'shapes',   coins: 4 },
-  donut:     { name: 'Donut',      page: 'shapes',    coins: 4 },
-  tower:     { name: 'Tower',      page: 'shapes',    coins: 4 },
-  tiny:      { name: 'Teeny',      page: 'shapes',    coins: 4 },
+  log:       { name: 'Log',        page: 'shapes',    coins: 2 },
+  pellets:   { name: 'Pellet pile', page: 'shapes',   coins: 2 },
+  donut:     { name: 'Donut',      page: 'shapes',    coins: 2 },
+  tower:     { name: 'Tower',      page: 'shapes',    coins: 2 },
+  tiny:      { name: 'Teeny',      page: 'shapes',    coins: 2 },
   // Patterns, 1 in 10 altogether.
-  polka:     { name: 'Polka dot',  page: 'patterns',  coins: 6 },
-  candy:     { name: 'Candy stripe', page: 'patterns', coins: 6 },
-  sprinkles: { name: 'Sprinkles',  page: 'patterns',  coins: 6 },
-  fuzzy:     { name: 'Fuzzy',      page: 'patterns',  coins: 6 },
-  checkers:  { name: 'Checkers',   page: 'patterns',  coins: 6 },
-  zigzag:    { name: 'Zigzag',     page: 'patterns',  coins: 6 },
-  cow:       { name: 'Cow spots',  page: 'patterns',  coins: 6 },
+  polka:     { name: 'Polka dot',  page: 'patterns',  coins: 3 },
+  candy:     { name: 'Candy stripe', page: 'patterns', coins: 3 },
+  sprinkles: { name: 'Sprinkles',  page: 'patterns',  coins: 3 },
+  fuzzy:     { name: 'Fuzzy',      page: 'patterns',  coins: 3 },
+  checkers:  { name: 'Checkers',   page: 'patterns',  coins: 3 },
+  zigzag:    { name: 'Zigzag',     page: 'patterns',  coins: 3 },
+  cow:       { name: 'Cow spots',  page: 'patterns',  coins: 3 },
   // Silly ones, 1 in 12 altogether.
-  dumpling:  { name: 'Dumpling',   page: 'silly',     coins: 10 },
-  carrot:    { name: 'Carrot',     page: 'silly',     coins: 10 },
-  bubblegum: { name: 'Bubblegum',  page: 'silly',     coins: 10 },
-  cactus:    { name: 'Cactus',     page: 'silly',     coins: 10 },
-  galaxy:    { name: 'Galaxy',     page: 'silly',     coins: 10 },
-  cupcake:   { name: 'Cupcake',    page: 'silly',     coins: 10 },
-  sleepy:    { name: 'Sleepy',     page: 'silly',     coins: 10 },
-  cool:      { name: 'Cool',       page: 'silly',     coins: 10 },
-  jelly:     { name: 'Jelly',      page: 'silly',     coins: 10 },
+  dumpling:  { name: 'Dumpling',   page: 'silly',     coins: 5 },
+  carrot:    { name: 'Carrot',     page: 'silly',     coins: 5 },
+  bubblegum: { name: 'Bubblegum',  page: 'silly',     coins: 5 },
+  cactus:    { name: 'Cactus',     page: 'silly',     coins: 5 },
+  galaxy:    { name: 'Galaxy',     page: 'silly',     coins: 5 },
+  cupcake:   { name: 'Cupcake',    page: 'silly',     coins: 5 },
+  sleepy:    { name: 'Sleepy',     page: 'silly',     coins: 5 },
+  cool:      { name: 'Cool',       page: 'silly',     coins: 5 },
+  jelly:     { name: 'Jelly',      page: 'silly',     coins: 5 },
   // Legendary: very rare, or only after something special happens.
-  unicorn:   { name: 'Unicorn',    page: 'legend',    coins: 60, odds: '1 in 500' },
-  goldicorn: { name: 'Gold unicorn', page: 'legend',   coins: 80, odds: '1 in 750' },
-  diamond:   { name: 'Diamond unicorn', page: 'legend', coins: 100, odds: '1 in 1000' },
-  royal:     { name: 'Royal',      page: 'legend',    coins: 50, odds: '1 in 300' },
-  moon:      { name: 'Moon',       page: 'legend',    coins: 30, odds: 'only at night' },
-  champ:     { name: 'Maze champ', page: 'legend',    coins: 30, odds: 'after a maze run' },
-  hay:       { name: 'Hay bale',   page: 'legend',    coins: 30, odds: 'after eating hay' },
-  mystery:   { name: 'Mystery',    page: 'legend',    coins: 40, odds: 'after a secret dumpling' },
-  robo:      { name: 'Robo',       page: 'legend',    coins: 30, odds: 'Robo-scooper finds it' },
+  unicorn:   { name: 'Unicorn',    page: 'legend',    coins: 30, odds: '1 in 500' },
+  goldicorn: { name: 'Gold unicorn', page: 'legend',   coins: 40, odds: '1 in 750' },
+  diamond:   { name: 'Diamond unicorn', page: 'legend', coins: 50, odds: '1 in 1000' },
+  royal:     { name: 'Royal',      page: 'legend',    coins: 25, odds: '1 in 300' },
+  moon:      { name: 'Moon',       page: 'legend',    coins: 15, odds: 'only at night' },
+  champ:     { name: 'Maze champ', page: 'legend',    coins: 15, odds: 'after a maze run' },
+  hay:       { name: 'Hay bale',   page: 'legend',    coins: 15, odds: 'after eating hay' },
+  mystery:   { name: 'Mystery',    page: 'legend',    coins: 20, odds: 'after a secret dumpling' },
+  robo:      { name: 'Robo',       page: 'legend',    coins: 15, odds: 'Robo-scooper finds it' },
 };
 const specialsOn = (page) => Object.keys(SPECIAL_POOPS).filter(id => SPECIAL_POOPS[id].page === page);
 // Kinds Ryan took out of the game. Any still lying in a pen become plain swirls.
@@ -719,7 +719,7 @@ export function poopValue(p) {
   if (!isSpecialPoop(p)) return POOP_VALUE[p.color] || POOP_VALUE.brown;
   const { def, sparkly } = parseSpecial(p.color);
   const coins = (def ? def.coins : 4) * (sparkly ? 2 : 1);
-  return { coins, compost: coins >= 30 ? 5 : coins >= 10 ? 3 : 2 };
+  return { coins, compost: coins >= 15 ? 5 : coins >= 5 ? 3 : 2 };
 }
 export function poopName(p) {
   if (!isSpecialPoop(p)) return `${POOP_COLORS[p.color]} ${POOP_SHAPES[p.shape].toLowerCase()}`;
@@ -922,7 +922,6 @@ export function harvest(state, plot, now = Date.now()) {
   if (!g || plantProgress(state, plot, now) < 1) return { ok: false };
   state.garden[plot] = null;
   state.pantry[g.filling] = (state.pantry[g.filling] || 0) + 2;
-  state.coins += 1;
   return { ok: true, filling: g.filling, amount: 2 };
 }
 

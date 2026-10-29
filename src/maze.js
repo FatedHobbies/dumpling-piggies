@@ -80,7 +80,7 @@ export function hash(m) { return m.cells.join(''); }
 
 // A random maze with a guaranteed route, carved with a recursive backtracker
 // on the odd cells, then a few extra openings so it isn't one long corridor.
-export function randomize(m, rng = Math.random, fillings = ['carrot']) {
+export function randomize(m, rng = Math.random, fillings = ['carrot'], coins = true) {
   m.cells.fill(1);
   const carve = (x, y) => {
     m.cells[idx(x, y)] = 0;
@@ -100,8 +100,8 @@ export function randomize(m, rng = Math.random, fillings = ['carrot']) {
   }
   m.cells[idx(START.x, START.y)] = 0;
   m.cells[idx(FINISH.x, FINISH.y)] = 0;
-  if (!solvable(m)) return randomize(m, rng, fillings);
-  hideTreasure(m, rng, fillings);
+  if (!solvable(m)) return randomize(m, rng, fillings, coins);
+  hideTreasure(m, rng, fillings, coins);
   m.fun = [];
 }
 
@@ -112,7 +112,8 @@ export const TREASURE_COINS = 10;
 export const TREASURE_VEGGIES = 2;
 export const treasureAt = (m, x, y) => (m.treasure || []).find(t => t.x === x && t.y === y);
 
-export function hideTreasure(m, rng = Math.random, fillings = ['carrot']) {
+// `coins` false leaves out the coin pile once the day's maze coins are used up.
+export function hideTreasure(m, rng = Math.random, fillings = ['carrot'], coins = true) {
   const main = new Set((path(m, START, FINISH) || []).map(c => idx(c.x, c.y)));
   const spots = [], ends = [];
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
@@ -122,7 +123,7 @@ export function hideTreasure(m, rng = Math.random, fillings = ['carrot']) {
   }
   const shuffle = (a) => a.sort(() => rng() - 0.5);
   const picks = [...shuffle(ends), ...shuffle(spots)].slice(0, 2);
-  const kinds = shuffle(['coins', 'veggie', 'box']);
+  const kinds = shuffle(coins ? ['coins', 'veggie', 'box'] : ['veggie', 'box']);
   m.treasure = picks.map((c, i) => {
     const t = { ...c, kind: kinds[i] };
     if (t.kind === 'veggie') t.filling = fillings[Math.floor(rng() * fillings.length)] || 'carrot';
@@ -177,8 +178,10 @@ export function placeFun(m, kinds, rng = Math.random) {
 
 // Gives the treasure to the player. A mystery box holds one dumpling of a
 // recipe she has already found (carrot if none yet).
-export function claim(state, t, rng = Math.random) {
-  if (t.kind === 'coins') { state.coins += TREASURE_COINS; return { ...t, coins: TREASURE_COINS }; }
+export function claim(state, t, rng = Math.random, now = Date.now()) {
+  // Once the day's maze coins are used up, a coin treasure turns into veggies.
+  if (t.kind === 'coins' && mazeCoinsLeft(state, now) > 0) { state.coins += TREASURE_COINS; return { ...t, coins: TREASURE_COINS }; }
+  if (t.kind === 'coins') t = { ...t, kind: 'veggie', filling: t.filling || 'carrot' };
   if (t.kind === 'veggie') { state.pantry[t.filling] = (state.pantry[t.filling] || 0) + TREASURE_VEGGIES; return { ...t, count: TREASURE_VEGGIES }; }
   const found = state.discovered || [];
   const key = found.length ? found[Math.floor(rng() * found.length)] : 'carrot+carrot';
@@ -272,12 +275,27 @@ export function cheer(run, now = Date.now()) {
   run.zoomUntil = now + 3000;
 }
 
+// Only the first few finishes each day pay coins, so the maze can't be farmed.
+// After that it is still fun: piggies cheer, treasure gives veggies and boxes.
+export const PAID_MAZES_PER_DAY = 5;
+function mazeDay(state, now) {
+  const day = new Date(now).toDateString();
+  if (!state.mazeCoins || state.mazeCoins.day !== day) state.mazeCoins = { day, paid: 0 };
+  return state.mazeCoins;
+}
+export function mazeCoinsLeft(state, now = Date.now()) {
+  const d = state.mazeCoins;
+  return PAID_MAZES_PER_DAY - (d && d.day === new Date(now).toDateString() ? d.paid : 0);
+}
+
 // Reward for finishing. The first finish of a given layout pays a bonus.
-export function reward(state, m, run) {
+export function reward(state, m, run, now = Date.now()) {
   const h = hash(m);
   const first = !m.finished[h];
   m.finished[h] = true;
-  const coins = 8 + (first ? 12 : 0);
+  const paid = mazeCoinsLeft(state, now) > 0;
+  const coins = paid ? 8 + (first ? 12 : 0) : 0;
+  if (paid) mazeDay(state, now).paid += 1;
   state.coins += coins;
   for (const p of state.piggies) p.fun = Math.min(100, p.fun + 30);
   state.stats.mazes = (state.stats.mazes || 0) + 1;
