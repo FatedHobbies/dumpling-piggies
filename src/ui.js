@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 59;
+const VERSION = 60;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -748,11 +748,13 @@ function gardenerRun(i, onDone, onDig = null) {
 function kitchenView() {
   const v = el(`<section class="kitchen">
     <div class="kitchen-stage" id="kstage">${Art.kitchenScene({ coat: current().coat })}
-      <div class="slots"><div class="slot" data-slot="0"></div><span class="plus">+</span><div class="slot" data-slot="1"></div></div>
-      <button class="btn btn-red" id="cook">Steam it!</button>
+      <div class="counter-bar">
+        <button class="dbook-btn" id="dbook" aria-label="Dumpling Book">${Art.dumpling('sp:gold', 40)}<span>Book</span><b class="book-count" id="rcount"></b></button>
+        <div class="slots"><div class="slot" data-slot="0"></div><span class="plus">+</span><div class="slot" data-slot="1"></div></div>
+        <button class="btn btn-red" id="cook">Steam it!</button>
+      </div>
     </div>
     <div class="fillings" id="fillings"></div>
-    <button class="dbook-btn panel" id="dbook"><span class="dbook-ico">${Art.dumpling('sp:gold', 52)}</span><span class="txt"><b>Dumpling Book</b><small id="rcount"></small></span><span class="dbook-go">›</span></button>
     <p class="seed-hint" id="seedhint"></p>
   </section>`);
   $('#cook', v).addEventListener('click', onCook);
@@ -779,7 +781,7 @@ function updateKitchen() {
       fl.appendChild(b);
     }
   }
-  $('#rcount').textContent = `${G.dumplingsFound(state)} / ${G.dumplingTotal()} found`;
+  $('#rcount').textContent = G.dumplingsFound(state);
   const next = G.nextSeed(state);
   const hint = $('#seedhint');
   const hsig = next ? next.filling + next.need : 'all';

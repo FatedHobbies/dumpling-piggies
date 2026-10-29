@@ -338,12 +338,12 @@ button.pk:active { transform: scale(.95); }
 /* ---- Kitchen ---- */
 .kitchen-stage { position: relative; border-radius: 18px; overflow: hidden; border: 3px solid var(--wood-dark); box-shadow: 0 4px 0 #6A4524; }
 .kitchen-stage .scene { position: static; width: 100%; height: auto; }
-.slots { position: absolute; left: 3%; bottom: 7%; display: flex; align-items: center; gap: 6px; }
+.slots { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .slot { width: 54px; height: 54px; border-radius: 14px; border: 3px dashed #fff; display: grid; place-items: center; background: rgba(255,255,255,.75); box-shadow: 0 3px 0 rgba(0,0,0,.2); }
 .slot.filled { border-style: solid; border-color: var(--panel-edge); background: #fff; }
 .slot svg { width: 42px; height: 42px; }
 .plus { font-family: var(--display); font-size: 1.5rem; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.3); }
-#cook { position: absolute; right: 3%; bottom: 9%; }
+#cook { flex: none; padding-left: 14px; padding-right: 14px; }
 .kitchen-stage .pot, .kitchen-stage .chef, .kitchen-stage .spoon { transform-box: fill-box; transform-origin: 50% 100%; }
 .kitchen-stage .puff { opacity: 0; transform-box: fill-box; transform-origin: center; }
 .kitchen-stage.cooking .pot { animation: potwiggle .45s ease-in-out 3; }
@@ -536,13 +536,6 @@ button.pk:active { transform: scale(.95); }
 
 /* ---- Dumpling Book & blind-box surprises ---- */
 .book-pane[data-pane="dumplings"] { touch-action: pan-y; overflow: hidden; }
-.dbook-btn { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 14px; padding: 8px 14px; text-align: left; font: inherit; color: var(--ink); cursor: pointer; }
-.dbook-btn:active { transform: translateY(2px); }
-.dbook-btn .txt { flex: 1; display: flex; flex-direction: column; }
-.dbook-btn .txt b { font-family: var(--display); font-weight: 600; font-size: 1.1rem; color: var(--wood-dark); }
-.dbook-btn .txt small { color: var(--soft); font-weight: 700; font-size: .8rem; }
-.dbook-ico svg { display: block; }
-.dbook-go { font-family: var(--display); font-size: 2rem; color: var(--blue-dark); line-height: 1; }
 .seed-hint { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 0; font-size: .82rem; font-weight: 700; color: var(--soft); text-align: center; }
 .seed-hint b { color: var(--green-dark); }
 .seed-shadow svg { display: block; }
@@ -593,3 +586,10 @@ button.pk:active { transform: scale(.95); }
 .pitem.locked span { color: var(--soft); }
 .pitem.locked .count { background: var(--line); color: var(--soft); }
 .pantry .pk-pad { visibility: hidden; }
+/* Counter bar: Dumpling Book on the left, the two filling slots beside Steam it! */
+.counter-bar { position: absolute; left: 3%; right: 3%; bottom: 7%; display: flex; align-items: center; gap: 8px; }
+.dbook-btn { position: relative; flex: none; width: 58px; height: 62px; border-radius: 14px; border: 3px solid var(--panel-edge, #D5CDBA); background: linear-gradient(#FFFFFF, #F1EBDF); box-shadow: 0 3px 0 rgba(0,0,0,.2); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; font: inherit; cursor: pointer; }
+.dbook-btn:active { transform: translateY(2px); box-shadow: none; }
+.dbook-btn svg { width: 38px; height: 38px; display: block; margin-top: -4px; }
+.dbook-btn span { font-family: var(--display); font-size: .72rem; color: var(--wood-dark); line-height: 1; }
+.dbook-btn .book-count { position: absolute; top: -9px; right: -9px; }
