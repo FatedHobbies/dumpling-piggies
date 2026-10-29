@@ -96,7 +96,7 @@ export const TREASURE_COINS = 10;
 export const TREASURE_VEGGIES = 2;
 export const treasureAt = (m, x, y) => (m.treasure || []).find(t => t.x === x && t.y === y);
 
-function hideTreasure(m, rng, fillings) {
+export function hideTreasure(m, rng = Math.random, fillings = ['carrot']) {
   const main = new Set((path(m, START, FINISH) || []).map(c => idx(c.x, c.y)));
   const spots = [], ends = [];
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {

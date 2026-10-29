@@ -1003,6 +1003,8 @@ function onCheer() {
 
 function startRun() {
   if (!M.solvable(state.maze)) return;
+  // Her own mazes get treasure too: if none is left, two goodies drop in.
+  if (!(state.maze.treasure || []).length) M.hideTreasure(state.maze, Math.random, G.unlockedFillings(state));
   run = M.newRun();
   sfx.ding();
   render();
