@@ -739,6 +739,13 @@ export function poopShadow(p = {}) {
     .replace(/fill="(?!none)[^"]*"/g, 'fill="#D5CDBA"').replace(/stroke="[^"]*"/g, 'stroke="#B7AC94"');
 }
 
+// Any picture as a grey "not found yet" silhouette, like the books use.
+export function shadow(svg) {
+  return svg.replace(/<defs>[\s\S]*?<\/defs>/g, '').replace(/<text[\s\S]*?<\/text>/g, '')
+    .replace(/fill="(?!none)[^"]*"/g, 'fill="#D5CDBA"').replace(/stroke="(?!none)[^"]*"/g, 'stroke="#B7AC94"')
+    .replace(/(fill|stroke|stop-color):\s*[^;"]+/g, (m, k) => `${k}:${k === 'stroke' ? '#B7AC94' : '#D5CDBA'}`);
+}
+
 export function badgeIcon(locked = false) {
   const c = locked ? ['#D5CDBA', '#B7AC94', '#E6DCC8'] : ['#FFD34D', '#E0941C', '#FFF3B0'];
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 38 L14 60 L32 50 L50 60 L44 38Z" fill="${locked ? '#B7AC94' : '#F2544A'}"/><circle cx="32" cy="28" r="22" fill="${c[0]}" stroke="${c[1]}" stroke-width="3"/><path d="M32 14 l4.5 9 10 1.5 -7 7 1.5 10 -9 -4.8 -9 4.8 1.5 -10 -7 -7 10 -1.5z" fill="${c[2]}" stroke="${c[1]}" stroke-width="2" stroke-linejoin="round"/></svg>`;
