@@ -533,3 +533,23 @@ export function toyArt(id, left = 1) {
   const art = id === 'chew' ? chewSticks(left) : id === 'carrot' ? carrotChew(left) : TOY_ART[id] || '';
   return `<svg viewBox="0 0 120 100" class="toy-svg" aria-hidden="true">${art}</svg>`;
 }
+
+// Small chunky icons for the Pen's need bars, need bubbles and the tab bar,
+// drawn in the same outlined style as coinIcon and mazeIcon.
+const ICONS = {
+  // A bowl with a dumpling peeking out
+  hunger: `<path d="M18 30 Q18 14 32 14 Q46 14 46 30Z" fill="#FFE6C8" stroke="#D9A86E" stroke-width="3" stroke-linejoin="round"/><path d="M32 14 Q27 20 26 26 M32 14 Q32 20 32 26 M32 14 Q37 20 38 26" stroke="#D9A86E" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M6 30 H58 Q56 52 32 54 Q8 52 6 30Z" fill="#4FA8F5" stroke="#2369B8" stroke-width="4" stroke-linejoin="round"/><path d="M14 38 Q32 44 50 38" stroke="#BFE0FF" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+  // A bouncy ball
+  fun: `<circle cx="32" cy="32" r="25" fill="#FF8FA8" stroke="#C93A5B" stroke-width="4"/><path d="M9 28 Q32 40 55 28" stroke="#FFD34D" stroke-width="7" fill="none"/><path d="M9 28 Q32 40 55 28" stroke="#C93A5B" stroke-width="2" fill="none" opacity=".35"/><ellipse cx="23" cy="18" rx="6" ry="4" fill="#fff" opacity=".7" transform="rotate(-30 23 18)"/>`,
+  // A poop scoop with sparkles
+  clean: `<path d="M38 36 L56 8" stroke="#9C6A3A" stroke-width="6" stroke-linecap="round"/><path d="M38 36 L56 8" stroke="#C98F4B" stroke-width="2.5" stroke-linecap="round"/><path d="M14 30 L44 34 Q46 52 30 54 Q12 54 14 30Z" fill="#7FDCD6" stroke="#3BA8A0" stroke-width="4" stroke-linejoin="round"/><path d="M8 12 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z M24 6 l1.5 3.5 3.5 1.5 -3.5 1.5 -1.5 3.5 -1.5 -3.5 -3.5 -1.5 3.5 -1.5z" fill="#FFD34D" stroke="#E0941C" stroke-width="1.2" stroke-linejoin="round"/>`,
+  pen: `<path d="M6 30 L32 8 L58 30" fill="none" stroke="#C93A5B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 28 L32 12 L52 28 V56 H12Z" fill="#F2CE7E" stroke="#C98F4B" stroke-width="4" stroke-linejoin="round"/><path d="M6 30 L32 8 L58 30" fill="none" stroke="#FF5C7A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 56 V42 Q32 32 40 42 V56Z" fill="#8A5634" stroke="#5E3820" stroke-width="3" stroke-linejoin="round"/>`,
+  garden: `<path d="M32 18 L46 56 Q32 62 18 56Z" fill="#FF9A3C" stroke="#D9772B" stroke-width="3.5" stroke-linejoin="round"/><path d="M32 18 Q22 6 16 12 M32 18 Q32 2 40 6 M32 18 Q44 8 50 14" stroke="#4CAF50" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M26 32 H34 M28 44 H38" stroke="#D9772B" stroke-width="2.5" stroke-linecap="round"/>`,
+  kitchen: `<path d="M6 44 Q6 18 32 16 Q58 18 58 44 Q32 54 6 44Z" fill="#FFE6C8" stroke="#D9A86E" stroke-width="3.5" stroke-linejoin="round"/><path d="M32 16 Q22 24 18 38 M32 16 Q30 28 28 42 M32 16 Q36 28 38 42 M32 16 Q44 24 46 38" stroke="#D9A86E" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="24" cy="44" r="2" fill="#2A1A14"/><circle cx="40" cy="44" r="2" fill="#2A1A14"/><path d="M29 47 Q32 50 35 47" stroke="#2A1A14" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
+  music: `<path d="M24 46 V14 L50 8 V40" fill="none" stroke="#E0941C" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="18" cy="46" rx="9" ry="7" fill="#FFD34D" stroke="#E0941C" stroke-width="3.5"/><ellipse cx="44" cy="40" rx="9" ry="7" fill="#FFD34D" stroke="#E0941C" stroke-width="3.5"/>`,
+  mute: `<g opacity=".8"><path d="M24 46 V14 L50 8 V40" fill="none" stroke="#8E99A8" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="18" cy="46" rx="9" ry="7" fill="#D8DEE6" stroke="#8E99A8" stroke-width="3.5"/><ellipse cx="44" cy="40" rx="9" ry="7" fill="#D8DEE6" stroke="#8E99A8" stroke-width="3.5"/></g><path d="M10 54 L54 10" stroke="#C93A5B" stroke-width="6" stroke-linecap="round"/>`,
+  shop: `<path d="M22 22 Q22 8 32 8 Q42 8 42 22" fill="none" stroke="#C93A5B" stroke-width="4" stroke-linecap="round"/><path d="M10 22 H54 L50 56 H14Z" fill="#FF8FA8" stroke="#C93A5B" stroke-width="4" stroke-linejoin="round"/><path d="M14 34 H50" stroke="#FFD34D" stroke-width="6"/><circle cx="32" cy="44" r="4" fill="#fff"/>`,
+};
+export function icon(name) {
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+}

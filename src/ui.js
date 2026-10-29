@@ -85,18 +85,18 @@ function buildShell() {
     <div id="coach" class="coach" hidden><span class="coach-pig" id="coachpig"></span><p id="coachtext"></p><button class="coach-skip" id="coachskip" aria-label="Skip tutorial">✕</button></div>
     <main id="view"></main>
     <nav class="tabs">
-      <button data-tab="steamer" class="tab" aria-label="Pen"><span class="ico">🏠</span>Pen</button>
-      <button data-tab="garden" class="tab" aria-label="Garden"><span class="ico">🥕</span>Garden</button>
-      <button data-tab="kitchen" class="tab" aria-label="Kitchen"><span class="ico">🥟</span>Kitchen</button>
+      <button data-tab="steamer" class="tab" aria-label="Pen"><span class="ico">${Art.icon('pen')}</span>Pen</button>
+      <button data-tab="garden" class="tab" aria-label="Garden"><span class="ico">${Art.icon('garden')}</span>Garden</button>
+      <button data-tab="kitchen" class="tab" aria-label="Kitchen"><span class="ico">${Art.icon('kitchen')}</span>Kitchen</button>
       <button data-tab="maze" class="tab" aria-label="Maze"><span class="ico">${Art.mazeIcon()}</span>Maze</button>
-      <button data-tab="shop" class="tab" aria-label="Shop"><span class="ico">🛍️</span>Shop</button>
+      <button data-tab="shop" class="tab" aria-label="Shop"><span class="ico">${Art.icon('shop')}</span>Shop</button>
     </nav>
     <div id="toasts"></div>`;
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); if (tab === 'shop' && b.dataset.tab === 'steamer') tut('home'); tab = b.dataset.tab; sfx.pop(); render(true); }));
   $('#name').addEventListener('click', renameDialog);
   $('#poopbook').addEventListener('click', poopBook);
   const musicBtn = $('#music');
-  const showMusic = () => { musicBtn.textContent = music.on ? '🎵' : '🔇'; musicBtn.classList.toggle('off', !music.on); };
+  const showMusic = () => { musicBtn.innerHTML = Art.icon(music.on ? 'music' : 'mute'); musicBtn.classList.toggle('off', !music.on); };
   musicBtn.addEventListener('click', () => { music.toggle(); sfx.pop(); showMusic(); });
   showMusic();
   $('#coachskip').addEventListener('click', () => confirmBox('Skip the tutorial?', () => { state.tutorial = { done: true }; render(); }));
@@ -214,9 +214,9 @@ function render(force = false) {
 function steamerView() {
   const v = el(`<section class="pen">
     <div class="needs panel-dark">
-      <div class="need" data-need="hunger"><span>🍽️</span><div class="bar"><i></i></div></div>
-      <div class="need" data-need="fun"><span>🎉</span><div class="bar"><i></i></div></div>
-      <div class="need" data-need="clean"><span>🧹</span><div class="bar"><i></i></div></div>
+      <div class="need" data-need="hunger"><span class="need-ico">${Art.icon('hunger')}</span><div class="bar"><i></i></div></div>
+      <div class="need" data-need="fun"><span class="need-ico">${Art.icon('fun')}</span><div class="bar"><i></i></div></div>
+      <div class="need" data-need="clean"><span class="need-ico">${Art.icon('clean')}</span><div class="bar"><i></i></div></div>
     </div>
     <div class="stage" id="stage">
       ${Art.penScene()}
@@ -264,7 +264,9 @@ function updateSteamer() {
     const face = m + JSON.stringify(pig.coat) + (pig.hat || '');
     if (d.dataset.face !== face) { d.dataset.face = face; $('.pig-art', d).innerHTML = Art.piggySide({ coat: pig.coat, hat: pig.hat, mood: m }); }
     $('.tag', d).textContent = pig.name;
-    $('.need-bubble', d).textContent = pig.hunger < 25 ? '🍽️' : pig.fun < 25 ? '🎉' : '';
+    const need = pig.hunger < 25 ? 'hunger' : pig.fun < 25 ? 'fun' : '';
+    const bub = $('.need-bubble', d);
+    if (bub.dataset.need !== need) { bub.dataset.need = need; bub.innerHTML = need ? Art.icon(need) : ''; }
     const w = wander.get(pig.id);
     d.classList.toggle('mood-' + m, true);
     for (const c of [...d.classList]) if (c.startsWith('mood-') && c !== 'mood-' + m) d.classList.remove(c);
