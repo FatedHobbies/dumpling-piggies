@@ -593,3 +593,10 @@ button.pk:active { transform: scale(.95); }
 .dbook-btn svg { width: 38px; height: 38px; display: block; margin-top: -4px; }
 .dbook-btn span { font-family: var(--display); font-size: .72rem; color: var(--wood-dark); line-height: 1; }
 .dbook-btn .book-count { position: absolute; top: -9px; right: -9px; }
+/* Keep the counter-bar squares below the countertop's top edge. */
+.counter-bar { bottom: 3.5%; }
+.dbook-btn { height: 56px; width: 56px; }
+.dbook-btn svg { width: 34px; height: 34px; margin-top: -2px; }
+.counter-bar .slot { width: 50px; height: 50px; }
+.counter-bar { bottom: 2.5%; }
+.dbook-btn .book-count { top: -5px; right: -8px; }
