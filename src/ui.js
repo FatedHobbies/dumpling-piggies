@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 85;
+const VERSION = 86;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -1233,31 +1233,34 @@ function updateShop() {
     }
   }
   const adopt = $('#adopt');
-  const room = state.piggies.length < G.capacity(state);
+  const room = G.hasRoom(state);
   const cost = G.adoptCost(state);
-  const offer = room ? G.makeOffer(state) : null;
-  const asig = JSON.stringify([offer, cost, state.coins, room, state.piggies.length]);
+  const offer = G.makeOffer(state);
+  const asig = JSON.stringify([offer, cost, state.coins, room, state.piggies.length, state.away.length]);
   if (adopt.dataset.sig !== asig) {
     adopt.dataset.sig = asig;
-    adopt.innerHTML = '';
-    if (!room) {
-      adopt.innerHTML = `<p class="hint">Your pen is full (${state.piggies.length} piggies). ${state.upgrades.pen3 ? 'That is all the piggies a home can hold!' : 'Buy a bigger pen in Upgrades for more room.'}</p>`;
-    } else {
-      adopt.innerHTML = `<p class="hint">Pick one to join the family. Colors and names are a surprise!</p><div class="offers"></div>`;
-      const box = $('.offers', adopt);
-      offer.forEach((o, i) => {
-        const b = el(`<button class="offer"><div class="pig-card">${Art.piggySide({ coat: o.coat })}</div><b>${esc(o.name)}</b><small>${G.BREEDS[o.coat.breed].name}</small><em>${G.BREEDS[o.coat.breed].blurb}</em>
-          ${cost === 0 ? '<span class="price can">Free!</span>' : price(cost)}</button>`);
-        b.addEventListener('click', () => {
+    const fullNote = `Your pen is full! Pick a new piggy and choose who goes on a sleepover${state.upgrades.pen3 ? '.' : ', or buy a bigger pen in Upgrades.'}`;
+    adopt.innerHTML = `<p class="hint">${room ? 'Pick one to join the family. Colors and names are a surprise!' : fullNote}</p><div class="offers"></div>
+      <button class="sleep-btn" id="sleepbtn">${Art.toyArt('hut')}<span><b>Sleepover House</b><small>${state.away.length ? `${state.away.length} ${state.away.length === 1 ? 'piggy is' : 'piggies are'} on a sleepover` : 'Nobody is on a sleepover yet'}</small></span></button>`;
+    $('#sleepbtn', adopt).onclick = sleepoverHouse;
+    const box = $('.offers', adopt);
+    offer.forEach((o, i) => {
+      const b = el(`<button class="offer"><div class="pig-card">${Art.piggySide({ coat: o.coat })}</div><b>${esc(o.name)}</b><small>${G.BREEDS[o.coat.breed].name}</small><em>${G.BREEDS[o.coat.breed].blurb}</em>
+        ${cost === 0 ? '<span class="price can">Free!</span>' : price(cost)}</button>`);
+      b.addEventListener('click', () => {
+        if (state.coins < cost) { sfx.nope(); toast(`Need ${cost - state.coins} more coins`); return; }
+        const welcome = () => {
           const r = G.adopt(state, i);
-          if (!r.ok) { sfx.nope(); toast(r.reason === 'coins' ? `Need ${cost - state.coins} more coins` : 'No room in the pen'); return; }
+          if (!r.ok) { sfx.nope(); toast('No room in the pen'); return; }
           sfx.fanfare(); selectedPig = r.piggy.id;
           popup('Welcome home!', `<div class="pig-card big">${Art.piggySide({ coat: r.piggy.coat })}</div><p><b>${esc(r.piggy.name)}</b> the ${G.BREEDS[r.piggy.coat.breed].name} moved into the pen.</p>`, 'Yay!', () => { tab = 'steamer'; render(true); });
           render(true);
-        });
-        box.appendChild(b);
+        };
+        if (G.hasRoom(state)) welcome();
+        else swapDialog(`Who goes on a sleepover so <b>${esc(o.name)}</b> can move in?`, (id) => { sendAway(id); welcome(); });
       });
-    }
+      box.appendChild(b);
+    });
   }
   const hats = $('#hats');
   const p = current();
@@ -1562,6 +1565,49 @@ function popup(title, html, button = 'OK', onClose = null) {
     if (popupQueue.length) popup(...popupQueue.shift()); else updateCoach();
   };
   document.body.appendChild(box);
+}
+
+// The Sleepover House lists the piggies who are away. Tapping one brings it
+// home; if the pen is full, a piggy from the pen goes on a sleepover instead.
+function sleepoverHouse() {
+  sfx.pop();
+  const box = el(`<div class="modal"><div class="card panel"><div class="ribbon"><span>Sleepover House</span></div>
+    ${state.away.length ? `<p>Tap a piggy to bring it home.</p>
+      <div class="swap-list">${state.away.map(q => `<button class="sleeper" data-id="${q.id}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}<span>${esc(q.name)}</span></button>`).join('')}</div>`
+      : `<div class="toy-card">${Art.toyArt('hut')}</div><p>Nobody is on a sleepover right now. When your pen is full and you adopt a new piggy, one piggy comes here to stay, safe and happy.</p>`}
+    <div class="row center"><button class="btn btn-grey">Close</button></div></div></div>`);
+  box.querySelectorAll('.sleeper').forEach(b => b.addEventListener('click', () => {
+    const q = state.away.find(x => x.id === +b.dataset.id);
+    if (!q) return;
+    box.remove();
+    const home = () => {
+      if (!G.bringHome(state, q.id).ok) return;
+      sfx.fanfare(); selectedPig = q.id;
+      popup('Home again!', `<div class="pig-card big">${Art.piggySide({ coat: q.coat, hat: q.hat })}</div><p><b>${esc(q.name)}</b> had a great sleepover and is back in the pen!</p>`, 'Yay!', () => { tab = 'steamer'; render(true); });
+      render(true);
+    };
+    if (G.hasRoom(state)) home();
+    else swapDialog(`Who trades places with <b>${esc(q.name)}</b> and goes on a sleepover?`, (id) => { sendAway(id); home(); });
+  }));
+  $('.btn-grey', box).onclick = () => box.remove();
+  document.body.appendChild(box);
+}
+
+// Pick a piggy from the pen to go on a sleepover.
+function swapDialog(text, onPick) {
+  const box = el(`<div class="modal"><div class="card panel"><div class="ribbon"><span>Sleepover!</span></div>
+    <p>${text}</p><p class="hint small">They stay safe in the Sleepover House and can come home any time.</p>
+    <div class="swap-list">${state.piggies.map(q => `<button class="sleeper" data-id="${q.id}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}<span>${esc(q.name)}</span></button>`).join('')}</div>
+    <div class="row center"><button class="btn btn-grey">Cancel</button></div></div></div>`);
+  box.querySelectorAll('.sleeper').forEach(b => b.addEventListener('click', () => { box.remove(); onPick(+b.dataset.id); }));
+  $('.btn-grey', box).onclick = () => box.remove();
+  document.body.appendChild(box);
+}
+
+function sendAway(id) {
+  if (!G.sleepover(state, id).ok) return;
+  wander.delete(id);
+  if (selectedPig === id) selectedPig = state.piggies[0].id;
 }
 
 function picker(title, options, onPick, onLocked = null) {

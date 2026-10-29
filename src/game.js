@@ -374,6 +374,7 @@ export function newState(now = Date.now()) {
     version: 2,
     coins: 0,
     piggies: [],
+    away: [],                       // piggies on a sleepover (see sleepover())
     poops: [],                      // { id, x, y }
     garden: [null, null, null],     // null or { filling, plantedAt }
     compost: 2,                     // scooped poop, needed to plant
@@ -402,6 +403,7 @@ export function newState(now = Date.now()) {
 // Older saves had one `piggy`; lift it into the `piggies` list.
 export function migrate(state) {
   if (!state.tutorial) state.tutorial = { done: true };   // saves from before the tutorial existed
+  if (!state.away) state.away = [];                        // piggies on a sleepover
   if (!state.toys) state.toys = {};
   if (!state.toyWear) state.toyWear = {};
   let room = toyLimit(state);                               // toys from v21 were just `true`
@@ -462,7 +464,7 @@ export function capacity(state) {
 }
 
 export function adoptCost(state) {
-  return ADOPT_COST[Math.min(state.piggies.length, ADOPT_COST.length - 1)];
+  return ADOPT_COST[Math.min(state.piggies.length + (state.away || []).length, ADOPT_COST.length - 1)];
 }
 
 export function isHappy(state, p) {
@@ -911,7 +913,7 @@ export function rename(state, piggyId, name) {
 export function makeOffer(state, rng = Math.random) {
   if (state.offer && state.offer.length === 3) return state.offer;
   const breeds = Object.keys(BREEDS).sort(() => rng() - 0.5).slice(0, 3);
-  const taken = state.piggies.map(p => p.name);
+  const taken = [...state.piggies, ...(state.away || [])].map(p => p.name);
   state.offer = breeds.map(b => {
     const coat = randomCoat(rng, b);
     const name = randomName(rng, taken);
@@ -919,6 +921,29 @@ export function makeOffer(state, rng = Math.random) {
     return { coat, name };
   });
   return state.offer;
+}
+
+// The Sleepover House: piggies sent here keep their name, coat and hat and
+// come home by trading places with a piggy in the pen. Nobody is ever lost.
+export function hasRoom(state) { return state.piggies.length < capacity(state); }
+
+export function sleepover(state, piggyId) {
+  const i = state.piggies.findIndex(p => p.id === piggyId);
+  if (i < 0 || state.piggies.length < 2) return { ok: false };
+  const [p] = state.piggies.splice(i, 1);
+  p.effect = null;
+  state.away.push(p);
+  return { ok: true, piggy: p };
+}
+
+export function bringHome(state, piggyId) {
+  const i = state.away.findIndex(p => p.id === piggyId);
+  if (i < 0) return { ok: false };
+  if (!hasRoom(state)) return { ok: false, reason: 'room' };
+  const [p] = state.away.splice(i, 1);
+  p.hunger = Math.max(p.hunger, 70); p.fun = Math.max(p.fun, 80);   // home from a fun sleepover
+  state.piggies.push(p);
+  return { ok: true, piggy: p };
 }
 
 export function adopt(state, index) {
