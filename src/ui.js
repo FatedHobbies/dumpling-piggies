@@ -5,7 +5,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 152;
+const VERSION = 153;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -191,7 +191,12 @@ function findTip() {
   if (tutStep() || $('.modal')) return tipNow;
   const seen = state.tips || {};
   if (tipNow && (tipNow.tab && tipNow.tab !== tab || !tipNow.when())) tipNow = null;
-  if (!tipNow) tipNow = TIPS.find(t => !seen[t.id] && (!t.tab || t.tab === tab) && t.when()) || null;
+  if (!tipNow) {
+    tipNow = TIPS.find(t => !seen[t.id] && (!t.tab || t.tab === tab) && t.when()) || null;
+    // A tip counts as seen as soon as it shows, so it can never come back in
+    // a loop (say the zoom pad goes away and Surprise me brings a new one).
+    if (tipNow) { state.tips = { ...seen, [tipNow.id]: true }; save(state); }
+  }
   return tipNow;
 }
 
@@ -274,6 +279,12 @@ function showTip(coach) {
 // While the maze runs she can tap anywhere (cheer, drop carrots) and watch.
 function tutBlock(e) {
   if (!(tutStep() || tipNow) || run || !(e.target instanceof Element)) return;
+  // Tapping the thing a "look" tip shows (a zoom pad, say) is the same as OK.
+  if (!tutStep() && tipNow && tipNow.look && e.target.closest('.hi')) {
+    e.stopPropagation(); e.preventDefault();
+    if (e.type === 'click') tipDone();
+    return;
+  }
   if (e.target.closest('.modal, #coach, .hi') && (Date.now() >= tutWait || e.target.closest('.modal, #coach'))) return;
   e.stopPropagation();
   if (e.type === 'click') e.preventDefault();
