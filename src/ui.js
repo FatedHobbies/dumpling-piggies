@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 114;
+const VERSION = 115;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -488,7 +488,9 @@ function updateSteamer() {
     }
   }
   // The Feed card sits over the first dumpling, out of the way of the pen.
+  // With no dumplings there is nothing to feed, so the card steps away.
   const first = tray.querySelector('.dump');
+  $('.feed-badge').hidden = !first;
   const anchor = $('.feed-anchor').getBoundingClientRect(), r = (first || tray).getBoundingClientRect();
   $('.feed-badge').style.setProperty('--fx', Math.round(r.left + r.width / 2 - anchor.left) + 'px');
 }

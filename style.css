@@ -270,6 +270,7 @@ button.pk:active { transform: scale(.95); }
 .needs { position: relative; padding-left: 60px; }
 .whose, .feed-badge { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
 .whose { left: 8px; top: 50%; transform: translateY(-50%); }
+.feed-badge[hidden] { display: none; }
 .whose .wf, .feed-badge .wf { display: block; border-radius: 50%; overflow: hidden; border: 3px solid #fff; background: radial-gradient(circle at 50% 35%, #FFF6D0, #FFE08A); }
 .whose .wf { width: 42px; height: 42px; box-shadow: 0 0 0 3px #FFC93C; }
 .wf svg { display: block; width: 100%; height: 100%; transform: translateY(6%) scale(1.12); }
