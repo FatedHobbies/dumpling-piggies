@@ -358,6 +358,8 @@ button.pk:active { transform: scale(.95); }
 .plot:active { transform: translateY(2px); box-shadow: 0 2px 0 #3E8E2A; }
 .plot .scene { height: 100%; }
 .plant { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 0 rgba(0,0,0,.2)); }
+/* A white sticker outline so dark crops (eggplant, blueberry) stand out on the soil. */
+.garden .plant { filter: drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 2px 1px rgba(0,0,0,.35)); }
 .gardener { position: absolute; bottom: 10px; left: 50%; width: 62px; transform: translateX(-260%); opacity: 0; pointer-events: none; z-index: 2; }
 .gardener svg { width: 100%; height: auto; overflow: visible; }
 .gardener .legA, .gardener .legB { animation: legA .3s steps(2) infinite; }
