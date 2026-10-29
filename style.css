@@ -682,8 +682,9 @@ button.pk:active { transform: scale(.95); }
 .book-pane[data-pane="dumplings"] .pk-grid { grid-auto-rows: 1fr; }
 /* Plots are short raised beds; the crop stands in the soil above the front board. */
 .garden .plot { height: 64px; }
-.garden .plant { bottom: 25px; }
-.garden .plant svg { width: 34px; height: 34px; }
+.garden .plant { bottom: 26px; }
+.garden .plot .lbl { font-size: .78rem; padding-bottom: 9px; }
+.garden .plant svg { width: 32px; height: 32px; }
 .garden .pantry { margin-top: 12px; }
 .pitem svg { width: 36px; height: 36px; }
 .pitem.locked { background: #F4EEE0; font-family: inherit; }
