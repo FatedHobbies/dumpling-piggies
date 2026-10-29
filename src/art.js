@@ -686,6 +686,79 @@ export function coinIcon() {
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="#F5B32B"/><circle cx="32" cy="32" r="22" fill="#FFD34D" stroke="#E0941C" stroke-width="3"/><path d="M32 16 l5 10 11 1.5 -8 7.5 2 11 -10 -5.5 -10 5.5 2 -11 -8 -7.5 11 -1.5z" fill="#FFF3B0" stroke="#E0941C" stroke-width="2" stroke-linejoin="round"/></svg>`;
 }
 
+
+// Maze themes: the board, floor and wall look for the whole maze. Walls and
+// floor decorations are drawn in maze cell coordinates (one cell is 48).
+const placeSvg = (svg, x, y, size) => svg.replace(/<svg [^>]*?viewBox/, `<svg x="${x}" y="${y}" width="${size}" height="${size}" viewBox`);
+const star4 = (x, y, r, fill) => `<path d="M${x} ${y - r} Q${x} ${y} ${x + r} ${y} Q${x} ${y} ${x} ${y + r} Q${x} ${y} ${x - r} ${y} Q${x} ${y} ${x} ${y - r}Z" fill="${fill}"/>`;
+const jit = (i, k) => ((i * 7919 + k * 104729) % 97) / 97;
+const C = 48;
+// 3/4 view: the wall's top is lifted by LIFT and a darker front face shows
+// below it, with a soft shadow on the floor. Rows draw top to bottom, so the
+// lift overlaps the square above.
+export const LIFT = 9;
+export function mazeWall3d(theme, px, py, i) {
+  const t = MAZE_THEMES[theme] || MAZE_THEMES.hay;
+  return `<ellipse cx="${px + 24}" cy="${py + 45}" rx="21" ry="4" fill="#000" opacity=".16"/>
+    <rect x="${px + 3}" y="${py + 14}" width="${C - 6}" height="${C - 16}" rx="9" fill="${t.side}"/>
+    <rect x="${px + 3}" y="${py + 14}" width="${C - 6}" height="${C - 16}" rx="9" fill="#000" opacity=".12"/>
+    <g transform="translate(0 ${-LIFT})">${t.wall(px, py, i)}</g>`;
+}
+export const MAZE_THEMES = {
+  hay: {
+    side: '#B07A3E', name: 'Hay barn', board: '#A7DB8C', floor: '#D9F0B8', seen: '#C2E39B', start: '#8ED46A', startEdge: '#4FA33A', post: '#C9935A', postEdge: '#8A5634',
+    wall: (px, py) => `<rect x="${px + 3}" y="${py + 6}" width="${C - 6}" height="${C - 10}" rx="9" fill="#E6B566" stroke="#9C6A3A" stroke-width="3"/>
+      <path d="M${px + 10} ${py + 14} h${C - 20} M${px + 10} ${py + 24} h${C - 20} M${px + 10} ${py + 34} h${C - 20}" stroke="#C98F4B" stroke-width="3" stroke-linecap="round"/>
+      <path d="M${px + 16} ${py + 8} v${C - 14} M${px + C - 16} ${py + 8} v${C - 14}" stroke="#9C6A3A" stroke-width="2.5" opacity=".6"/>`,
+    deco: () => '',
+  },
+  pumpkin: {
+    side: '#8B5A2B', name: 'Pumpkin patch', board: '#7CB65A', floor: '#EBCB97', seen: '#DDB47A', start: '#A9DB7E', startEdge: '#5E9A3A', post: '#8A5634', postEdge: '#5A3A22',
+    wall: (px, py) => `<ellipse cx="${px + 13}" cy="${py + 40}" rx="11" ry="5" fill="#4F9A3C" transform="rotate(-15 ${px + 13} ${py + 40})"/><ellipse cx="${px + 35}" cy="${py + 40}" rx="11" ry="5" fill="#5FAE4E" transform="rotate(15 ${px + 35} ${py + 40})"/>
+      ${placeSvg(veggie('pumpkin', 64), px + 1, py - 1, 46)}<path d="M${px + 34} ${py + 9} q6 -4 9 2" stroke="#4F9A3C" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+    deco: (px, py, i) => `<circle cx="${px + 10 + jit(i, 1) * 28}" cy="${py + 10 + jit(i, 2) * 28}" r="1.6" fill="#C79B62"/><circle cx="${px + 12 + jit(i, 3) * 24}" cy="${py + 14 + jit(i, 4) * 22}" r="1.2" fill="#C79B62"/>`,
+  },
+  galaxy: {
+    side: '#3A2A8C', name: 'Galaxy', board: '#17123A', floor: '#2A2468', seen: '#3D368F', start: '#3FBFB0', startEdge: '#9FFFF2', post: '#FFD84D', postEdge: '#B8901A',
+    wall: (px, py, i) => `<rect x="${px + 3}" y="${py + 5}" width="${C - 6}" height="${C - 9}" rx="13" fill="#6A50C8" stroke="#2A1C6E" stroke-width="3"/>
+      <circle cx="${px + 15}" cy="${py + 18}" r="5" fill="#8C74E0"/><circle cx="${px + 31}" cy="${py + 30}" r="7" fill="#8C74E0"/><circle cx="${px + 14}" cy="${py + 34}" r="3" fill="#8C74E0"/>
+      ${i % 3 === 0 ? star4(px + 36, py + 13, 5, '#FFE66B') : ''}`,
+    deco: (px, py, i) => star4(px + 8 + jit(i, 1) * 30, py + 8 + jit(i, 2) * 30, 2.6, '#fff') + `<circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1" fill="#C9C2FF"/>`,
+  },
+  unicorn: {
+    side: '#D98BC4', name: 'Unicorn', board: '#FFB8E1', floor: '#FFF1FA', seen: '#FFDDF1', start: '#C8F2E4', startEdge: '#7FD6BC', post: '#FFFFFF', postEdge: '#E58BC0',
+    wall: (px, py, i) => `<clipPath id="uw${i}"><rect x="${px + 3}" y="${py + 5}" width="${C - 6}" height="${C - 9}" rx="11"/></clipPath>
+      <g clip-path="url(#uw${i})">${['#FF8FA8', '#FFC27A', '#FFE66B', '#8EE3A0', '#8CC8FF', '#C5A3FF'].map((c, k) => `<rect x="${px}" y="${py + 5 + k * 6.5}" width="${C}" height="7" fill="${c}"/>`).join('')}</g>
+      <rect x="${px + 3}" y="${py + 5}" width="${C - 6}" height="${C - 9}" rx="11" fill="none" stroke="#fff" stroke-width="3"/>${star4(px + 34, py + 15, 5, '#fff')}`,
+    deco: (px, py, i) => ['#FF8FC8', '#B79CFF', '#8CC8FF'].map((c, k) => `<circle cx="${px + 8 + jit(i, k * 2) * 32}" cy="${py + 8 + jit(i, k * 2 + 1) * 32}" r="1.5" fill="${c}"/>`).join(''),
+  },
+  kitchen: {
+    side: '#A8763A', name: 'Dumpling kitchen', board: '#E9B98A', floor: '#D3F1E4', seen: '#B7E6D2', start: '#FFE08A', startEdge: '#E0A93A', post: '#C9935A', postEdge: '#8A5634',
+    wall: (px, py) => `<ellipse cx="${px + 24}" cy="${py + 12}" rx="20" ry="7" fill="#F2D59A" stroke="#9C6A3A" stroke-width="3"/>
+      <path d="M${px + 4} ${py + 13} V${py + 38} Q${px + 24} ${py + 46} ${px + 44} ${py + 38} V${py + 13}" fill="#E8C27A" stroke="#9C6A3A" stroke-width="3"/>
+      <path d="M${px + 4} ${py + 24} Q${px + 24} ${py + 31} ${px + 44} ${py + 24}" stroke="#B5823F" stroke-width="2.5" fill="none"/>`,
+    deco: (px, py) => `<path d="M${px + 24} ${py + 4} V${py + 44} M${px + 4} ${py + 24} H${px + 44}" stroke="#fff" stroke-width="2" opacity=".7"/>`,
+  },
+  snow: {
+    side: '#6FA9CF', name: 'Snow day', board: '#BFE3F7', floor: '#F6FBFF', seen: '#E1F0FA', start: '#BDF0D0', startEdge: '#6CC48E', post: '#8FB8D6', postEdge: '#5A86A8',
+    wall: (px, py) => `<rect x="${px + 3}" y="${py + 7}" width="${C - 6}" height="${C - 11}" rx="8" fill="#A9DDF7" stroke="#5FA9D6" stroke-width="3"/>
+      <path d="M${px + 10} ${py + 34} L${px + 22} ${py + 16} M${px + 18} ${py + 38} L${px + 26} ${py + 26}" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+      <path d="M${px + 2} ${py + 12} Q${px + 6} ${py + 1} ${px + 16} ${py + 5} Q${px + 24} ${py - 1} ${px + 32} ${py + 5} Q${px + 42} ${py + 1} ${px + 46} ${py + 12} Q${px + 24} ${py + 16} ${px + 2} ${py + 12}Z" fill="#fff" stroke="#CFE6F5" stroke-width="1.5"/>`,
+    deco: (px, py, i) => { const x = px + 12 + jit(i, 1) * 24, y = py + 12 + jit(i, 2) * 24; return `<path d="M${x - 4} ${y} H${x + 4} M${x} ${y - 4} V${y + 4} M${x - 3} ${y - 3} L${x + 3} ${y + 3} M${x + 3} ${y - 3} L${x - 3} ${y + 3}" stroke="#B9DDF2" stroke-width="1.4" stroke-linecap="round"/>`; },
+  },
+  sea: {
+    side: '#8C7AA0', name: 'Under the sea', board: '#3FA7D6', floor: '#F3E2B3', seen: '#E8D196', start: '#9BE7D8', startEdge: '#3BB5A0', post: '#FF9A8A', postEdge: '#D2604F',
+    wall: (px, py, i) => `<ellipse cx="${px + 24}" cy="${py + 40}" rx="20" ry="6" fill="#B9A6C9"/>
+      <path d="M${px + 24} ${py + 40} V${py + 12} M${px + 24} ${py + 28} L${px + 12} ${py + 16} V${py + 8} M${px + 24} ${py + 24} L${px + 36} ${py + 14} M${px + 12} ${py + 22} L${px + 6} ${py + 16} M${px + 36} ${py + 22} L${px + 42} ${py + 18}" stroke="${i % 2 ? '#FF7FA0' : '#FF9F5A'}" stroke-width="6" stroke-linecap="round" fill="none"/>`,
+    deco: (px, py, i) => `<circle cx="${px + 10 + jit(i, 1) * 28}" cy="${py + 10 + jit(i, 2) * 28}" r="2.6" fill="none" stroke="#fff" stroke-width="1.2" opacity=".8"/><circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1.4" fill="none" stroke="#fff" stroke-width="1" opacity=".8"/>`,
+  },
+  poop: {
+    side: '#7A4E2C', name: 'Poop party', board: '#C9A27A', floor: '#F5E6CF', seen: '#EAD3B1', start: '#BFE8A0', startEdge: '#6DB24A', post: '#8A5634', postEdge: '#5A3A22',
+    wall: (px, py, i) => placeSvg(poop({ shape: 'swirl', color: i % 7 === 0 ? 'gold' : 'brown' }), px + 1, py, 46),
+    deco: (px, py, i) => i % 4 ? '' : `<circle cx="${px + 12 + jit(i, 1) * 24}" cy="${py + 14 + jit(i, 2) * 20}" r="2" fill="#E2C49A"/>`,
+  },
+};
+
 // A veggie wall for the maze: a chunky crate in the veggie's color with the
 // veggie sitting on top, drawn in a 64 box.
 export function veggieWall(filling, color) {
