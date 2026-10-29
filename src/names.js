@@ -4,7 +4,7 @@
 // Silly, kid-friendly names, 16 letters at most (the rename box limit).
 export const NAMES = [
   'Bao Bao', 'Sir Wheeksalot', 'Lil Potsticker', 'Mochi', 'Noodle', 'Gyoza', 'Wonton',
-  'Dim Sum', 'Dumpling Doug', 'Princess Squeak', 'Captain Fluff', 'Biscuit', 'Pudding',
+  'Dim Sum', 'Dumpling', 'Princess Squeak', 'Captain Fluff', 'Biscuit', 'Pudding',
   'Nugget', 'Peanut', 'Jellybean', 'Sprinkles', 'Bok Choy', 'Sweet Pea', 'Marshmallow',
 ];
 

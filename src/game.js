@@ -154,6 +154,7 @@ export function migrate(state) {
       delete state.upgrades.hat;
     }
   }
+  for (const p of (state.piggies || [])) if (p.name === 'Dumpling Doug') p.name = 'Dumpling';
   if (state.version >= 2) return state;
   const old = state.piggy || {};
   state.piggies = [{
