@@ -1060,12 +1060,12 @@ export function kitchenScene(opts = {}) {
       <path d="M230 116 H222 M354 116 H362" stroke="#5E7189" stroke-width="6" stroke-linecap="round"/>
       <rect x="232" y="108" width="120" height="8" rx="4" fill="#B9CCDE" stroke="#5E7189" stroke-width="3"/>
       <g fill="#8FD3F2" stroke="#5E9BC0" stroke-width="1.5">${[238, 346].map(x => `<circle cx="${x}" cy="104" r="3"/>`).join('')}</g>
-      ${tier(87, 21)}${tier(66, 21)}
-      <path d="M238 68 Q292 36 346 68 Z" fill="#F2CE7E" stroke="#9C6A3A" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M256 60 Q292 44 328 60" fill="none" stroke="#C98F4B" stroke-width="2"/>
-      <circle cx="292" cy="46" r="5" fill="#C98F4B" stroke="#9C6A3A" stroke-width="2"/>
+      ${tier(90, 18)}${tier(72, 18)}
+      <path d="M238 74 Q292 50 346 74 Z" fill="#F2CE7E" stroke="#9C6A3A" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M256 68 Q292 56 328 68" fill="none" stroke="#C98F4B" stroke-width="2"/>
+      <circle cx="292" cy="58" r="5" fill="#C98F4B" stroke="#9C6A3A" stroke-width="2"/>
     </g>
-    <g class="vapor"><ellipse class="puff p1" cx="246" cy="58" rx="8" ry="11" fill="#fff" opacity=".9"/><ellipse class="puff p2" cx="292" cy="34" rx="10" ry="12" fill="#fff" opacity=".9"/><ellipse class="puff p3" cx="340" cy="58" rx="8" ry="11" fill="#fff" opacity=".9"/></g>
+    <g class="vapor"><ellipse class="puff p1" cx="246" cy="64" rx="8" ry="11" fill="#fff" opacity=".9"/><ellipse class="puff p2" cx="292" cy="46" rx="10" ry="12" fill="#fff" opacity=".9"/><ellipse class="puff p3" cx="340" cy="64" rx="8" ry="11" fill="#fff" opacity=".9"/></g>
   </svg>`;
 }
 
