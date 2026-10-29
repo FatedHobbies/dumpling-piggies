@@ -118,13 +118,51 @@ export function dumplingInfo(key) {
   return { name: sp.name, effect: sp.effect, hunger: 50, coins: t.coins, tier: sp.tier, from: sp.from };
 }
 
-// Roll the blind box for one steaming of recipe a+b.
-export function rollSurprise(a, b, rng = Math.random) {
+// Bags of marbles: each draw takes one marble out, and an empty bag refills.
+// Every marble comes out once per bag, so colors take turns and the rare ones
+// can't bunch up. A bag is { kind: marbles left } in state.bags.
+function draw(state, name, full, rng) {
+  state.bags = state.bags || {};
+  const total = (b) => Object.values(b).reduce((n, x) => n + x, 0);
+  let bag = state.bags[name];
+  if (!bag || !total(bag)) bag = state.bags[name] = { ...full };
+  let r = Math.floor(rng() * total(bag));
+  for (const k of Object.keys(bag)) {
+    if (r < bag[k]) { bag[k] -= 1; return k; }
+    r -= bag[k];
+  }
+}
+// The big prizes also wait their turn: one can't come out within `gap` draws
+// of the last one. Its marble goes back in the bag for later.
+function drawTreasure(state, name, full, gap, rng) {
+  state.bagCount = state.bagCount || {};
+  state.lastTreasure = state.lastTreasure || {};
+  const n = state.bagCount[name] = (state.bagCount[name] || 0) + 1;
+  const k = draw(state, name, full, rng);
+  if (k === 'none') return null;
+  if (n - (state.lastTreasure[name] ?? -Infinity) < gap) { state.bags[name][k] += 1; return null; }
+  state.lastTreasure[name] = n;
+  return k;
+}
+const sizeOf = (o) => Object.values(o).reduce((n, x) => n + x, 0);
+// Blind-box bags: 12 shiny, 4 rare and 1 super in every 120 steamings, and a
+// secret in every 500, never two secrets within 40 steamings.
+const SURPRISE_BAG = { plain: 103, shiny: 12, rare: 4, super: 1 };
+const SECRET_BAG = { none: 499, secret: 1 };
+export function surpriseTier(state, rng = Math.random) {
+  const secret = drawTreasure(state, 'secret', SECRET_BAG, 40, rng);
+  const t = secret || draw(state, 'surprise', SURPRISE_BAG, rng);
+  return t === 'plain' ? null : t;
+}
+
+// Roll the blind box for one steaming of recipe a+b. With `tier` (from
+// surpriseTier) it only picks which dumpling of that tier comes out.
+export function rollSurprise(a, b, rng = Math.random, tier) {
   const r = rng();
   let acc = 0;
   for (const t of [...DUMPLING_TIERS].reverse()) {
     acc += t.chance;
-    if (r >= acc) continue;
+    if (tier !== undefined ? t.id !== tier : r >= acc) continue;
     if (t.id === 'shiny') return 'shiny:' + recipeKey(a, b);
     const ids = Object.keys(SPECIALS).filter(id => SPECIALS[id].tier === t.id);
     const here = ids.filter(id => SPECIALS[id].from === a || SPECIALS[id].from === b);
@@ -655,14 +693,14 @@ export const GLITTER = [...GLITTER_COLORS, 'gold', 'crystal'];
 export const PLAIN_COLORS = ['white', 'pink', 'red', 'blue', 'green', 'orange', 'lavender'];
 // Odds per poop, shown in the Poop Book.
 export const POOP_ODDS = [
-  { label: 'Plain colors', odds: 'common' }, { label: 'Glitter', odds: '1 in 12' }, { label: 'Rainbow', odds: '1 in 33' },
-  { label: 'Golden', odds: '1 in 100' }, { label: 'Crystal', odds: '1 in 250' },
+  { label: 'Plain colors', odds: 'common' }, { label: 'Glitter', odds: '1 in 17' }, { label: 'Rainbow', odds: '1 in 100' },
+  { label: 'Golden', odds: '1 in 333' }, { label: 'Crystal', odds: '1 in 500' },
 ];
 // The Poop Book groups kinds by how rare they are.
 export const POOP_TIERS = [
   { label: 'Everyday', odds: 'common', colors: ['brown', ...PLAIN_COLORS] },
-  { label: 'Glitter', odds: '1 in 12', colors: GLITTER_COLORS },
-  { label: 'Super rare', odds: 'rainbow 1 in 33 · golden 1 in 100 · crystal 1 in 250', colors: ['rainbow', 'gold', 'crystal'] },
+  { label: 'Glitter', odds: '1 in 17', colors: GLITTER_COLORS },
+  { label: 'Super rare', odds: 'rainbow 1 in 100 · golden 1 in 333 · crystal 1 in 500', colors: ['rainbow', 'gold', 'crystal'] },
 ];
 export const POOP_VALUE = { brown: { coins: 1, compost: 1 }, rainbow: { coins: 5, compost: 3 }, gold: { coins: 25, compost: 5 }, crystal: { coins: 50, compost: 8 } };
 for (const c of PLAIN_COLORS) POOP_VALUE[c] = { coins: 1, compost: 1 };
@@ -672,13 +710,13 @@ for (const c of GLITTER_COLORS) POOP_VALUE[c] = { coins: 3, compost: 2 };
 // { shape: 'sp', color: id }, so their book key is 'sp-<id>'.
 // `odds` is per poop for the random ones; `how` explains the event ones.
 export const SPECIAL_POOPS = {
-  // Funny shapes, 1 in 25 altogether.
+  // Funny shapes, 1 in 5 altogether.
   log:       { name: 'Log',        page: 'shapes',    coins: 2 },
   pellets:   { name: 'Pellet pile', page: 'shapes',   coins: 2 },
   donut:     { name: 'Donut',      page: 'shapes',    coins: 2 },
   tower:     { name: 'Tower',      page: 'shapes',    coins: 2 },
   tiny:      { name: 'Teeny',      page: 'shapes',    coins: 2 },
-  // Patterns, 1 in 50 altogether.
+  // Patterns, 1 in 33 altogether.
   polka:     { name: 'Polka dot',  page: 'patterns',  coins: 3 },
   candy:     { name: 'Candy stripe', page: 'patterns', coins: 3 },
   sprinkles: { name: 'Sprinkles',  page: 'patterns',  coins: 3 },
@@ -686,7 +724,7 @@ export const SPECIAL_POOPS = {
   checkers:  { name: 'Checkers',   page: 'patterns',  coins: 3 },
   zigzag:    { name: 'Zigzag',     page: 'patterns',  coins: 3 },
   cow:       { name: 'Cow spots',  page: 'patterns',  coins: 3 },
-  // Silly ones, 1 in 80 altogether.
+  // Silly ones, 1 in 50 altogether.
   dumpling:  { name: 'Dumpling',   page: 'silly',     coins: 5 },
   carrot:    { name: 'Carrot',     page: 'silly',     coins: 5 },
   bubblegum: { name: 'Bubblegum',  page: 'silly',     coins: 5 },
@@ -697,10 +735,10 @@ export const SPECIAL_POOPS = {
   cool:      { name: 'Cool',       page: 'silly',     coins: 5 },
   jelly:     { name: 'Jelly',      page: 'silly',     coins: 5 },
   // Legendary: very rare, or only after something special happens.
-  unicorn:   { name: 'Unicorn',    page: 'legend',    coins: 30, odds: '1 in 500' },
-  goldicorn: { name: 'Gold unicorn', page: 'legend',   coins: 40, odds: '1 in 750' },
+  unicorn:   { name: 'Unicorn',    page: 'legend',    coins: 30, odds: '1 in 1000' },
+  goldicorn: { name: 'Gold unicorn', page: 'legend',   coins: 40, odds: '1 in 1000' },
   diamond:   { name: 'Diamond unicorn', page: 'legend', coins: 50, odds: '1 in 1000' },
-  royal:     { name: 'Royal',      page: 'legend',    coins: 25, odds: '1 in 300' },
+  royal:     { name: 'Royal',      page: 'legend',    coins: 25, odds: '1 in 500' },
   moon:      { name: 'Moon',       page: 'legend',    coins: 15, odds: 'only at night' },
   champ:     { name: 'Maze champ', page: 'legend',    coins: 15, odds: 'after a maze run' },
   hay:       { name: 'Hay bale',   page: 'legend',    coins: 15, odds: 'after eating hay' },
@@ -726,9 +764,9 @@ function variantsOf(id) {
   return [false, true].flatMap(g => tints.map(t => specialVariant(id, t, g)));
 }
 POOP_TIERS.push(
-  ...specialsOn('shapes').map(id => ({ label: SPECIAL_POOPS[id].name, odds: 'all colors: 1 in 125 · sparkly 1 in 6 of those', colors: variantsOf(id) })),
-  { label: 'Patterns', odds: '1 in 350 each · sparkly 1 in 6 of those', colors: specialsOn('patterns').flatMap(variantsOf) },
-  { label: 'Silly', odds: '1 in 720 each · sparkly 1 in 6 of those', colors: specialsOn('silly').flatMap(variantsOf) },
+  ...specialsOn('shapes').map(id => ({ label: SPECIAL_POOPS[id].name, odds: 'all colors: 1 in 25 · sparkly 1 in 6 of those', colors: variantsOf(id) })),
+  { label: 'Patterns', odds: '1 in 230 each · sparkly 1 in 6 of those', colors: specialsOn('patterns').flatMap(variantsOf) },
+  { label: 'Silly', odds: '1 in 450 each · sparkly 1 in 6 of those', colors: specialsOn('silly').flatMap(variantsOf) },
   { label: 'Legendary', odds: 'super rare, or after something special', colors: specialsOn('legend') },
 );
 export const isSpecialPoop = (p) => p.shape === 'sp';
@@ -754,48 +792,71 @@ function foodColor(food, rng) {
   return null;
 }
 
-// Event and super-rare poops first, then the odd shapes, patterns and silly ones.
-function specialPoop(state, pooper, rng) {
+// Every poop draws from bags of marbles (see draw). The main bag picks the
+// kind; smaller bags pick the color or shape, so each one takes its turn.
+const POOP_BAG = { plain: 70, shapes: 18, glitter: 6, patterns: 3, silly: 2, rainbow: 1 };
+// The treasure bag: mostly nothing, and a golden, crystal or legendary at most
+// once every 40 poops.
+const TREASURE_BAG = { none: 990, gold: 3, crystal: 2, royal: 2, unicorn: 1, goldicorn: 1, diamond: 1 };
+const TREASURE_GAP = 40;
+const bagOf = (keys) => Object.fromEntries(keys.map(k => [k, 1]));
+const EVERYDAY_BAG = bagOf(['brown', ...PLAIN_COLORS].flatMap(c => ['beans', 'swirl'].map(sh => sh + '|' + c)));
+const SHAPE_BAG = bagOf(specialsOn('shapes').flatMap(id => SHAPE_TINTS.map(t => id + '|' + t)));
+
+// Event legendaries first: they come from something the piggy did.
+function eventPoop(state, pooper, rng) {
   const food = pooper && pooper.lastFood ? pooper.lastFood : '';
-  const pick = (page) => { const ids = specialsOn(page); return ids[Math.floor(rng() * ids.length)]; };
   if ((state.stats.mazes || 0) > (state.mazePoopSeen || 0)) {
     state.mazePoopSeen = state.stats.mazes;
     if (!(state.poopBook || {})['sp-champ'] || rng() < 0.15) return 'champ';
   }
-  if (food.includes('hay') && rng() < 0.1) return 'hay';
-  if (food.startsWith('sp:') && rng() < (SPECIALS[food.slice(3)] && SPECIALS[food.slice(3)].tier === 'secret' ? 0.5 : 0.12)) return 'mystery';
+  // One try per meal, on the first poop after it.
+  if (pooper && pooper.foodTry) {
+    delete pooper.foodTry;
+    if (food.includes('hay') && rng() < 0.2) return 'hay';
+    const sp = food.startsWith('sp:') && SPECIALS[food.slice(3)];
+    if (sp && rng() < (sp.tier === 'secret' ? 0.5 : 0.25)) return 'mystery';
+  }
   const hour = new Date().getHours();
-  if ((hour >= 20 || hour < 6) && rng() < 1 / 80) return 'moon';
-  const r = rng();
-  if (r < 1 / 1000) return 'diamond';
-  if (r < 1 / 1000 + 1 / 750) return 'goldicorn';
-  if (r < 1 / 1000 + 1 / 750 + 1 / 500) return 'unicorn';
-  if (r < 1 / 1000 + 1 / 750 + 1 / 500 + 1 / 300) return 'royal';
-  // Shapes 1 in 25, patterns 1 in 50, silly 1 in 80; 1 in 6 of those sparkle.
-  const r2 = rng();
-  const page = r2 < 1 / 80 ? 'silly' : r2 < 1 / 80 + 1 / 50 ? 'patterns' : r2 < 1 / 80 + 1 / 50 + 1 / 25 ? 'shapes' : null;
-  if (!page) return null;
-  const sparkly = rng() < 1 / 6;
-  const tint = page === 'shapes' ? (foodColor(food, rng) || 'brown') : 'brown';
-  return specialVariant(pick(page), tint, sparkly);
+  if ((hour >= 20 || hour < 6) && rng() < 1 / 80) {
+    const n = (state.bagCount || {}).treasure || 0;
+    if (n - ((state.lastTreasure || {}).treasure ?? -Infinity) >= TREASURE_GAP) {
+      state.lastTreasure = state.lastTreasure || {};
+      state.lastTreasure.treasure = n;
+      return 'moon';
+    }
+  }
+  return null;
 }
 
 export function poopKind(state, rng = Math.random) {
   const fed = state.piggies.filter(p => p.hunger > 30);
   const pooper = fed[Math.floor(rng() * fed.length)] || state.piggies[0];
-  const special = specialPoop(state, pooper, rng);
   const by = pooper ? pooper.id : undefined;   // the Pen drops it from this piggy
-  if (special) return { shape: 'sp', color: special, by };
-  const shape = rng() < 0.4 ? 'swirl' : 'beans';
-  // Recipes color the poop after one of their veggies; specials give a surprise color.
-  let color = foodColor(pooper && pooper.lastFood ? pooper.lastFood : '', rng) || 'brown';
-  const r = rng();
-  // Rare ones: crystal 1 in 250, golden 1 in 100, rainbow 1 in 33, glitter 1 in 12.
-  if (r < 0.004) color = 'crystal';
-  else if (r < 0.014) color = 'gold';
-  else if (r < 0.044) color = 'rainbow';
-  else if (r < 0.127) color = GLITTER_COLORS[Math.floor(rng() * GLITTER_COLORS.length)];
-  return { shape, color, by };
+  const food = pooper && pooper.lastFood ? pooper.lastFood : '';
+  const sp = (color) => ({ shape: 'sp', color, by });
+  const ev = eventPoop(state, pooper, rng);
+  if (ev) return sp(ev);
+  const shape = () => rng() < 0.4 ? 'swirl' : 'beans';
+  const treasure = drawTreasure(state, 'treasure', TREASURE_BAG, TREASURE_GAP, rng);
+  if (treasure === 'gold' || treasure === 'crystal') return { shape: shape(), color: treasure, by };
+  if (treasure) return sp(treasure);
+  const sparkly = () => rng() < 1 / 6;
+  const pick = (page) => draw(state, page, bagOf(specialsOn(page)), rng);
+  const kind = draw(state, 'poop', POOP_BAG, rng);
+  if (kind === 'rainbow') return { shape: shape(), color: 'rainbow', by };
+  if (kind === 'glitter') return { shape: shape(), color: draw(state, 'glitter', bagOf(GLITTER_COLORS), rng), by };
+  if (kind === 'silly' || kind === 'patterns') return sp(specialVariant(pick(kind), 'brown', sparkly()));
+  if (kind === 'shapes') {
+    const [id, tint] = draw(state, 'shapes', SHAPE_BAG, rng).split('|');
+    return sp(specialVariant(id, tint, sparkly()));
+  }
+  // Plain: half the time the color follows the food, otherwise the next
+  // marble from the everyday bag (every color in both shapes, in turn).
+  const fromFood = foodColor(food, rng);
+  if (fromFood && rng() < 0.5) return { shape: shape(), color: fromFood, by };
+  const [plainShape, color] = draw(state, 'everyday', EVERYDAY_BAG, rng).split('|');
+  return { shape: plainShape, color, by };
 }
 
 export function addPoop(state) {
@@ -876,6 +937,7 @@ export function feed(state, key, piggyId = null, now = Date.now()) {
   state.stats.fed += 1;
   if (r.effect) { p.effect = r.effect; p.effectUntil = now + 20000; }
   p.lastFood = key;
+  p.foodTry = true;   // the next poop gets one try at the hay or mystery legendary
   // Eating makes poop more likely soon.
   state.poopTimer = (state.poopTimer || 0) + 45;
   return { ok: true, coins: r.coins, effect: r.effect, piggy: p };
@@ -957,7 +1019,8 @@ export function cook(state, a, b, rng = Math.random) {
   }
   // The very first steaming of a recipe is always the plain one, so she sees
   // it in the book before any surprise version.
-  const surprise = isNew ? null : rollSurprise(a, b, rng);
+  const tier = isNew ? null : surpriseTier(state, rng);
+  const surprise = tier ? rollSurprise(a, b, rng, tier) : null;
   const made = surprise || key;
   state.dumplings[made] = (state.dumplings[made] || 0) + 1;
   state.recipeBook = state.recipeBook || {};
