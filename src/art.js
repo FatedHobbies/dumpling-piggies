@@ -452,3 +452,40 @@ function shade(rgb) {
   const m = rgb.match(/\d+/g).map(Number).map(v => Math.round(v * 0.78));
   return `rgb(${m[0]},${m[1]},${m[2]})`;
 }
+
+// ---- Pen toys ----
+// Squishy-style toys drawn on a 120x100 box, sitting on the floor at y=94.
+const TOY_ART = {
+  ball: `<ellipse cx="60" cy="94" rx="26" ry="5" fill="#000" opacity=".12"/>
+    <g class="toy-move"><circle cx="60" cy="66" r="28" fill="#FF8FA8" stroke="#D9577A" stroke-width="4"/>
+    <path d="M34 58 Q60 74 86 58" fill="none" stroke="#FFD34D" stroke-width="7" stroke-linecap="round"/>
+    <path d="M40 82 Q60 92 80 82" fill="none" stroke="#7AA6FF" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="60" cy="44" r="4" fill="#fff" opacity=".9"/><circle cx="74" cy="72" r="3.5" fill="#fff" opacity=".9"/>
+    <ellipse cx="48" cy="52" rx="8" ry="5" transform="rotate(-30 48 52)" fill="#fff" opacity=".55"/></g>`,
+  chew: `<ellipse cx="60" cy="94" rx="34" ry="5" fill="#000" opacity=".12"/>
+    <g class="toy-move">${[[-18, -14], [-6, -4], [6, 4], [18, 14]].map(([dx, r]) => `<rect x="${55 + dx}" y="34" width="10" height="58" rx="5" transform="rotate(${r} ${60 + dx} 92)" fill="#C9935A" stroke="#8A5634" stroke-width="3"/>`).join('')}
+    <path d="M36 64 Q60 72 84 64" fill="none" stroke="#5FAE4E" stroke-width="8" stroke-linecap="round"/>
+    <path d="M58 66 q-12 -14 -2 -18 q8 6 2 18 q12 -12 16 -2 q-8 6 -16 2" fill="#7DC768" stroke="#3E8E2A" stroke-width="2.5"/></g>`,
+  tunnel: `<ellipse cx="60" cy="94" rx="56" ry="6" fill="#000" opacity=".12"/>
+    <g class="toy-move"><path d="M6 94 V64 Q6 30 60 30 Q114 30 114 64 V94Z" fill="#7B6CF6" stroke="#4F42B5" stroke-width="4" stroke-linejoin="round"/>
+    ${[26, 46, 66, 86].map(x => `<path d="M${x} 34 Q${x + 4} 64 ${x} 94" fill="none" stroke="#9A8DFF" stroke-width="6"/>`).join('')}
+    <path d="M16 94 V68 Q16 48 34 48 Q50 48 50 68 V94Z" fill="#3B2F86"/>
+    <path d="M20 40 Q60 26 100 40" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/></g>`,
+  hut: `<ellipse cx="60" cy="94" rx="54" ry="6" fill="#000" opacity=".12"/>
+    <g class="toy-move"><path d="M8 92 Q4 54 36 40 Q60 30 84 40 Q116 54 112 92Z" fill="#FFF3E2" stroke="#D9B890" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M60 14 Q50 26 52 38 M60 14 Q70 26 68 38 M60 14 Q60 28 60 38" stroke="#D9B890" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M52 38 Q60 30 68 38 Q76 44 72 52 Q60 44 48 52 Q44 44 52 38Z" fill="#FFF3E2" stroke="#D9B890" stroke-width="3.5"/>
+    <path d="M24 60 Q34 52 40 62 M80 62 Q86 52 96 60" stroke="#E8CDA8" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M42 92 V74 Q42 60 60 60 Q78 60 78 74 V92Z" fill="#6A4524"/>
+    <ellipse cx="30" cy="72" rx="7" ry="4" fill="#FFB3C1" opacity=".8"/><ellipse cx="90" cy="72" rx="7" ry="4" fill="#FFB3C1" opacity=".8"/>
+    <ellipse cx="34" cy="50" rx="10" ry="5" transform="rotate(-25 34 50)" fill="#fff" opacity=".8"/></g>`,
+  slide: `<ellipse cx="60" cy="94" rx="54" ry="6" fill="#000" opacity=".12"/>
+    <g class="toy-move"><path d="M20 94 V22 M36 94 V22" stroke="#9C6A3A" stroke-width="5" stroke-linecap="round"/>
+    <path d="M20 40 H36 M20 58 H36 M20 76 H36" stroke="#9C6A3A" stroke-width="4" stroke-linecap="round"/>
+    <rect x="14" y="16" width="30" height="10" rx="5" fill="#D9A862" stroke="#9C6A3A" stroke-width="3"/>
+    <path d="M40 18 Q60 22 78 60 Q90 84 112 88 L112 96 Q84 94 70 66 Q56 34 40 30Z" fill="#5BC8A8" stroke="#2E8C70" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M48 24 Q62 30 74 56" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".6"/></g>`,
+};
+export function toyArt(id) {
+  return `<svg viewBox="0 0 120 100" class="toy-svg" aria-hidden="true">${TOY_ART[id] || ''}</svg>`;
+}

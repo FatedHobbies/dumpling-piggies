@@ -65,6 +65,33 @@ export function wearHat(state, piggyId, id) {
   return { ok: true };
 }
 
+// Pen toys are bought once and sit in the pen at a fixed spot (x, y as
+// fractions of the pen floor). Piggies wander over and play with them.
+export const TOYS = {
+  ball:   { name: 'Bouncy ball',  desc: 'Piggies love to nose it around.',  cost: 30,  x: 0.80, y: 0.58 },
+  chew:   { name: 'Chew sticks',  desc: 'A crunchy bundle to nibble on.',    cost: 45,  x: 0.32, y: 0.80 },
+  tunnel: { name: 'Fuzzy tunnel', desc: 'Run in one end and out the other!', cost: 80,  x: 0.80, y: 0.95 },
+  hut:    { name: 'Dumpling hut', desc: 'A cozy hidey house shaped like a dumpling.', cost: 120, x: 0.17, y: 0.62 },
+  slide:  { name: 'Tiny slide',   desc: 'Wheee! Down the slide.',            cost: 160, x: 0.52, y: 0.34 },
+};
+
+export function buyToy(state, id) {
+  const t = TOYS[id];
+  if (!t || state.toys[id]) return { ok: false };
+  if (state.coins < t.cost) return { ok: false, reason: 'coins' };
+  state.coins -= t.cost;
+  state.toys[id] = true;
+  return { ok: true };
+}
+
+// A piggy reached a toy: a little more fun, no coins.
+export function playToy(state, piggyId) {
+  const p = piggy(state, piggyId);
+  if (!p) return { ok: false };
+  p.fun = clamp(p.fun + 4, 0, 100);
+  return { ok: true, piggy: p };
+}
+
 export const RENAME_COST = 30;
 export const ADOPT_COST = [0, 80, 200, 400, 700, 1000];
 export const MAX_PIGGIES = 6;
@@ -135,6 +162,7 @@ export function newState(now = Date.now()) {
     hats: {},                       // hatId -> true (owned)
     bookPage: {},                   // poop kinds found on the current Poop Book page
     booksFilled: 0,                 // times the Poop Book has been filled
+    toys: {},                       // toyId -> true (owned, in the pen)
     stats: { fed: 0, scooped: 0, cooked: 0, petted: 0 },
     offer: null,                    // the three piggies up for adoption
     lastSeen: now,
@@ -148,6 +176,7 @@ export function newState(now = Date.now()) {
 // Older saves had one `piggy`; lift it into the `piggies` list.
 export function migrate(state) {
   if (!state.tutorial) state.tutorial = { done: true };   // saves from before the tutorial existed
+  if (!state.toys) state.toys = {};
   if (!state.hats) {                                        // the old single strawberry-hat upgrade
     state.hats = {};
     if (state.upgrades && state.upgrades.hat) {

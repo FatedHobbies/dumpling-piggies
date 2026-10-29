@@ -413,3 +413,27 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 @keyframes rise { to { transform: translateY(-90px); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
+
+/* ---- Shop tabs & pen toys ---- */
+.shop-tabs { position: sticky; top: -12px; z-index: 4; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px; margin: 0 -4px; background: linear-gradient(#E6B566, #C98F4B); border: 3px solid var(--wood-dark); border-radius: 16px; box-shadow: 0 4px 0 #6A4524; }
+.stab { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 2px 4px; border-radius: 12px; background: linear-gradient(#FFFFFF, #F1EBDF); border: 3px solid #B7AC94; box-shadow: 0 3px 0 #8A6A45; font-family: var(--display); font-weight: 600; font-size: .78rem; color: var(--ink); min-width: 0; }
+.stab svg { width: 34px; height: 34px; }
+.stab:active { transform: translateY(2px); box-shadow: 0 1px 0 #8A6A45; }
+.stab.active { background: linear-gradient(#73C1FF, #3C98EA); border-color: var(--blue-dark); box-shadow: 0 3px 0 var(--blue-dark); color: #fff; text-shadow: 0 2px 0 var(--blue-dark); }
+.stab.active svg { transform: scale(1.12); filter: drop-shadow(0 2px 0 rgba(0,0,0,.2)); }
+.shop-sec[hidden] { display: none; }
+.toys { padding: 10px; }
+.toy-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+.toy-tile > svg { width: 84px; height: 70px; }
+.toy-tile > span:first-of-type { font-family: var(--display); font-weight: 600; font-size: .9rem; }
+.toy-tile small { font-size: .7rem; color: var(--soft); text-align: center; line-height: 1.2; }
+.toy-tile .price { font-size: .85rem; margin-top: 2px; }
+.toy-tile.owned { border-color: #B8E39A; background: linear-gradient(#FFFFFF, #F3FBEE); }
+.toy-card svg { width: 150px; height: 125px; margin: 0 auto; }
+.toy { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--y) * 100%); width: 24%; max-width: 110px; transform: translate(-50%, -94%); transform-origin: 50% 94%; z-index: 3; }
+.toy svg { width: 100%; height: auto; overflow: visible; }
+.toy .toy-move { transform-box: fill-box; transform-origin: 50% 100%; }
+.toy.play .toy-move { animation: toy-jiggle .45s ease-in-out 2; }
+.toy[data-toy="ball"].play .toy-move { animation: toy-roll .9s ease-in-out; }
+@keyframes toy-jiggle { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(1.1, .88); } 65% { transform: scale(.94, 1.08) translateY(-4%); } }
+@keyframes toy-roll { 0%, 100% { transform: translateX(0) rotate(0); } 30% { transform: translateY(-30%) rotate(120deg); } 60% { transform: translateX(14%) rotate(240deg); } }

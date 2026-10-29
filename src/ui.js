@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 20;
+const VERSION = 21;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -108,7 +108,7 @@ const TUTORIAL = [
   { tab: null,      on: 'rename', text: n => `You earned ${G.RENAME_COST} coins! Tap ${n}'s name up top to rename them.`, target: '#name' },
   // The shop is only shown: the arrow rests on her coins, then moves to the
   // Pen tab, and going home ends the tutorial.
-  { tab: 'shop',    on: 'home',   text: n => `This is the Shop! Spend your coins here on new piggies, hats and upgrades. Then tap the Pen to go home.`,
+  { tab: 'shop',    on: 'home',   text: n => `This is the Shop! Tap the tabs to find piggies, upgrades, hats and toys. Then tap the Pen to go home.`,
     enter: () => { shopLook = 0; }, target: () => !shopLook || Date.now() < shopLook ? '.hud-coins' : '.tab[data-tab="steamer"]', ok: () => { shopLook = Date.now() + 2500; setTimeout(render, 2600); } },
 ];
 let shopLook = 0;   // until when the shop step's arrow points at the coins
@@ -252,6 +252,15 @@ function updateSteamer() {
     placePig(d, pig, w);
   }
   for (const [, c] of have) c.remove();
+  // Toys sit on the floor; tapping one sends the picked piggy over to play.
+  for (const [id, t] of Object.entries(G.TOYS)) {
+    let d = $(`.toy[data-toy="${id}"]`, floor);
+    if (!state.toys[id]) { if (d) d.remove(); continue; }
+    if (d) continue;
+    d = el(`<button class="toy" data-toy="${id}" aria-label="${t.name}" style="--x:${t.x};--y:${t.y}">${Art.toyArt(id)}</button>`);
+    d.addEventListener('click', () => { toyBounce(id); goToToy(current(), id); });
+    floor.appendChild(d);
+  }
   // Poops
   const poops = new Map([...floor.querySelectorAll('.poop')].map(c => [+c.dataset.id, c]));
   for (const poop of state.poops) {
@@ -304,13 +313,50 @@ function wanderTick() {
     if (dist < speed) {
       pig.x = w.tx; pig.y = w.ty;
       w.pause = now + 1500 + Math.random() * (zoom ? 500 : 4000);
-      w.tx = 0.08 + Math.random() * 0.84; w.ty = Math.random();
+      if (w.toy) { playAt(pig, w.toy, d); w.toy = null; }
+      const owned = Object.keys(G.TOYS).filter(t => state.toys[t]);
+      if (owned.length && Math.random() < 0.35) aimAtToy(w, owned[Math.floor(Math.random() * owned.length)]);
+      else { w.tx = 0.08 + Math.random() * 0.84; w.ty = Math.random(); }
       if (d) d.classList.remove('walking');
       continue;
     }
     pig.x += dx / dist * speed; pig.y += dy / dist * speed;
     if (Math.abs(dx) > 0.01) w.face = dx > 0 ? 1 : -1;
     if (d) { d.classList.add('walking'); placePig(d, pig, w); }
+  }
+}
+
+// Piggies stand just beside a toy, on the side they happen to pick.
+function aimAtToy(w, id) {
+  const t = G.TOYS[id];
+  w.toy = id;
+  w.tx = Math.min(0.92, Math.max(0.08, t.x + (Math.random() < 0.5 ? -0.13 : 0.13)));
+  w.ty = Math.min(1, t.y + 0.02);
+}
+
+function goToToy(pig, id) {
+  const w = wander.get(pig.id);
+  if (!w) return;
+  aimAtToy(w, id);
+  w.pause = 0;
+}
+
+function toyBounce(id) {
+  const d = $(`.toy[data-toy="${id}"]`);
+  if (!d) return;
+  d.classList.remove('play'); void d.offsetWidth; d.classList.add('play');
+  setTimeout(() => d.classList.remove('play'), 900);
+}
+
+function playAt(pig, id, d) {
+  toyBounce(id);
+  G.playToy(state, pig.id);
+  if (d) {
+    const w = wander.get(pig.id);
+    if (w) { w.face = G.TOYS[id].x > pig.x ? 1 : -1; placePig(d, pig, w); }
+    d.classList.remove('hop'); void d.offsetWidth; d.classList.add('hop');
+    setTimeout(() => d.classList.remove('hop'), 600);
+    bubble(d, ['Wheee!', 'Fun!', '♥', 'Wheek!'][Math.floor(Math.random() * 4)]);
   }
 }
 
@@ -681,21 +727,54 @@ function svgBubble(text) {
 }
 
 // ---------- Shop ----------
+// The shop is split into tabs; the last one picked is kept in the save.
+const SHOP_TABS = [
+  { id: 'piggies',  name: 'Piggies',  icon: () => Art.upgradeIcon('piggy') },
+  { id: 'upgrades', name: 'Upgrades', icon: () => Art.upgradeIcon('sun') },
+  { id: 'hats',     name: 'Hats',     icon: () => Art.hatIcon('party') },
+  { id: 'toys',     name: 'Toys',     icon: () => Art.toyArt('ball') },
+];
 function shopView() {
   return el(`<section class="shop">
     <div class="scene-top">${Art.shopScene()}</div>
-    <div class="ribbon"><span>Adopt a piggy</span></div>
-    <div class="adopt panel" id="adopt"></div>
-    <div class="ribbon"><span>Hats</span></div>
-    <div class="hats panel" id="hats"></div>
-    <div class="ribbon"><span>Upgrades</span></div>
-    <div id="items"></div>
+    <div class="shop-tabs">${SHOP_TABS.map(t => `<button class="stab" data-stab="${t.id}">${t.icon()}<span>${t.name}</span></button>`).join('')}</div>
+    <div class="shop-sec" data-sec="piggies"><div class="ribbon"><span>Adopt a piggy</span></div><div class="adopt panel" id="adopt"></div></div>
+    <div class="shop-sec" data-sec="upgrades"><div class="ribbon"><span>Upgrades</span></div><div id="items"></div></div>
+    <div class="shop-sec" data-sec="hats"><div class="ribbon"><span>Hats</span></div><div class="hats panel" id="hats"></div></div>
+    <div class="shop-sec" data-sec="toys"><div class="ribbon"><span>Pen toys</span></div><div class="toys panel" id="toys"></div></div>
     <div class="row center"><button class="btn btn-grey" id="replay">Replay tutorial</button></div>
     <button class="reset" id="reset">Start over</button>
     <p class="version">version ${VERSION}</p></section>`);
 }
 
 function updateShop() {
+  const stab = SHOP_TABS.some(t => t.id === state.shopTab) ? state.shopTab : 'piggies';
+  document.querySelectorAll('.stab').forEach(b => {
+    b.classList.toggle('active', b.dataset.stab === stab);
+    b.onclick = () => { if (state.shopTab !== b.dataset.stab) { state.shopTab = b.dataset.stab; sfx.pop(); persist(); render(); } };
+  });
+  document.querySelectorAll('.shop-sec').forEach(sec => { sec.hidden = sec.dataset.sec !== stab; });
+  const toys = $('#toys');
+  const tsig = JSON.stringify([state.toys, state.coins]);
+  if (toys.dataset.sig !== tsig) {
+    toys.dataset.sig = tsig;
+    toys.innerHTML = `<p class="hint">Toys go in the Pen. Your piggies will run over and play!</p><div class="toy-grid"></div>`;
+    const grid = $('.toy-grid', toys);
+    for (const [id, t] of Object.entries(G.TOYS)) {
+      const owned = !!state.toys[id];
+      const b = el(`<button class="toy-tile tile ${owned ? 'owned' : ''}">${Art.toyArt(id)}<span>${t.name}</span><small>${t.desc}</small>
+        ${owned ? '<span class="price can">In the pen!</span>' : price(t.cost)}</button>`);
+      b.addEventListener('click', () => {
+        if (state.toys[id]) { sfx.pop(); tab = 'steamer'; render(); return; }
+        const r = G.buyToy(state, id);
+        if (!r.ok) { sfx.nope(); toast(`Need ${t.cost - state.coins} more coins`); return; }
+        sfx.fanfare();
+        popup('New toy!', `<div class="toy-card">${Art.toyArt(id)}</div><p>The <b>${t.name}</b> is in the pen. Go see your piggies play!</p>`, 'Go see!', () => { tab = 'steamer'; render(); });
+        render();
+      });
+      grid.appendChild(b);
+    }
+  }
   const adopt = $('#adopt');
   const room = state.piggies.length < G.capacity(state);
   const cost = G.adoptCost(state);
@@ -705,7 +784,7 @@ function updateShop() {
     adopt.dataset.sig = asig;
     adopt.innerHTML = '';
     if (!room) {
-      adopt.innerHTML = `<p class="hint">Your pen is full (${state.piggies.length} piggies). ${state.upgrades.pen3 ? 'That is all the piggies a home can hold!' : 'Buy a bigger pen below for more room.'}</p>`;
+      adopt.innerHTML = `<p class="hint">Your pen is full (${state.piggies.length} piggies). ${state.upgrades.pen3 ? 'That is all the piggies a home can hold!' : 'Buy a bigger pen in Upgrades for more room.'}</p>`;
     } else {
       adopt.innerHTML = `<p class="hint">Pick one to join the family. Colors and names are a surprise!</p><div class="offers"></div>`;
       const box = $('.offers', adopt);
