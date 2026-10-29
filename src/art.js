@@ -513,6 +513,30 @@ export function veggieShadow(filling, size = 48) {
   return veggie(filling, size).replace(/fill="(?!none)[^"]*"/g, 'fill="#D5CDBA"').replace(/stroke="[^"]*"/g, 'stroke="#B7AC94"');
 }
 
+// Just the outline of a crop, for seeds that aren't unlocked yet.
+export function veggieOutline(filling, size = 48) {
+  const inner = veggie(filling, size).replace(/^<svg[^>]*>|<\/svg>$/g, '')
+    .replace(/<ellipse[^>]*opacity[^>]*\/>/g, '')
+    .replace(/ (fill|stroke|stroke-width|opacity)="[^"]*"/g, '');
+  return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true"><g fill="none" stroke="#B7AC94" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">${inner}</g></svg>`;
+}
+
+// A little paper seed packet with the crop on the front. style 'kraft' is a
+// brown paper bag with a colored label; 'color' is a packet in the crop's color.
+export function seedPacket(filling, size = 48, style = 'kraft') {
+  const c = (FILLINGS[filling] || {}).color || '#8FD07A';
+  const body = style === 'kraft' ? '#E8C9A0' : c, edge = style === 'kraft' ? '#B08A5A' : 'rgba(0,0,0,.28)';
+  const label = style === 'kraft' ? `<rect x="13" y="21" width="38" height="37" rx="6" fill="#FFF8EA" stroke="${c}" stroke-width="3"/>` : `<rect x="13" y="21" width="38" height="37" rx="6" fill="#FFF8EA" opacity=".9"/>`;
+  const art = veggie(filling, 64).replace(/^<svg[^>]*>|<\/svg>$/g, '');
+  return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">
+    <path d="M10 14 H54 V58 Q54 61 51 61 H13 Q10 61 10 58Z" fill="${body}" stroke="${edge}" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M10 14 L13 9 L16 14 L19 9 L22 14 L25 9 L28 14 L31 9 L34 14 L37 9 L40 14 L43 9 L46 14 L49 9 L52 14 L54 10 V18 H10Z" fill="${body}" stroke="${edge}" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M10 18 H54" stroke="${edge}" stroke-width="2"/>
+    ${label}
+    <g transform="translate(14.5 22) scale(.55)">${art}</g>
+  </svg>`;
+}
+
 export function sprout(progress, filling) {
   if (progress >= 1) return veggie(filling, 44);
   const h = 10 + progress * 26;

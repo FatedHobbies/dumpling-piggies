@@ -907,7 +907,7 @@ function updateGarden() {
 
 // A crop whose seed isn't unlocked yet: a ? mystery card, like the books.
 function lockedCrop(f) {
-  const b = el(`<button class="pitem tile locked">${Art.veggieShadow(f, 44)}<b class="count">?</b><span>???</span></button>`);
+  const b = el(`<button class="pitem tile locked">${Art.veggieOutline(f, 44)}<span>&nbsp;</span></button>`);
   b.addEventListener('click', () => {
     const next = G.nextSeed(state);
     sfx.pop();
@@ -929,7 +929,7 @@ function onPlot(i) {
     return;
   }
   if (state.compost < 1) { sfx.nope(); toast('You need compost. Scoop some poop first!'); return; }
-  picker('What should we plant?', G.unlockedFillings(state).map(f => ({ id: f, html: Art.veggie(f, 48), label: G.FILLINGS[f].name, count: state.pantry[f] || 0,
+  picker('What should we plant?', G.unlockedFillings(state).map(f => ({ id: f, html: Art.seedPacket(f, 48), label: G.FILLINGS[f].name, count: state.pantry[f] || 0,
     cost: G.plantCost(f), locked: state.compost < G.plantCost(f) })), (f) => {
     gardenerRun(i, () => {
       const r = G.plant(state, i, f);
