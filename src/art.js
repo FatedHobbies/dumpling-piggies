@@ -776,17 +776,17 @@ export const PEN_FIXTURES = {
       <path d="M26 110 Q66 76 106 110" fill="none" stroke="#E6B566" stroke-width="6"/>
     </g>` },
   bottle: { box: '176 -16 48 160', x: 200, y: 140, svg: `<g class="pen-bottle">
+      <path d="M200 26 V13 Q200 6 207 6 Q212 6 213 10" fill="none" stroke="#6E7C88" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M200 26 V13 Q200 6 207 6 Q212 6 213 10" fill="none" stroke="#B6C2CC" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
       <rect x="194" y="18" width="12" height="8" rx="3" fill="#8C9AA6"/>
-      <path d="M200 24 V-2 Q200 -11 209 -11 Q218 -11 218 -2 V9" fill="none" stroke="#6E7C88" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M200 24 V-2 Q200 -11 209 -11 Q218 -11 218 -2 V9" fill="none" stroke="#B6C2CC" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <rect x="183" y="22" width="34" height="88" rx="13" fill="#BFE6F7" stroke="#6FB7D9" stroke-width="3"/>
-      <rect x="189" y="38" width="22" height="66" rx="7" fill="#8FD3F2"/>
-      <path d="M190 32 V100" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".7"/>
-      <path d="M183 46 H217 M183 50 H217" stroke="#8C9AA6" stroke-width="2.5"/>
-      <rect x="190" y="106" width="20" height="10" rx="4" fill="#6FB7D9" stroke="#4C93B8" stroke-width="2.5"/>
-      <path d="M200 116 L200 132" stroke="#9AA" stroke-width="5" stroke-linecap="round"/>
-      <circle class="drip" cx="200" cy="136" r="4" fill="#6FC6F0"/>
-      <circle class="bubble-up" cx="200" cy="94" r="2.5" fill="#fff" opacity="0"/>
+      <rect x="183" y="22" width="34" height="62" rx="13" fill="#BFE6F7" stroke="#6FB7D9" stroke-width="3"/>
+      <rect x="189" y="36" width="22" height="42" rx="7" fill="#8FD3F2"/>
+      <path d="M190 32 V74" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".7"/>
+      <path d="M183 44 H217 M183 48 H217" stroke="#8C9AA6" stroke-width="2.5"/>
+      <rect x="190" y="80" width="20" height="10" rx="4" fill="#6FB7D9" stroke="#4C93B8" stroke-width="2.5"/>
+      <path d="M200 90 L200 103" stroke="#9AA" stroke-width="5" stroke-linecap="round"/>
+      <circle class="drip" cx="200" cy="107" r="4" fill="#6FC6F0"/>
+      <circle class="bubble-up" cx="200" cy="70" r="2.5" fill="#fff" opacity="0"/>
     </g>` },
   bowl:   { box: '164 270 72 30', x: 200, y: 299, svg: `<g class="pen-bowl">
       <ellipse cx="200" cy="286" rx="34" ry="12" fill="#7AA6FF" stroke="#4C7FD9" stroke-width="3"/>
