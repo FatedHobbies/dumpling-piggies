@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 17;
+const VERSION = 18;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -87,7 +87,7 @@ function buildShell() {
       <button data-tab="shop" class="tab" aria-label="Shop"><span class="ico">🛍️</span>Shop</button>
     </nav>
     <div id="toasts"></div>`;
-  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); tab = b.dataset.tab; sfx.pop(); render(true); }));
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); if (tab === 'shop' && b.dataset.tab === 'steamer') tut('home'); tab = b.dataset.tab; sfx.pop(); render(true); }));
   $('#name').addEventListener('click', renameDialog);
   $('#coachskip').addEventListener('click', () => confirmBox('Skip the tutorial?', () => { state.tutorial = { done: true }; render(); }));
 }
@@ -102,9 +102,15 @@ const TUTORIAL = [
   { tab: 'steamer', on: 'scoop',  text: n => `Uh oh, a poop! Tap it to scoop it up.`, target: '.poop', enter: () => { if (!state.poops.length) G.addPoop(state); } },
   { tab: 'garden',  on: 'plant',  text: n => `Poop makes compost! Tap a plot to plant a veggie.`, target: '.plot.empty' },
   { tab: 'kitchen', on: 'cook',   text: n => `Pick two veggies, then tap Steam it!`, target: () => selected.length < 2 ? '.fill:not(:disabled)' : '#cook' },
+  { tab: 'maze',    on: 'surprise', text: n => `Tap Surprise me to build a maze for ${n}! You can also tap squares to add hay walls.`, target: '.surprise' },
   { tab: 'maze',    on: 'maze',   text: n => `Tap Go! and watch ${n} run. Tap ${n} to cheer!`, target: () => run ? '#mpig' : '.go' },
   { tab: null,      on: 'rename', text: n => `You earned ${G.RENAME_COST} coins! Tap ${n}'s name up top to rename them.`, target: '#name' },
+  // The shop is only shown: the arrow rests on her coins, then moves to the
+  // Pen tab, and going home ends the tutorial.
+  { tab: 'shop',    on: 'home',   text: n => `This is the Shop! Spend your coins here on new piggies, hats and upgrades. Then tap the Pen to go home.`,
+    enter: () => { shopLook = 0; }, target: () => !shopLook || Date.now() < shopLook ? '.hud-coins' : '.tab[data-tab="steamer"]', ok: () => { shopLook = Date.now() + 2500; setTimeout(render, 2600); } },
 ];
+let shopLook = 0;   // until when the shop step's arrow points at the coins
 const TAB_NAMES = { steamer: 'Pen', garden: 'Garden', kitchen: 'Kitchen', maze: 'Maze', shop: 'Shop' };
 
 function tutStep() {
@@ -151,7 +157,7 @@ function updateCoach() {
   // any other popup has been closed.
   if (tutShown !== key && !$('.modal')) {
     tutShown = key;
-    popup(`Step ${i} of ${TUTORIAL.length - 1}`, `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div><p class="tut-text">${text}</p>`, 'OK!');
+    popup(`Step ${i} of ${TUTORIAL.length - 1}`, `<div class="pig-card">${Art.piggySide({ coat: current().coat })}</div><p class="tut-text">${text}</p>`, 'OK!', key.endsWith(':do') ? step.ok : null);
   }
 }
 
@@ -570,7 +576,7 @@ function updateMaze() {
   if (run) {
     btns.appendChild(btn('Stop', () => { stopRun(); render(); }, 'btn-grey'));
   } else {
-    btns.appendChild(btn('Surprise me', () => { M.randomize(m); sfx.pop(); render(); }, 'btn-grey'));
+    btns.appendChild(btn('Surprise me', () => { M.randomize(m); sfx.pop(); tut('surprise'); render(); }, 'btn-grey surprise'));
     btns.appendChild(btn('Clear', () => { M.clear(m); sfx.pop(); render(); }, 'btn-grey'));
     const go = btn('Go!', startRun, 'btn-green go');
     go.disabled = !ok;
@@ -646,7 +652,7 @@ function scheduleStep() {
       pig.classList.add('popcorn');
       floatCoin(r.coins);
       toast(r.first ? `New maze finished! +${r.coins} coins` : `Dumpling! +${r.coins} coins`, 'big');
-      setTimeout(() => { stopRun(); tut('maze'); render(); }, 2200);
+      setTimeout(() => { stopRun(); tut('surprise'); tut('maze'); render(); }, 2200);
       return;
     }
     scheduleStep();
