@@ -782,7 +782,11 @@ button.pk:active { transform: scale(.95); }
 .hat-pin .hat-title b { font-size: 1.2rem; }
 .hat-pin .hat-who { display: contents; }
 .hat-pin .hat-title { grid-area: who; justify-self: center; }
-.hat-pin .hat-for { position: relative; grid-template-areas: "who who" "model pigs"; padding-bottom: 14px; }
+.hat-pin .hat-for { position: relative; grid-template-areas: "model pigs"; padding-top: 10px; padding-bottom: 14px; }
+.hat-pin .hat-title { grid-area: auto; position: absolute; top: 8px; left: 10px; z-index: 2; max-width: 55%; }
+.hat-pin .hat-title b { font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hat-pin .hat-model { margin-top: 26px; }
+.hat-pin .hat-title { padding: 1px 11px; }
 .hat-pin { padding-bottom: 16px; }
 .hat-pin .hat-side { align-self: center; }
 /* The try-on note sits on the box's bottom border, so the box never changes size. */

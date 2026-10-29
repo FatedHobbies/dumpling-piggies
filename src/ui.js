@@ -1532,13 +1532,13 @@ function updateShop() {
   const hsig = JSON.stringify([state.hats, state.coins, p.id, p.hat, tryHat, state.piggies.map(q => [q.id, q.name, q.hat])]);
   if (hats.dataset.sig !== hsig) {
     hats.dataset.sig = hsig;
-    // "Fancy hats for [name]" across the top, the piggy being dressed below it,
-    // and every piggy's face on the right to switch who is dressing up.
+    // The piggy being dressed with its name tag in the corner, and every
+    // piggy's face on the right to switch who is dressing up.
     const others = state.piggies.filter(q => q.id !== p.id);
     hats.innerHTML = `<div class="hat-pin"><div class="hat-for ${tryHat ? 'trying' : ''}">
         ${others.length ? `<div class="hat-side"><div class="hat-pigs ${state.piggies.length > 2 ? 'two' : ''}">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div></div>` : ''}
         <div class="hat-model">${Art.piggySide({ coat: p.coat, hat: showing })}</div>
-        <div class="hat-who"><span class="hat-title"><small>Fancy hats for</small><b>${esc(p.name)}</b></span>
+        <div class="hat-who"><span class="hat-title"><b>${esc(p.name)}</b></span>
           ${tryHat ? `<em>${G.HATS[tryHat.id].goal ? `${G.HATS[tryHat.id].name}! ${G.HATS[tryHat.id].goal} to earn it!` : `Trying on the ${G.HATS[tryHat.id].name}! Like ${/s$/.test(G.HATS[tryHat.id].name) ? 'them' : 'it'}? Press Buy!`}</em>` : ''}</div>
       </div></div>
       <p class="hint small">Tap a hat to try it on. Hats you own fit every piggy.</p><div class="hat-grid"></div>`;
