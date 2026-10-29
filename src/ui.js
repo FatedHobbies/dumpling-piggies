@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 119;
+const VERSION = 120;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -835,9 +835,15 @@ function startAct(kind, a, b) {
     act.spots = { [left.id]: [t.x - gap, t.y + 0.01, 1], [(left === a ? b : a).id]: [t.x + gap, t.y + 0.01, -1] };
     act.left = left.id;
   } else if (kind === 'train') {
-    act.stops = [0, 1, 2].map(() => [0.15 + Math.random() * 0.7, 0.15 + Math.random() * 0.75]);
-    act.phase = 'go';
-    bubble($(`.piggy[data-id="${a.id}"]`), 'Choo choo!');
+    // The leader zig-zags across the pen; the other lines up behind it and
+    // walks the very same path, nose to tail.
+    const right = a.x < 0.5, y0 = 0.3 + Math.random() * 0.45;
+    act.stops = [0, 1, 2].map(i => [(i % 2 === 0) === right ? 0.82 : 0.18, Math.min(0.85, Math.max(0.25, y0 + (Math.random() - 0.5) * 0.3))]);
+    act.phase = 'gather';
+    act.face = right ? 1 : -1;
+    const room = noseGap(a.y) * 2.05 + 0.06;   // space behind the leader for the follower
+    act.start = [right ? Math.max(a.x, room) : Math.min(a.x, 1 - room), a.y];
+    act.trail = [];
   } else if (kind === 'popcorn') {
     act.phase = 'pop';
   }
@@ -911,15 +917,39 @@ function actTick(pig, w, d, now) {
     return;
   }
   if (act.kind === 'train') {
-    if (lead) {
+    const gap = noseGap(pig.y) * 2.05;   // middle to middle when a nose meets a tail
+    if (act.phase === 'gather') {
+      // Both line up facing the same way, the follower's nose at the leader's tail.
+      const [sx, sy] = act.start;
+      const there = stepTo(pig, w, d, lead ? sx : sx - act.face * gap, sy);
+      if (there) { w.face = act.face; w.front = false; syncPose(d, w); if (d) placePig(d, pig, w); }
+      w.ready = there;
+      if (there && ow.ready) {
+        w.ready = ow.ready = false;
+        act.phase = 'go'; act.trail = [act.start.slice()];
+        bubble($(`.piggy[data-id="${act.a}"]`), 'Choo choo!');
+      }
+    } else if (lead) {
       const stop = act.stops[0];
       if (!stop) return endAct(act);
       if (stepTo(pig, w, d, stop[0], stop[1], 0.014)) act.stops.shift();
+      w.front = false; syncPose(d, w);
+      act.trail.push([pig.x, pig.y]);
     } else {
-      // Follow along just behind the leader.
-      const tx = other.x - (ow.face || 1) * 0.15, ty = other.y - 0.02;
-      if (Math.hypot(tx - pig.x, ty - pig.y) > 0.03) stepTo(pig, w, d, tx, ty, 0.016);
-      else if (d) d.classList.remove('walking');
+      // Walk the leader's trail, staying one piggy-length behind.
+      let left = Math.hypot(act.trail[0][0] - pig.x, act.trail[0][1] - pig.y);
+      for (let i = 1; i < act.trail.length; i++) left += Math.hypot(act.trail[i][0] - act.trail[i - 1][0], act.trail[i][1] - act.trail[i - 1][1]);
+      if (left > gap) {
+        let speed = Math.min(0.02, left - gap);
+        while (speed > 0 && act.trail.length > 1) {
+          const [tx, ty] = act.trail[0], dd = Math.hypot(tx - pig.x, ty - pig.y);
+          if (dd > speed) { stepTo(pig, w, d, tx, ty, speed); break; }
+          if (Math.abs(tx - pig.x) > 0.002) w.face = tx > pig.x ? 1 : -1;
+          pig.x = tx; pig.y = ty; speed -= dd; act.trail.shift();
+        }
+        w.front = false; syncPose(d, w);
+        if (d) { d.classList.add('walking'); placePig(d, pig, w); }
+      } else if (d) d.classList.remove('walking');
     }
     if (now - act.t > 20000) endAct(act);
     return;
