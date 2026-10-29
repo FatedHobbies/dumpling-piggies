@@ -692,8 +692,15 @@ export function kitchenScene(opts = {}) {
   return `<svg viewBox="0 0 400 230" class="scene" preserveAspectRatio="none" aria-hidden="true">
     <defs><pattern id="tiles" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#A9DCC6"/><rect x="2" y="2" width="36" height="36" rx="6" fill="#CDEEDF"/></pattern></defs>
     <rect width="400" height="230" fill="url(#tiles)"/>
-    <g><rect x="16" y="22" width="150" height="10" rx="3" fill="#B9824A"/><rect x="234" y="22" width="150" height="10" rx="3" fill="#B9824A"/>
-      <g stroke="#8A5634" stroke-width="2.5"><rect x="30" y="-2" width="26" height="26" rx="5" fill="#FFB77A"/><rect x="66" y="2" width="22" height="22" rx="5" fill="#A6DB8C"/><rect x="100" y="-4" width="30" height="28" rx="6" fill="#FF8FA8"/><rect x="250" y="0" width="24" height="24" rx="5" fill="#8FD3F2"/><rect x="286" y="-2" width="28" height="26" rx="6" fill="#FFD34D"/><rect x="326" y="4" width="22" height="20" rx="5" fill="#C9B8D6"/></g></g>
+    <g><rect x="8" y="30" width="166" height="10" rx="3" fill="#B9824A"/><rect x="214" y="30" width="180" height="10" rx="3" fill="#B9824A"/>
+      <g stroke="#8A5634" stroke-width="2" stroke-linejoin="round">
+        <g transform="translate(0 8) translate(91 22) scale(1.2) translate(-91 -22)">${[[24, '#FF9A3D'], [50, '#7CC56A']].map(([x, c]) => `<rect x="${x}" y="5" width="22" height="17" rx="5" fill="#EAF6FF"/><rect x="${x + 2}" y="11" width="18" height="10" rx="3" fill="${c}" stroke="none"/><circle cx="${x + 7}" cy="14" r="1.6" fill="#fff" stroke="none"/><circle cx="${x + 14}" cy="17" r="1.6" fill="#fff" stroke="none"/><rect x="${x - 1}" y="1" width="24" height="6" rx="2" fill="#E2574C"/>`).join('')}
+        <path d="M82 22 L84 7 Q94 3 104 7 L106 22 Z" fill="#FFF8EC"/><path d="M84 7 Q94 11 104 7" fill="none"/><rect x="86" y="13" width="16" height="5" rx="2" fill="#8FD3F2" stroke="none"/>
+        <rect x="116" y="9" width="16" height="13" rx="4" fill="#5A3A26"/><rect x="120" y="2" width="8" height="8" rx="2" fill="#5A3A26"/><rect x="119" y="-1" width="10" height="4" rx="1.5" fill="#E2574C"/><rect x="119" y="12" width="10" height="7" rx="2" fill="#FFF8EC" stroke="none"/><circle cx="124" cy="15.5" r="2" fill="#E2574C" stroke="none"/></g>
+        <g transform="translate(0 8) translate(305 22) scale(1.2) translate(-305 -22)">        <ellipse cx="260" cy="18" rx="18" ry="4" fill="#fff"/><ellipse cx="260" cy="17" rx="13" ry="2" fill="#8FD3F2" stroke="none"/><path d="M245 17 Q245 7 253 7 Q261 7 261 17 Z M259 17 Q259 7 267 7 Q275 7 275 17 Z" fill="#FFF3DC"/><path d="M250 10 Q253 13 256 10 M264 10 Q267 13 270 10" fill="none" stroke-width="1.5"/>
+        <path d="M296 9 L290 -6 M302 9 L304 -6" stroke="#C9935A" stroke-width="3" stroke-linecap="round"/><rect x="290" y="8" width="18" height="14" rx="4" fill="#E2574C"/><circle cx="296" cy="15" r="1.6" fill="#fff" stroke="none"/><circle cx="302" cy="15" r="1.6" fill="#fff" stroke="none"/>
+        <rect x="318" y="15" width="7" height="5" rx="2" fill="#C9935A"/><rect x="361" y="15" width="7" height="5" rx="2" fill="#C9935A"/><rect x="324" y="12" width="38" height="10" rx="5" fill="#F2CE7E"/></g>
+      </g></g>
     <g class="chef">${'<g transform="translate(26 54) scale(.62)">' + pig + '</g>'}
       <g class="spoon"><path d="M152 136 L188 100" stroke="#8A5634" stroke-width="5" stroke-linecap="round"/><rect x="183" y="80" width="16" height="22" rx="6" fill="#C98F4B" stroke="#8A5634" stroke-width="2.5" transform="rotate(42 191 91)"/>
         <ellipse cx="152" cy="137" rx="8" ry="6.5" fill="#FFF8EE" stroke="#C9A27A" stroke-width="2.5"/></g></g>
@@ -706,12 +713,12 @@ export function kitchenScene(opts = {}) {
       <path d="M230 116 H222 M354 116 H362" stroke="#5E7189" stroke-width="6" stroke-linecap="round"/>
       <rect x="232" y="108" width="120" height="8" rx="4" fill="#B9CCDE" stroke="#5E7189" stroke-width="3"/>
       <g fill="#8FD3F2" stroke="#5E9BC0" stroke-width="1.5">${[238, 346].map(x => `<circle cx="${x}" cy="104" r="3"/>`).join('')}</g>
-      ${tier(84, 24)}${tier(60, 24)}
-      <path d="M238 62 Q292 30 346 62 Z" fill="#F2CE7E" stroke="#9C6A3A" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M256 54 Q292 38 328 54" fill="none" stroke="#C98F4B" stroke-width="2"/>
-      <circle cx="292" cy="40" r="5" fill="#C98F4B" stroke="#9C6A3A" stroke-width="2"/>
+      ${tier(87, 21)}${tier(66, 21)}
+      <path d="M238 68 Q292 36 346 68 Z" fill="#F2CE7E" stroke="#9C6A3A" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M256 60 Q292 44 328 60" fill="none" stroke="#C98F4B" stroke-width="2"/>
+      <circle cx="292" cy="46" r="5" fill="#C98F4B" stroke="#9C6A3A" stroke-width="2"/>
     </g>
-    <g class="vapor"><ellipse class="puff p1" cx="246" cy="52" rx="8" ry="11" fill="#fff" opacity=".9"/><ellipse class="puff p2" cx="292" cy="26" rx="10" ry="12" fill="#fff" opacity=".9"/><ellipse class="puff p3" cx="340" cy="52" rx="8" ry="11" fill="#fff" opacity=".9"/></g>
+    <g class="vapor"><ellipse class="puff p1" cx="246" cy="58" rx="8" ry="11" fill="#fff" opacity=".9"/><ellipse class="puff p2" cx="292" cy="34" rx="10" ry="12" fill="#fff" opacity=".9"/><ellipse class="puff p3" cx="340" cy="58" rx="8" ry="11" fill="#fff" opacity=".9"/></g>
   </svg>`;
 }
 
