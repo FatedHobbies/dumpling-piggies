@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 116;
+const VERSION = 117;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -12,7 +12,9 @@ let tab = 'steamer';
 let selected = [];          // fillings chosen in the kitchen
 let selectedPig = null;     // id of the piggy whose name is in the HUD
 const NEEDY = 30;           // Food or Fun below this shows a need bubble
+const FULL = 80;            // ...and keeps asking until it is back above this
 let needPig = null;         // the one piggy showing a need bubble until it is looked after
+let needKind = '';          // what it is asking for: 'hunger' or 'fun'
 let lastTick = Date.now();
 let run = null;             // the maze run in progress, or null while building
 let runTimer = null;
@@ -116,7 +118,7 @@ function buildShell() {
 // points there first if she is somewhere else. `enter` runs once when the
 // step starts and sets things up so the step can always be done (a hungry
 // piggy to feed, a poop to scoop, veggies to cook).
-const lowNeed = (k) => { const p = current(); if (p[k] >= NEEDY) p[k] = NEEDY - 5; needPig = p.id; };
+const lowNeed = (k) => { const p = current(); if (p[k] >= NEEDY) p[k] = NEEDY - 5; needPig = p.id; needKind = k; };
 const TUTORIAL = [
   null,
   { tab: 'steamer', on: 'pet',   text: n => `${n} wants a pet! Tap ${n}.`, target: () => `.piggy[data-id="${current().id}"]`, enter: () => lowNeed('fun') },
@@ -370,6 +372,9 @@ function steamerView() {
 
 // What a piggy is asking for: food first, then petting.
 const needOf = pig => !pig ? '' : pig.hunger < NEEDY ? 'hunger' : pig.fun < NEEDY ? 'fun' : '';
+// The asking piggy keeps asking for the same thing until it is over FULL
+// (the tutorial lets go at NEEDY so each step ends on one tap).
+const stillAsking = pig => pig && pig.id === needPig && needKind && pig[needKind] < (tutStep() ? NEEDY : FULL) ? needKind : '';
 
 function updateSteamer() {
   const p = current();
@@ -409,16 +414,18 @@ function updateSteamer() {
     if (box.dataset.sig !== nsig) { box.dataset.sig = nsig; box.innerHTML = needs.map(n => `<i>${Art.icon(n)}</i>`).join(''); }
   }
   // Only one piggy asks for something at a time. It keeps its bubble until
-  // it is fed or petted, then the neediest of the rest gets a turn.
+  // it is well fed or petted, then the neediest of the rest gets a turn.
   const asking = G.piggy(state, needPig);
-  if (!asking || !needOf(asking)) {
-    const next = state.piggies.filter(needOf).sort((a, b) => Math.min(a.hunger, a.fun) - Math.min(b.hunger, b.fun))[0];
+  if (!stillAsking(asking)) {
+    const again = needOf(asking);
+    const next = again ? asking : state.piggies.filter(needOf).sort((a, b) => Math.min(a.hunger, a.fun) - Math.min(b.hunger, b.fun))[0];
     needPig = next ? next.id : null;
+    needKind = needOf(next);
     // The next piggy that asks gets picked, so the Feed card and bars follow it.
-    if (next && !tutStep()) { selectedPig = next.id; render(); return; }
+    if (next && next !== asking && !tutStep()) { selectedPig = next.id; render(); return; }
   }
   // In the tutorial only her piggy asks for things, so the bubbles match the steps.
-  if (tutStep()) needPig = needOf(current()) ? current().id : null;
+  if (tutStep() && !stillAsking(current())) { needKind = needOf(current()); needPig = needKind ? current().id : null; }
   const floor = $('#floor');
   // Piggies
   const have = new Map([...floor.querySelectorAll('.piggy')].map(c => [+c.dataset.id, c]));
@@ -441,7 +448,7 @@ function updateSteamer() {
     $('.tag', d).textContent = pig.name;
     // A big thought bubble over a piggy that needs something: a dumpling
     // when hungry, a heart when it wants petting.
-    const need = pig.id === needPig ? needOf(pig) : '';
+    const need = stillAsking(pig);
     const bub = $('.need-bubble', d);
     if (bub.dataset.need !== need) { bub.dataset.need = need; bub.innerHTML = need === 'hunger' ? Art.dumpling('carrot+carrot', 44) : need ? Art.icon('pet') : ''; }
     d.classList.toggle('needy', !!need);
@@ -483,7 +490,7 @@ function updateSteamer() {
   poopsShown = true;
   // Dumpling tray, glowing while somebody is hungry
   const tray = $('#tray');
-  tray.classList.toggle('hungry', needOf(G.piggy(state, needPig)) === 'hunger');
+  tray.classList.toggle('hungry', needKind === 'hunger' && !!needPig);
   // Surprise dumplings sit at the front of the tray.
   const rank = k => ({ secret: 0, super: 1, rare: 2, shiny: 3 }[G.dumplingInfo(k)?.tier] ?? 4);
   const keys = Object.keys(state.dumplings).filter(k => state.dumplings[k] > 0 && G.dumplingInfo(k)).sort((a, b) => rank(a) - rank(b));
@@ -497,12 +504,18 @@ function updateSteamer() {
       tray.appendChild(b);
     }
   }
-  // The Feed card sits over the first dumpling, out of the way of the pen.
-  // With no dumplings there is nothing to feed, so the card steps away.
+  // The card shows only while the picked piggy is asking: Feed over the first
+  // dumpling, or Pet (no arrow, petting is a tap on the piggy). It hides when
+  // nobody is asking, or there are no dumplings to feed.
   const first = tray.querySelector('.dump');
-  $('.feed-badge').hidden = !first;
-  const anchor = $('.feed-anchor').getBoundingClientRect(), r = (first || tray).getBoundingClientRect();
-  $('.feed-badge').style.setProperty('--fx', Math.round(r.left + r.width / 2 - anchor.left) + 'px');
+  const card = $('.feed-badge'), ask = stillAsking(current());
+  card.classList.toggle('pet', ask === 'fun');
+  $('i', card).textContent = ask === 'fun' ? 'Pet' : 'Feed';
+  card.hidden = !ask || (ask === 'hunger' && !first);
+  // Always at the left end, where the first dumpling is (or would be).
+  const anchor = $('.feed-anchor').getBoundingClientRect(), r = first ? first.getBoundingClientRect() : null;
+  const fx = r ? r.left + r.width / 2 : tray.getBoundingClientRect().left + 44;
+  card.style.setProperty('--fx', Math.round(fx - anchor.left) + 'px');
 }
 
 // A new poop falls out of the back end of the piggy that made it (or any
@@ -866,7 +879,7 @@ function onFeed(key, btn) {
   // A dumpling goes to the piggy with the hungry bubble, so nobody has to be
   // picked first. The picked piggy gets it if it is hungry or nobody is.
   const asking = G.piggy(state, needPig);
-  if (needOf(asking) === 'hunger' && current().hunger >= NEEDY) selectedPig = asking.id;
+  if (stillAsking(asking) === 'hunger' && current().hunger >= NEEDY) selectedPig = asking.id;
   const target = current();
   const r = G.feed(state, key, target.id);
   if (!r.ok) {

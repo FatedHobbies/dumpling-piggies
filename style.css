@@ -271,6 +271,7 @@ button.pk:active { transform: scale(.95); }
 .whose, .feed-badge { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
 .whose { left: 8px; top: 50%; transform: translateY(-50%); }
 .feed-badge[hidden] { display: none; }
+.feed-badge.pet::before, .feed-badge.pet::after { display: none; }
 .whose .wf, .feed-badge .wf { display: block; border-radius: 50%; overflow: hidden; border: 3px solid #fff; background: radial-gradient(circle at 50% 35%, #FFF6D0, #FFE08A); }
 .whose .wf { width: 42px; height: 42px; box-shadow: 0 0 0 3px #FFC93C; }
 .wf svg { display: block; width: 100%; height: 100%; transform: translateY(6%) scale(1.12); }
@@ -334,8 +335,9 @@ button.pk:active { transform: scale(.95); }
 @keyframes ring-pulse { from { transform: scale(.92); opacity: .8; } to { transform: scale(1.06); opacity: 1; } }
 .piggy.selected .tag { font-size: .95rem; padding: 3px 14px; box-shadow: 0 0 0 2px var(--blue), 0 2px 0 rgba(0,0,0,.2); z-index: 2; }
 .piggy.selected .tag { background: var(--blue); color: #fff; border-color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.3); }
-.piggy .need-bubble { position: absolute; left: 50%; top: -88px; transform: translateX(-50%); width: 58px; height: 50px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 0 0 3px #FF5C7A, 0 4px 0 rgba(0,0,0,.18); animation: bob .7s ease-in-out infinite alternate; pointer-events: none; z-index: 5; }
-.piggy.selected .need-bubble { top: -128px; }
+.piggy .need-bubble { position: absolute; left: 50%; top: -60px; transform: translateX(-50%); width: 58px; height: 50px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 0 0 3px #FF5C7A, 0 4px 0 rgba(0,0,0,.18); animation: bob .7s ease-in-out infinite alternate; pointer-events: none; z-index: 5; }
+/* the bubble sits right over the piggy's name, in place of the arrow */
+.piggy.needy .pick-arrow { display: none !important; }
 .piggy .need-bubble::before, .piggy .need-bubble::after { content: ""; position: absolute; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px #FF5C7A; }
 .piggy .need-bubble::before { width: 13px; height: 13px; left: 13px; bottom: -13px; }
 .piggy .need-bubble::after { width: 7px; height: 7px; left: 7px; bottom: -24px; }
