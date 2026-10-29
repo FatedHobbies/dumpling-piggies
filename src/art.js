@@ -757,9 +757,22 @@ export const MAZE_THEMES = {
     deco: (px, py, i) => { const x = px + 12 + jit(i, 1) * 24, y = py + 12 + jit(i, 2) * 24; return `<path d="M${x - 4} ${y} H${x + 4} M${x} ${y - 4} V${y + 4} M${x - 3} ${y - 3} L${x + 3} ${y + 3} M${x + 3} ${y - 3} L${x - 3} ${y + 3}" stroke="#B9DDF2" stroke-width="1.4" stroke-linecap="round"/>`; },
   },
   sea: {
-    side: '#8C7AA0', name: 'Under the sea', board: '#3FA7D6', floor: '#F3E2B3', seen: '#E8D196', start: '#9BE7D8', startEdge: '#3BB5A0', post: '#FF9A8A', postEdge: '#D2604F',
-    wall: (px, py, i) => `<ellipse cx="${px + 24}" cy="${py + 40}" rx="20" ry="6" fill="#B9A6C9"/>
-      <path d="M${px + 24} ${py + 40} V${py + 12} M${px + 24} ${py + 28} L${px + 12} ${py + 16} V${py + 8} M${px + 24} ${py + 24} L${px + 36} ${py + 14} M${px + 12} ${py + 22} L${px + 6} ${py + 16} M${px + 36} ${py + 22} L${px + 42} ${py + 18}" stroke="${i % 2 ? '#FF7FA0' : '#FF9F5A'}" stroke-width="6" stroke-linecap="round" fill="none"/>`,
+    side: '#D98A7A', name: 'Seashell beach', board: '#3FA7D6', floor: '#F3E2B3', seen: '#E8D196', start: '#9BE7D8', startEdge: '#3BB5A0', post: '#FF9A8A', postEdge: '#D2604F',
+    // A giant scallop shell standing up in the sand, filling the block.
+    cube: true,
+    wall: (px, py, i) => {
+      const [c, d] = [['#FFB8A8', '#E07A6A'], ['#FFD39A', '#D9944A'], ['#F8C6E6', '#C979AE']][i % 3];
+      const cx = px + 24, by = py + 46;
+      const lobes = 6, top = py + 5, l = px + 2, r = px + 46, w = (r - l) / lobes;
+      let edge = `M${cx} ${by} L${l} ${py + 22}`;
+      for (let k = 0; k < lobes; k++) edge += ` Q${l + w * k} ${top + (k === 0 || k === lobes - 1 ? 8 : 0)} ${l + w * (k + .5)} ${top + (k === 0 || k === lobes - 1 ? 6 : -2)} Q${l + w * (k + 1)} ${top + (k === 0 || k === lobes - 1 ? 8 : 0)} ${l + w * (k + 1)} ${k === lobes - 1 ? py + 22 : top + 6}`;
+      edge += 'Z';
+      const ribs = Array.from({ length: lobes - 1 }, (_, k) => `M${cx} ${by - 4} L${l + w * (k + 1)} ${top + 7}`).join(' ');
+      return `<path d="${edge}" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="${ribs}" stroke="${d}" stroke-width="2" opacity=".7" stroke-linecap="round"/>
+        <path d="M${cx - 8} ${by - 2} L${cx} ${by - 9} L${cx + 8} ${by - 2}Z" fill="${d}"/>
+        <path d="M${l + 7} ${py + 18} Q${l + 10} ${top + 6} ${l + 16} ${top + 4}" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".7"/>`;
+    },
     deco: (px, py, i) => `<circle cx="${px + 10 + jit(i, 1) * 28}" cy="${py + 10 + jit(i, 2) * 28}" r="2.6" fill="none" stroke="#fff" stroke-width="1.2" opacity=".8"/><circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1.4" fill="none" stroke="#fff" stroke-width="1" opacity=".8"/>`,
   },
   poop: {
