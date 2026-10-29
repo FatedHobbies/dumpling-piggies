@@ -732,12 +732,13 @@ export const MAZE_THEMES = {
       // top face is big and the front face shows as a darker band below it,
       // with straight up-and-down side edges.
       const l = px + 3, r = px + 45, t = py + 1, e = py + 32, b = py + 47;
-      return `<rect x="${l}" y="${t}" width="${r - l}" height="${b - t}" rx="7" fill="#3E2C96" stroke="#1E145A" stroke-width="2.5"/>
-        <path d="M${l + 1.5} ${e} H${r - 1.5}" stroke="#2A1C6E" stroke-width="2"/>
-        <circle cx="${px + 14}" cy="${py + 40}" r="2.4" fill="#2E2178"/><circle cx="${px + 32}" cy="${py + 41}" r="1.8" fill="#2E2178"/>
-        <path d="M${l + 1.5} ${e - 1} V${t + 7} Q${l + 1.5} ${t + 1.5} ${l + 7} ${t + 1.5} H${r - 7} Q${r - 1.5} ${t + 1.5} ${r - 1.5} ${t + 7} V${e - 1}Z" fill="#8F78E8"/>
-        <circle cx="${px + 15}" cy="${py + 12}" r="5" fill="#6E56CC"/><circle cx="${px + 31}" cy="${py + 21}" r="5.5" fill="#6E56CC"/><circle cx="${px + 34}" cy="${py + 9}" r="2.2" fill="#6E56CC"/>
+      return `<rect x="${l}" y="${t}" width="${r - l}" height="${b - t}" rx="7" fill="#7058D2" stroke="#120C3A" stroke-width="2.5"/>
+        <path d="M${l + 1.5} ${e} H${r - 1.5}" stroke="#4E39A8" stroke-width="2"/>
+        <circle cx="${px + 14}" cy="${py + 40}" r="2.4" fill="#5C46BC"/><circle cx="${px + 32}" cy="${py + 41}" r="1.8" fill="#5C46BC"/>
+        <path d="M${l + 1.5} ${e - 1} V${t + 7} Q${l + 1.5} ${t + 1.5} ${l + 7} ${t + 1.5} H${r - 7} Q${r - 1.5} ${t + 1.5} ${r - 1.5} ${t + 7} V${e - 1}Z" fill="#A994F6"/>
+        <circle cx="${px + 15}" cy="${py + 12}" r="5" fill="#8770E2"/><circle cx="${px + 31}" cy="${py + 21}" r="5.5" fill="#8770E2"/><circle cx="${px + 34}" cy="${py + 9}" r="2.2" fill="#8770E2"/>
         <path d="M${l + 5} ${t + 10} Q${l + 5} ${t + 5} ${l + 10} ${t + 5} H${r - 10}" stroke="#C7B9FF" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M${l + 5} ${b - 3} H${r - 5}" stroke="#B9A8FF" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>
         ${i % 3 === 0 ? star4(px + 41, py + 2, 5, '#FFE66B') : ''}`;
     },
     deco: (px, py, i) => star4(px + 8 + jit(i, 1) * 30, py + 8 + jit(i, 2) * 30, 2.6, '#fff') + `<circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1" fill="#C9C2FF"/>`,
