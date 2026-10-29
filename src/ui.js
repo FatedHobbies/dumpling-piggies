@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 117;
+const VERSION = 118;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -504,14 +504,11 @@ function updateSteamer() {
       tray.appendChild(b);
     }
   }
-  // The card shows only while the picked piggy is asking: Feed over the first
-  // dumpling, or Pet (no arrow, petting is a tap on the piggy). It hides when
-  // nobody is asking, or there are no dumplings to feed.
+  // The card shows only while the picked piggy is hungry and there are
+  // dumplings to give it.
   const first = tray.querySelector('.dump');
-  const card = $('.feed-badge'), ask = stillAsking(current());
-  card.classList.toggle('pet', ask === 'fun');
-  $('i', card).textContent = ask === 'fun' ? 'Pet' : 'Feed';
-  card.hidden = !ask || (ask === 'hunger' && !first);
+  const card = $('.feed-badge');
+  card.hidden = stillAsking(current()) !== 'hunger' || !first;
   // Always at the left end, where the first dumpling is (or would be).
   const anchor = $('.feed-anchor').getBoundingClientRect(), r = first ? first.getBoundingClientRect() : null;
   const fx = r ? r.left + r.width / 2 : tray.getBoundingClientRect().left + 44;
