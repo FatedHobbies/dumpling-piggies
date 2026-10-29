@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 113;
+const VERSION = 114;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -487,6 +487,10 @@ function updateSteamer() {
       tray.appendChild(b);
     }
   }
+  // The Feed card sits over the first dumpling, out of the way of the pen.
+  const first = tray.querySelector('.dump');
+  const anchor = $('.feed-anchor').getBoundingClientRect(), r = (first || tray).getBoundingClientRect();
+  $('.feed-badge').style.setProperty('--fx', Math.round(r.left + r.width / 2 - anchor.left) + 'px');
 }
 
 // A new poop falls out of the back end of the piggy that made it (or any
