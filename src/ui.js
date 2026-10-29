@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 24;
+const VERSION = 25;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -78,6 +78,7 @@ function buildShell() {
   document.body.innerHTML = `
     <header class="hud">
       <button class="hud-pig" id="name" aria-label="Rename your piggy"><span class="hud-avatar" id="avatar"></span><span class="hud-name" id="pigname"></span></button>
+      <button class="hud-book" id="poopbook" aria-label="Poop Book">${Art.poop({ shape: 'swirl', color: 'brown' })}<b class="book-count" id="bookcount" hidden></b></button>
       <button class="hud-music" id="music" aria-label="Music on or off"></button>
       <div class="hud-coins"><span class="coin-ico">${Art.coinIcon()}</span><span id="coins">0</span></div>
     </header>
@@ -93,6 +94,7 @@ function buildShell() {
     <div id="toasts"></div>`;
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); if (tab === 'shop' && b.dataset.tab === 'steamer') tut('home'); tab = b.dataset.tab; sfx.pop(); render(true); }));
   $('#name').addEventListener('click', renameDialog);
+  $('#poopbook').addEventListener('click', poopBook);
   const musicBtn = $('#music');
   const showMusic = () => { musicBtn.textContent = music.on ? '🎵' : '🔇'; musicBtn.classList.toggle('off', !music.on); };
   musicBtn.addEventListener('click', () => { music.toggle(); sfx.pop(); showMusic(); });
@@ -191,6 +193,8 @@ function positionArrow() {
 function render(force = false) {
   const p = current();
   $('#coins').textContent = state.coins;
+  $('#bookcount').hidden = !state.booksFilled;
+  $('#bookcount').textContent = `★${state.booksFilled}`;
   $('#pigname').textContent = p.name;
   const av = $('#avatar');
   const asig = p.id + JSON.stringify(p.coat) + (p.hat || '');
@@ -218,7 +222,6 @@ function steamerView() {
       ${Art.penScene()}
       <div class="floor" id="floor"></div>
       <span class="pen-count" id="pencount"></span>
-      <button class="book-btn" id="poopbook" aria-label="Poop Book">${Art.poop({ shape: 'swirl', color: 'brown' })}<span>Poop Book</span><b class="book-count" id="bookcount" hidden></b></button>
     </div>
     <div class="tray panel" id="tray"></div>
   </section>`);
@@ -227,9 +230,6 @@ function steamerView() {
 
 function updateSteamer() {
   const p = current();
-  $('#poopbook').onclick = poopBook;
-  $('#bookcount').hidden = !state.booksFilled;
-  $('#bookcount').textContent = `★${state.booksFilled}`;
   $('[data-need="hunger"] i').style.width = p.hunger + '%';
   $('[data-need="fun"] i').style.width = p.fun + '%';
   $('[data-need="clean"] i').style.width = Math.max(0, 100 - state.poops.length / G.MAX_POOPS * 100) + '%';
