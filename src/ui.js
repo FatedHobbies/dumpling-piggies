@@ -1946,7 +1946,7 @@ function poopBook() {
     <div class="book-pane swipe" data-pane="poops">
       ${filled ? `<div class="book-prize"><span class="books-filled">${Art.poopBookArt(true)}<span>Filled <b>${filled}</b> ${filled === 1 ? 'time' : 'times'}</span></span></div>` : ''}
       <p class="book-hint">${filled ? 'A fresh page! Find every kind again.' : 'Scoop every kind of poop to fill the book.'}</p>
-      ${tiers}
+      <div class="pages">${tiers}</div>
     </div>
     <div class="book-pane" data-pane="badges" hidden><div class="ach-list">${ach}</div></div>`, 'Close');
   sfx.pop();
@@ -2059,7 +2059,7 @@ function dumplingBook() {
   popup('Dumpling Book', `<div class="book-prize"><span class="next-prize">Found <b>${G.dumplingsFound(state)}</b> / ${G.dumplingTotal()}</span>
       <span class="next-prize shiny-count"><i class="shiny-mark">★</i> Shiny <b>${G.shinyFound(state)}</b> / ${Object.keys(G.RECIPES).length}</span></div>
     <p class="book-hint">Every steaming is a surprise. Rare ones can pop out of any recipe!</p>
-    <div class="book-pane swipe" data-pane="dumplings">${html}</div>`, 'Close');
+    <div class="book-pane swipe" data-pane="dumplings"><div class="pages">${html}</div></div>`, 'Close');
   sfx.pop();
 }
 
@@ -2147,12 +2147,12 @@ function collectionBook() {
         <div class="pk-grid">${pg.map(it => tile(c, it)).join('')}${'<i class="pk pk-pad"></i>'.repeat(Math.max(0, pad - pg.length))}</div>
         ${pages.length > 1 ? `<div class="dots">${pages.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}<span>Page ${i + 1} of ${pages.length}</span></div>` : ''}</div>`;
     }).join('');
-    return `<div class="book-pane ${pages.length > 1 ? 'swipe' : ''}" data-pane="${pane}" ${c.id === cbookTab ? '' : 'hidden'}>${html}</div>`;
+    return `<div class="book-pane ${pages.length > 1 ? 'swipe' : ''}" data-pane="${pane}" ${c.id === cbookTab ? '' : 'hidden'}><div class="pages">${html}</div></div>`;
   }).join('');
   popup('Collection Book', `<div class="book-tabs ctabs">${tabs.map(({ c, items }) => `<button class="${c.id === cbookTab ? 'on' : ''}" data-pane="c-${c.id}">${c.label} <small>${items.filter(i => i.own).length} / ${items.length}</small></button>`).join('')}</div>
     <div class="book-prize"><span class="next-prize">Collected <b>${got}</b> / ${total}</span></div>
     <p class="book-hint">Buy them in the Shop or win the gold ones!</p>
-    ${panes}`, 'Close');
+    <div class="pages">${panes}</div>`, 'Close');
   sfx.pop();
 }
 // Remember which tab was open for next time.

@@ -875,3 +875,13 @@ button.pk:active { transform: scale(.95); }
 .pk.unknown.earn .how { color: #B9861A; }
 .ctabs button { font-size: .92rem; padding: 8px 2px; }
 .stuff-card svg { width: 120px; height: 120px; }
+
+/* Book pages (and Collection Book tabs) are stacked in one spot, so the book
+   is always as tall as its tallest page and nothing jumps when flipping. */
+.pages { display: grid; }
+.pages > * { grid-area: 1 / 1; }
+.pages > [hidden] { display: block; visibility: hidden; }
+.pages > .book-pane[hidden] { display: flex; }
+.pages > .tier { display: flex; flex-direction: column; }
+.pages > .tier > .dots { margin-top: auto; padding-top: 10px; }
+.pages > .book-pane > .pages { flex: 1; }
