@@ -173,10 +173,9 @@ export function step(m, run, rng = Math.random, now = Date.now()) {
 }
 
 export function dropLure(m, run, x, y) {
-  if (run.done || run.lures < 1 || !inside(x, y) || isWall(m, x, y) || same({ x, y }, run.pos) || same({ x, y }, FINISH)) return false;
+  if (run.done || !inside(x, y) || isWall(m, x, y) || same({ x, y }, run.pos) || same({ x, y }, FINISH)) return false;
   if (!path(m, run.pos, { x, y })) return false;
   run.lure = { x, y };
-  run.lures -= 1;
   return true;
 }
 

@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 76;
+const VERSION = 77;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -916,7 +916,7 @@ function updateMaze() {
   const name = esc(current().name);
   const bsig = run ? 'run' : ok ? 'ok' : 'blocked';
   const loot = (m.treasure || []).length;
-  if (run) hint.textContent = run.done ? 'Yay!' : loot ? `Drop a carrot by the treasure! (${run.lures} left)` : `Tap a square to drop a carrot (${run.lures} left). Tap ${current().name} to cheer!`;
+  if (run) hint.textContent = run.done ? 'Yay!' : loot ? 'Tap by the treasure to drop a carrot!' : `Tap squares to drop carrots. Tap ${current().name} to cheer!`;
   else hint.textContent = ok ? 'Tap squares to build walls!' : `${current().name} can't reach the dumpling. Open a path!`;
   updateTray();
   if (btns.dataset.sig === bsig) return;
