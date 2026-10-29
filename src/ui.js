@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 78;
+const VERSION = 79;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -79,6 +79,7 @@ function buildShell() {
     <header class="hud">
       <button class="hud-pig" id="name" aria-label="Rename your piggy"><span class="hud-avatar" id="avatar"></span><span class="hud-name" id="pigname"></span></button>
       <button class="hud-book" id="poopbook" aria-label="Poop Book">${Art.poop({ shape: 'swirl', color: 'brown' })}<span>Book</span></button>
+      <button class="hud-book" id="dumpbook" aria-label="Dumpling Book">${Art.dumpling('sp:gold', 40)}<span>Book</span></button>
       <div class="hud-coins"><span class="coin-ico">${Art.coinIcon()}</span><span id="coins">0</span></div>
       <button class="hud-gear" id="gear" aria-label="Settings">${Art.icon('gear')}</button>
     </header>
@@ -95,6 +96,7 @@ function buildShell() {
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { if (tab === 'maze' && run) stopRun(); if (tab === 'shop' && b.dataset.tab === 'steamer') tut('home'); tab = b.dataset.tab; sfx.pop(); render(true); }));
   $('#name').addEventListener('click', renameDialog);
   $('#poopbook').addEventListener('click', poopBook);
+  $('#dumpbook').addEventListener('click', dumplingBook);
   $('#gear').addEventListener('click', () => { sfx.pop(); settings(); });
   $('#coachskip').addEventListener('click', () => confirmBox('Skip the tutorial?', () => { state.tutorial = { done: true }; render(); }));
 }
@@ -190,6 +192,7 @@ function positionArrow() {
 function render(force = false) {
   const p = current();
   $('#coins').textContent = state.coins;
+  $('#dumpbook').hidden = tab === 'kitchen';   // the kitchen has its own on the counter
   $('#pigname').textContent = p.name;
   const av = $('#avatar');
   const asig = p.id + JSON.stringify(p.coat) + (p.hat || '');
