@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 81;
+const VERSION = 82;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -246,12 +246,21 @@ function updateSteamer() {
     faces.dataset.sig = fsig;
     faces.innerHTML = '';
     for (const pig of state.piggies) {
-      const b = el(`<button class="face" data-id="${pig.id}" aria-label="Pick ${esc(pig.name)}">${Art.piggyFace({ coat: pig.coat, hat: pig.hat })}</button>`);
-      b.addEventListener('click', () => pickPig(pig.id));
-      faces.appendChild(b);
+      const slot = el(`<span class="face-slot" data-id="${pig.id}"><button class="face" data-id="${pig.id}" aria-label="Pick ${esc(pig.name)}">${Art.piggyFace({ coat: pig.coat, hat: pig.hat })}</button><span class="face-needs"></span></span>`);
+      $('.face', slot).addEventListener('click', () => pickPig(pig.id));
+      faces.appendChild(slot);
     }
   }
   faces.querySelectorAll('.face').forEach(b => b.classList.toggle('on', +b.dataset.id === selectedPig));
+  // Flashing need icons under each portrait when Food, Fun or Clean drops below 30%.
+  const dirty = state.poops.length / G.MAX_POOPS > 0.7;
+  for (const slot of faces.querySelectorAll('.face-slot')) {
+    const pig = state.piggies.find(g => g.id === +slot.dataset.id);
+    if (!pig) continue;
+    const needs = [pig.hunger < 30 && 'hunger', pig.fun < 30 && 'fun', dirty && 'clean'].filter(Boolean);
+    const box = $('.face-needs', slot), nsig = needs.join(',');
+    if (box.dataset.sig !== nsig) { box.dataset.sig = nsig; box.innerHTML = needs.map(n => `<i>${Art.icon(n)}</i>`).join(''); }
+  }
   const floor = $('#floor');
   // Piggies
   const have = new Map([...floor.querySelectorAll('.piggy')].map(c => [+c.dataset.id, c]));
