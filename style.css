@@ -41,7 +41,8 @@ p { margin: 0; }
   box-shadow: inset 0 0 0 3px #fff, 0 4px 0 var(--panel-shadow);
 }
 .panel-dark { background: rgba(58, 42, 34, .55); border-radius: 16px; border: 3px solid rgba(255,255,255,.25); }
-.ribbon { position: relative; display: flex; justify-content: center; margin: 14px 0 10px; }
+/* The ribbon hugs its label so the tails always tuck in behind its ends. */
+.ribbon { position: relative; display: flex; justify-content: center; width: fit-content; max-width: calc(100% - 48px); align-self: center; margin: 14px auto 10px; }
 .ribbon span {
   position: relative; background: linear-gradient(#6DB9FF, #3F8FE0); color: #fff; font-family: var(--display); font-weight: 600;
   font-size: 1.15rem; padding: 6px 26px; border-radius: 10px; border: 3px solid #1F5FA8; text-shadow: 0 2px 0 #1F5FA8;
@@ -51,8 +52,8 @@ p { margin: 0; }
 .ribbon::before, .ribbon::after {
   content: ""; position: absolute; top: 10px; width: 34px; height: 30px; background: #2C74C7; border: 3px solid #1F5FA8;
 }
-.ribbon::before { left: calc(50% - 50% + 10%); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 30% 50%); transform: translateX(-40%); }
-.ribbon::after { right: 10%; clip-path: polygon(0 0, 100% 0, 70% 50%, 100% 100%, 0 100%); transform: translateX(40%); }
+.ribbon::before { left: -24px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 30% 50%); }
+.ribbon::after { right: -24px; clip-path: polygon(0 0, 100% 0, 70% 50%, 100% 100%, 0 100%); }
 .btn {
   font-family: var(--display); font-weight: 600; font-size: 1.05rem; color: #fff; padding: 9px 20px; border-radius: 14px;
   background: linear-gradient(#73C1FF, #3C98EA); border: 3px solid var(--blue-dark); box-shadow: 0 4px 0 var(--blue-dark);
@@ -274,7 +275,7 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 .compost small { margin-left: auto; color: var(--soft); font-size: .72rem; text-align: right; font-family: var(--body); }
 .plots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
 .garden .scene-top .scene { height: 110px; }
-.garden .ribbon { margin: 4px 0 4px; }
+.garden .ribbon { margin-top: 4px; margin-bottom: 4px; }
 .garden .scene-top { margin-bottom: 8px; }
 .garden .pantry { gap: 8px; }
 .plot { position: relative; height: 84px; border-radius: 18px; background: #A7DB8C; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; border: 3px solid #5FAE4E; box-shadow: 0 4px 0 #3E8E2A; }
@@ -390,7 +391,7 @@ main { flex: 1; overflow-y: auto; padding: 12px 14px calc(16px + var(--safe-bott
 /* ---- Modals & toasts ---- */
 .modal { position: fixed; inset: 0; background: rgba(30, 20, 15, .55); display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding: 36px 20px 24px; z-index: 20; }
 .card { margin: auto 0; flex: 0 0 auto; padding: 14px 18px 18px; width: min(100%, 360px); display: flex; flex-direction: column; gap: 10px; align-items: stretch; animation: pop-in .2s; }
-.card .ribbon { margin: -26px 0 6px; }
+.card .ribbon { margin-top: -26px; margin-bottom: 6px; }
 .card p { color: var(--soft); text-align: center; }
 .card .pig-card { margin: 0 auto; }
 .card input { font: inherit; font-size: 1.1rem; padding: 10px 12px; border-radius: 12px; border: 3px solid var(--line); background: #fff; }
