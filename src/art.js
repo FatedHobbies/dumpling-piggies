@@ -699,7 +699,8 @@ const C = 48;
 export const LIFT = 9;
 export function mazeWall3d(theme, px, py, i) {
   const t = MAZE_THEMES[theme] || MAZE_THEMES.hay;
-  if (t.cube) return `<ellipse cx="${px + 24}" cy="${py + 46}" rx="21" ry="4" fill="#000" opacity=".25"/><g transform="translate(0 ${-LIFT + 2})">${t.wall(px, py, i)}</g>`;
+  // Cube themes sit right on their square, with a contact shadow at the base.
+  if (t.cube) return `<ellipse cx="${px + 24}" cy="${py + 45}" rx="23" ry="3.5" fill="#000" opacity=".22"/><g transform="translate(0 -2)">${t.wall(px, py, i)}</g>`;
   return `<ellipse cx="${px + 24}" cy="${py + 45}" rx="21" ry="4" fill="#000" opacity=".16"/>
     <rect x="${px + 3}" y="${py + 14}" width="${C - 6}" height="${C - 16}" rx="9" fill="${t.side}"/>
     <rect x="${px + 3}" y="${py + 14}" width="${C - 6}" height="${C - 16}" rx="9" fill="#000" opacity=".12"/>
@@ -714,7 +715,8 @@ export const MAZE_THEMES = {
     deco: () => '',
   },
   pumpkin: {
-    side: '#D0601C', name: 'Pumpkin patch', board: '#7CB65A', floor: '#EBCB97', seen: '#DDB47A', start: '#A9DB7E', startEdge: '#5E9A3A', post: '#8A5634', postEdge: '#5A3A22',
+    side: '#D0601C', ui: { p: ['#FFF4E2', '#F6DDB8', '#C98F4B'], hint: '#7A4A20', b: ['#FFE2BD', '#F7B977', '#B9632A', '#6B3410'], g: 'linear-gradient(#FFB066, #E8701C)', ge: '#A9480F', t: ['#FFF4E2', '#E8C79A', '#E8701C'] },
+    name: 'Pumpkin patch', board: '#7CB65A', floor: '#EBCB97', seen: '#DDB47A', start: '#A9DB7E', startEdge: '#5E9A3A', post: '#8A5634', postEdge: '#5A3A22',
     // A chunky, cube-ish pumpkin that fills the whole block.
     wall: (px, py) => `<rect x="${px + 3}" y="${py + 6}" width="${C - 6}" height="${C - 10}" rx="13" fill="#FF8A2A" stroke="#B9531A" stroke-width="3"/>
       <path d="M${px + 16} ${py + 8} Q${px + 11} ${py + 25} ${px + 16} ${py + 42} M${px + 24} ${py + 7} V${py + 43} M${px + 32} ${py + 8} Q${px + 37} ${py + 25} ${px + 32} ${py + 42}" stroke="#D96A1C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
@@ -724,7 +726,8 @@ export const MAZE_THEMES = {
     deco: (px, py, i) => `<circle cx="${px + 10 + jit(i, 1) * 28}" cy="${py + 10 + jit(i, 2) * 28}" r="1.6" fill="#C79B62"/><circle cx="${px + 12 + jit(i, 3) * 24}" cy="${py + 14 + jit(i, 4) * 22}" r="1.2" fill="#C79B62"/>`,
   },
   galaxy: {
-    side: '#3A2A8C', name: 'Galaxy', board: '#17123A', floor: '#2A2468', seen: '#3D368F', start: '#3FBFB0', startEdge: '#9FFFF2', post: '#FFD84D', postEdge: '#B8901A',
+    side: '#3A2A8C', ui: { p: ['#2E2774', '#1E1A52', '#6E5BD6'], hint: '#D9D2FF', b: ['#9C86F0', '#6A50C8', '#2A1C6E', '#FFFFFF'], g: 'linear-gradient(#6FEBD8, #2FB8A6)', ge: '#17756A', t: ['#3A3290', '#5B4CB8', '#5EE3D0'] },
+    name: 'Galaxy', board: '#17123A', floor: '#2A2468', seen: '#3D368F', start: '#3FBFB0', startEdge: '#9FFFF2', post: '#FFD84D', postEdge: '#B8901A',
     // A space-rock cube: lit top face, darker front face with its own craters.
     cube: true,
     wall: (px, py, i) => {
@@ -744,14 +747,16 @@ export const MAZE_THEMES = {
     deco: (px, py, i) => star4(px + 8 + jit(i, 1) * 30, py + 8 + jit(i, 2) * 30, 2.6, '#fff') + `<circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1" fill="#C9C2FF"/>`,
   },
   unicorn: {
-    side: '#D98BC4', name: 'Unicorn', board: '#FFB8E1', floor: '#FFF1FA', seen: '#FFDDF1', start: '#C8F2E4', startEdge: '#7FD6BC', post: '#FFFFFF', postEdge: '#E58BC0',
+    side: '#D98BC4', ui: { p: ['#FFF6FC', '#FFE3F3', '#F59ACB'], hint: '#A3326F', b: ['#FFFFFF', '#FFD6EE', '#E07AB4', '#A3326F'], g: 'linear-gradient(90deg, #FF8FA8, #FFC27A, #FFE66B, #8EE3A0, #8CC8FF, #C5A3FF)', ge: '#C96AD6', t: ['#FFF6FC', '#F7C1E0', '#C96AD6'] },
+    name: 'Unicorn', board: '#FFB8E1', floor: '#FFF1FA', seen: '#FFDDF1', start: '#C8F2E4', startEdge: '#7FD6BC', post: '#FFFFFF', postEdge: '#E58BC0',
     wall: (px, py, i) => `<clipPath id="uw${i}"><rect x="${px + 3}" y="${py + 5}" width="${C - 6}" height="${C - 9}" rx="11"/></clipPath>
       <g clip-path="url(#uw${i})">${['#FF8FA8', '#FFC27A', '#FFE66B', '#8EE3A0', '#8CC8FF', '#C5A3FF'].map((c, k) => `<rect x="${px}" y="${py + 5 + k * 6.5}" width="${C}" height="7" fill="${c}"/>`).join('')}</g>
       <rect x="${px + 3}" y="${py + 5}" width="${C - 6}" height="${C - 9}" rx="11" fill="none" stroke="#fff" stroke-width="3"/>${star4(px + 34, py + 15, 5, '#fff')}`,
     deco: (px, py, i) => ['#FF8FC8', '#B79CFF', '#8CC8FF'].map((c, k) => `<circle cx="${px + 8 + jit(i, k * 2) * 32}" cy="${py + 8 + jit(i, k * 2 + 1) * 32}" r="1.5" fill="${c}"/>`).join(''),
   },
   kitchen: {
-    side: '#A8763A', name: 'Dumpling kitchen', board: '#E9B98A', floor: '#D3F1E4', seen: '#B7E6D2', start: '#FFE08A', startEdge: '#E0A93A', post: '#C9935A', postEdge: '#8A5634',
+    side: '#A8763A', ui: { p: ['#F2FBF6', '#D9F2E6', '#8CCFB2'], hint: '#2E6B55', b: ['#F6DDA4', '#E8C27A', '#9C6A3A', '#5A3A22'], g: 'linear-gradient(#FF8A7A, #EE5146)', ge: '#B83A30', t: ['#F2FBF6', '#B7E6D2', '#EE5146'] },
+    name: 'Dumpling kitchen', board: '#E9B98A', floor: '#D3F1E4', seen: '#B7E6D2', start: '#FFE08A', startEdge: '#E0A93A', post: '#C9935A', postEdge: '#8A5634',
     // A tall stack of bamboo steamer baskets, nothing underneath.
     cube: true,
     wall: (px, py) => {
@@ -767,24 +772,27 @@ export const MAZE_THEMES = {
     deco: (px, py) => `<path d="M${px + 24} ${py + 4} V${py + 44} M${px + 4} ${py + 24} H${px + 44}" stroke="#fff" stroke-width="2" opacity=".7"/>`,
   },
   snow: {
-    side: '#6FA9CF', name: 'Snow day', board: '#BFE3F7', floor: '#F6FBFF', seen: '#E1F0FA', start: '#BDF0D0', startEdge: '#6CC48E', post: '#8FB8D6', postEdge: '#5A86A8',
-    // An ice block seen from above: the whole top face is a snow pile that
-    // drips a little over the front edge, and the front face is clear ice.
+    side: '#6FA9CF', ui: { p: ['#FFFFFF', '#E6F4FC', '#8CC6EA'], hint: '#2A5C80', b: ['#FFFFFF', '#D6EEFB', '#5FA3CF', '#2A5C80'], g: 'linear-gradient(#8CD3FF, #4AA8E8)', ge: '#2B74AE', t: ['#FFFFFF', '#BFE0F5', '#4AA8E8'] },
+    name: 'Snow day', board: '#BFE3F7', floor: '#F6FBFF', seen: '#E1F0FA', start: '#BDF0D0', startEdge: '#6CC48E', post: '#8FB8D6', postEdge: '#5A86A8',
+    // An ice block: clear ice on top and front, with a little cap of snow
+    // on the top face.
     cube: true,
-    wall: (px, py) => {
+    wall: (px, py, i) => {
       const l = px + 3, r = px + 45, t = py + 1, e = py + 32, b = py + 47;
-      return `<rect x="${l}" y="${t}" width="${r - l}" height="${b - t}" rx="7" fill="#8CCBEE" stroke="#3F86B5" stroke-width="2.5"/>
-        <path d="M${l + 7} ${e + 5} L${l + 14} ${b - 4} M${l + 17} ${e + 5} L${l + 21} ${b - 7}" stroke="#E6F6FF" stroke-width="2.5" stroke-linecap="round"/>
-        <path d="M${l + 1.5} ${e + 2} V${t + 7} Q${l + 1.5} ${t + 1.5} ${l + 7} ${t + 1.5} H${r - 7} Q${r - 1.5} ${t + 1.5} ${r - 1.5} ${t + 7} V${e + 2}
-          Q${r - 5} ${e + 7} ${r - 9} ${e + 2} Q${r - 14} ${e + 5} ${r - 18} ${e + 1} Q${px + 22} ${e + 8} ${l + 14} ${e + 2} Q${l + 8} ${e + 6} ${l + 1.5} ${e + 2}Z" fill="#FFFFFF"/>
-        <path d="M${l + 6} ${e - 4} Q${px + 24} ${e - 1} ${r - 6} ${e - 5}" stroke="#D8ECF8" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <ellipse cx="${px + 16}" cy="${py + 10}" rx="6" ry="2.5" fill="#EEF8FF"/>
+      const capR = i % 2 ? r - 14 : r - 20;
+      return `<rect x="${l}" y="${t}" width="${r - l}" height="${b - t}" rx="7" fill="#7FC2EA" stroke="#3F86B5" stroke-width="2.5"/>
+        <path d="M${l + 1.5} ${e} V${t + 7} Q${l + 1.5} ${t + 1.5} ${l + 7} ${t + 1.5} H${r - 7} Q${r - 1.5} ${t + 1.5} ${r - 1.5} ${t + 7} V${e}Z" fill="#BDE6FB"/>
+        <path d="M${l + 1.5} ${e} H${r - 1.5}" stroke="#5FA3CF" stroke-width="2"/>
+        <path d="M${l + 9} ${t + 25} L${l + 20} ${t + 12} M${l + 22} ${t + 26} L${l + 28} ${t + 18}" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".85"/>
+        <path d="M${l + 6} ${e + 4} L${l + 12} ${b - 4} M${r - 12} ${e + 4} L${r - 8} ${b - 6}" stroke="#D6F0FF" stroke-width="2" stroke-linecap="round"/>
+        <path d="M${l + 1.5} ${t + 9} Q${l + 1.5} ${t + 1.5} ${l + 8} ${t + 1.5} H${capR} Q${capR + 6} ${t + 2} ${capR + 3} ${t + 7} Q${capR - 4} ${t + 11} ${capR - 10} ${t + 8} Q${l + 12} ${t + 14} ${l + 1.5} ${t + 12}Z" fill="#fff"/>
         <rect x="${l}" y="${t}" width="${r - l}" height="${b - t}" rx="7" fill="none" stroke="#3F86B5" stroke-width="2.5"/>`;
     },
     deco: (px, py, i) => { const x = px + 12 + jit(i, 1) * 24, y = py + 12 + jit(i, 2) * 24; return `<path d="M${x - 4} ${y} H${x + 4} M${x} ${y - 4} V${y + 4} M${x - 3} ${y - 3} L${x + 3} ${y + 3} M${x + 3} ${y - 3} L${x - 3} ${y + 3}" stroke="#B9DDF2" stroke-width="1.4" stroke-linecap="round"/>`; },
   },
   sea: {
-    side: '#D98A7A', name: 'Seashell beach', board: '#3FA7D6', floor: '#F3E2B3', seen: '#E8D196', start: '#9BE7D8', startEdge: '#3BB5A0', post: '#FF9A8A', postEdge: '#D2604F',
+    side: '#D98A7A', ui: { p: ['#FFF8E4', '#F3E2B3', '#E0B866'], hint: '#7A5A20', b: ['#FFE7DD', '#FFB8A8', '#D9705F', '#7A2E22'], g: 'linear-gradient(#6FD4F5, #2C98CF)', ge: '#1C6A96', t: ['#FFF8E4', '#EBD49A', '#2C98CF'] },
+    name: 'Seashell beach', board: '#3FA7D6', floor: '#F3E2B3', seen: '#E8D196', start: '#9BE7D8', startEdge: '#3BB5A0', post: '#FF9A8A', postEdge: '#D2604F',
     // A classic clam shell: a round fan with ribs, narrowing to a hinge with
     // two little ears at the bottom.
     cube: true,
@@ -801,7 +809,8 @@ export const MAZE_THEMES = {
     deco: (px, py, i) => `<circle cx="${px + 10 + jit(i, 1) * 28}" cy="${py + 10 + jit(i, 2) * 28}" r="2.6" fill="none" stroke="#fff" stroke-width="1.2" opacity=".8"/><circle cx="${px + 10 + jit(i, 3) * 28}" cy="${py + 10 + jit(i, 4) * 28}" r="1.4" fill="none" stroke="#fff" stroke-width="1" opacity=".8"/>`,
   },
   poop: {
-    side: '#7A4E2C', name: 'Poop party', board: '#C9A27A', floor: '#F5E6CF', seen: '#EAD3B1', start: '#BFE8A0', startEdge: '#6DB24A', post: '#8A5634', postEdge: '#5A3A22',
+    side: '#7A4E2C', ui: { p: ['#FBF1E2', '#EBD7BC', '#A8794E'], hint: '#5A3A22', b: ['#E2B07A', '#B97C47', '#6E4223', '#FFFFFF'], g: 'linear-gradient(#FFE07A, #F2B624)', ge: '#A87A10', t: ['#FBF1E2', '#D8B78E', '#8A5634'] },
+    name: 'Poop party', board: '#C9A27A', floor: '#F5E6CF', seen: '#EAD3B1', start: '#BFE8A0', startEdge: '#6DB24A', post: '#8A5634', postEdge: '#5A3A22',
     wall: (px, py, i) => placeSvg(poop({ shape: 'swirl', color: i % 7 === 0 ? 'gold' : 'brown' }), px + 1, py, 46),
     deco: (px, py, i) => i % 4 ? '' : `<circle cx="${px + 12 + jit(i, 1) * 24}" cy="${py + 14 + jit(i, 2) * 20}" r="2" fill="#E2C49A"/>`,
   },

@@ -864,6 +864,10 @@ function mazeView() {
   cells.querySelectorAll('.mcell').forEach(r => r.addEventListener('click', () => onCell(+r.dataset.x, +r.dataset.y)));
   let fence = '';
   for (let x = -6; x <= w + 6; x += 48) fence += `<rect x="${x - 4}" y="-12" width="8" height="14" rx="3" fill="${th.post}" stroke="${th.postEdge}" stroke-width="2"/><rect x="${x - 4}" y="${h - 2}" width="8" height="14" rx="3" fill="${th.post}" stroke="${th.postEdge}" stroke-width="2"/>`;
+  const bar = $('.maze-bar', v), u = th.ui;
+  bar.classList.toggle('themed', !!u);
+  if (u) [['--pb1', u.p[0]], ['--pb2', u.p[1]], ['--pbe', u.p[2]], ['--hint', u.hint], ['--b1', u.b[0]], ['--b2', u.b[1]], ['--be', u.b[2]], ['--bt', u.b[3]],
+    ['--g', u.g], ['--ge', u.ge], ['--tb', u.t[0]], ['--te', u.t[1]], ['--ton', u.t[2]]].forEach(([k, val]) => bar.style.setProperty(k, val));
   const g = $('#mgrid', v);
   g.style.setProperty('--floor', th.floor); g.style.setProperty('--seen', th.seen);
   g.style.setProperty('--start', th.start); g.style.setProperty('--start-edge', th.startEdge);
