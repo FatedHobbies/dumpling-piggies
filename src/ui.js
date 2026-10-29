@@ -4,7 +4,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 47;
+const VERSION = 48;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -231,6 +231,7 @@ function steamerView() {
     <div class="tray panel" id="tray"></div>
   </section>`);
   for (const b of v.querySelectorAll('.spot-hit')) b.addEventListener('click', () => goToSpot(current(), b.dataset.spot));
+  $('.fixture[data-fix="house"]', v).addEventListener('click', () => goToToy(current(), 'house'));
   return v;
 }
 
@@ -371,7 +372,7 @@ function wanderTick() {
       if (r < eat && !spotTaken('bowl', pig.id)) aimAtSpot(w, 'bowl');
       else if (r < eat + 0.1 && !spotTaken('bottle', pig.id)) aimAtSpot(w, 'bottle');
       else if (owned.length && Math.random() < 0.35) aimAtToy(w, owned[Math.floor(Math.random() * owned.length)]);
-      else if (Math.random() < 0.12 && !hideTaken('house', pig.id)) aimAtToy(w, 'house');
+      else if (Math.random() < 0.25 && !hideTaken('house', pig.id)) aimAtToy(w, 'house');
       else { w.tx = 0.08 + Math.random() * 0.84; w.ty = Math.random(); }
       if (d) { d.classList.remove('walking'); syncPose(d, w); }
       continue;
@@ -466,7 +467,7 @@ function goToSpot(pig, id) {
 
 function goToToy(pig, id) {
   const w = wander.get(pig.id);
-  if (!w) return;
+  if (!w || w.hide || w.riding) return;
   if (w.using) stopSpot(w, $(`.piggy[data-id="${pig.id}"]`));
   w.spot = null;
   aimAtToy(w, id);
