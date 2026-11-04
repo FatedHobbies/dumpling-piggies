@@ -835,6 +835,48 @@ function eventPoop(state, pooper, rng) {
   return null;
 }
 
+// The Lucky Poop of the Day: one fancy poop that every player gets on the same
+// calendar day (their own local date), the first poop of that day. It goes
+// through every kind in this list once, in a shuffled order, before any
+// repeats. It never uses the shuffle bags, and missing a day costs nothing.
+export const LUCKY_DAY_BONUS = 10;
+const LUCKY_DAY_POOL = [
+  ...specialsOn('silly').map(id => ({ shape: 'sp', color: id })),
+  ...specialsOn('patterns').map(id => ({ shape: 'sp', color: id })),
+  ...specialsOn('shapes').map(id => ({ shape: 'sp', color: specialVariant(id, 'brown', true) })),
+  ...GLITTER_COLORS.map((color, i) => ({ shape: i % 2 ? 'beans' : 'swirl', color })),
+  { shape: 'swirl', color: 'rainbow' },
+];
+export function dayKey(now = Date.now()) {
+  const d = new Date(now);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+// Same answer for everyone: it only depends on the date ('2026-11-12').
+export function luckyPoopOfDay(key = dayKey()) {
+  const [y, m, d] = key.split('-').map(Number);
+  const day = Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+  const n = LUCKY_DAY_POOL.length;
+  const round = Math.floor(day / n);
+  let seed = (round * 2654435761 + 12345) >>> 0;
+  const rnd = () => {   // mulberry32
+    seed = (seed + 0x6D2B79F5) >>> 0;
+    let t = seed;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const order = LUCKY_DAY_POOL.map((_, i) => i);
+  for (let i = n - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  return { ...LUCKY_DAY_POOL[order[day - round * n]] };
+}
+function luckyDayPoop(state) {
+  if (state.tutorial && !state.tutorial.done) return null;   // the tutorial's first poop stays a plain one
+  const key = dayKey();
+  if (state.luckyDay === key) return null;
+  state.luckyDay = key;
+  return { ...luckyPoopOfDay(key), daily: key };
+}
+
 export function poopKind(state, rng = Math.random) {
   const fed = state.piggies.filter(p => p.hunger > 30);
   const pooper = fed[Math.floor(rng() * fed.length)] || state.piggies[0];
@@ -843,6 +885,8 @@ export function poopKind(state, rng = Math.random) {
   const sp = (color) => ({ shape: 'sp', color, by });
   const ev = eventPoop(state, pooper, rng);
   if (ev) return sp(ev);
+  const daily = luckyDayPoop(state);
+  if (daily) return { ...daily, by };
   const shape = () => rng() < 0.4 ? 'swirl' : 'beans';
   const treasure = drawTreasure(state, 'treasure', TREASURE_BAG, TREASURE_GAP, rng);
   if (treasure === 'gold' || treasure === 'crystal') return { shape: shape(), color: treasure, by };
@@ -973,12 +1017,14 @@ export function scoop(state, id) {
   if (i < 0) return { ok: false };
   const poop = state.poops.splice(i, 1)[0];
   const v = poopValue(poop);
+  const coins = v.coins + (poop.daily ? LUCKY_DAY_BONUS : 0);
   state.compost += v.compost;
-  state.coins += v.coins;
+  state.coins += coins;
   state.stats.scooped += 1;
+  if (poop.daily) state.stats.luckyDays = (state.stats.luckyDays || 0) + 1;
   const isNew = !((state.poopBook || {})[poopKey(poop)] > 0);
   collect(state, poop);
-  return { ok: true, coins: v.coins, compost: v.compost, poop, isNew };
+  return { ok: true, coins, compost: v.compost, poop, isNew, daily: !!poop.daily };
 }
 
 // Planting costs compost by row of the 4x4 crop grid: row 1 costs 1, row 4 costs 4.

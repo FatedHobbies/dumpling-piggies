@@ -5,7 +5,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 159;
+const VERSION = 160;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -541,7 +541,7 @@ function updateSteamer() {
     // made while away, on another tab, or while every piggy is busy waits
     // (unseen) until the Pen is open and a piggy is free, one at a time.
     if (!poops.has(poop.id) && (poop.seen || dropReady(poop))) {
-      const b = el(`<button class="poop ${poop.color || 'brown'}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y};z-index:${depth(poop.y)}">${Art.poop(poop)}</button>`);
+      const b = el(`<button class="poop ${poop.color || 'brown'}${poop.daily ? ' daily' : ''}" data-id="${poop.id}" aria-label="Scoop the poop" style="--x:${poop.x};--y:${poop.y};z-index:${depth(poop.y)}">${Art.poop(poop)}</button>`);
       b.addEventListener('click', () => onScoop(poop.id, b));
       floor.appendChild(b);
       if (!poop.seen) { poop.seen = true; if (!dropFromPiggy(poop, b)) sfx.plop(); }
@@ -1316,7 +1316,10 @@ function onScoop(id, btn) {
   floatCoin(r.coins);
   const c = r.poop.color;
   const sp = G.isSpecialPoop(r.poop) && G.parseSpecial(c).def;
-  if (c === 'rainbow' || c === 'gold' || c === 'crystal' || (sp && (r.isNew || (sp.page !== 'shapes' && sp.page !== 'patterns')))) {
+  if (r.daily) {
+    sfx.fanfare();
+    popup('Lucky Poop!', `<div class="pig-card poop-card lucky-day">${Art.poop(r.poop)}</div><p>Everyone's Piggies made a <b>${G.poopName(r.poop)}</b> poop today! ${r.isNew ? 'It goes in the Poop Book! ' : ''}That's worth <b>${r.coins} coins</b>.</p>`, 'Lucky!');
+  } else if (c === 'rainbow' || c === 'gold' || c === 'crystal' || (sp && (r.isNew || (sp.page !== 'shapes' && sp.page !== 'patterns')))) {
     sfx.fanfare();
     const title = !sp ? (c === 'gold' ? 'A golden poop!' : c === 'crystal' ? 'A crystal poop!' : 'A rainbow poop!')
       : `${/^[aeio]/i.test(sp.name) ? 'An' : 'A'} ${sp.name.toLowerCase()} poop!`;
