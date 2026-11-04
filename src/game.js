@@ -293,10 +293,10 @@ export function wearHat(state, piggyId, id) {
 // `state.gifts` is { got: gifts opened ever, day: dayKey() of the last one }.
 export const GIFTS = [
   { kind: 'coins', n: 25 },
-  { kind: 'compost', n: 3 },
+  { kind: 'dumplings', n: 5 },
   { kind: 'veggies', n: 4 },
   { kind: 'coins', n: 50 },
-  { kind: 'compost', n: 5 },
+  { kind: 'dumplings', n: 8 },
   { kind: 'dumplings', n: 2 },
   { kind: 'hat' },
 ];
