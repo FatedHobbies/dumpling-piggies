@@ -1041,12 +1041,14 @@ export function feed(state, key, piggyId = null, now = Date.now()) {
   p.fun = clamp(p.fun + 5, 0, 100);
   state.coins += r.coins;
   state.stats.fed += 1;
-  if (r.effect) { p.effect = r.effect; p.effectUntil = now + 20000; }
+  // No sleepy or zoomy effects in the tutorial: her piggy stays put for the arrow.
+  const effect = state.tutorial && !state.tutorial.done ? null : r.effect;
+  if (effect) { p.effect = effect; p.effectUntil = now + 20000; }
   p.lastFood = key;
   p.foodTry = true;   // the next poop gets one try at the hay or mystery legendary
   // Eating makes poop more likely soon.
   state.poopTimer = (state.poopTimer || 0) + 45;
-  return { ok: true, coins: r.coins, effect: r.effect, piggy: p };
+  return { ok: true, coins: r.coins, effect, piggy: p };
 }
 
 // Each piggy pays for petting at most once every few seconds, so spam-tapping
