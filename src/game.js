@@ -292,10 +292,10 @@ export function wearHat(state, piggyId, id) {
 // round again. Missing a day never costs anything; the next gift just waits.
 // `state.gifts` is { got: gifts opened ever, day: dayKey() of the last one }.
 export const GIFTS = [
-  { kind: 'coins', n: 25 },
+  { kind: 'coins', n: 10 },
   { kind: 'dumplings', n: 5 },
-  { kind: 'veggies', n: 4 },
-  { kind: 'coins', n: 50 },
+  { kind: 'veggies', n: 5 },
+  { kind: 'coins', n: 15 },
   { kind: 'dumplings', n: 8 },
   { kind: 'coins', n: 15 },
   { kind: 'hat' },
@@ -317,10 +317,10 @@ export function openGift(state, now = Date.now(), rng = Math.random) {
   if (g.kind === 'coins') state.coins += g.n;
   if (g.kind === 'compost') state.compost += g.n;
   if (g.kind === 'veggies') {
-    // Two of each of the two veggies she has fewest of.
+    // n of each of the two veggies she has fewest of.
     const pick = unlockedFillings(state).filter(f => f !== 'hay')
       .sort((a, b) => (state.pantry[a] || 0) - (state.pantry[b] || 0)).slice(0, 2);
-    for (const f of pick) state.pantry[f] = (state.pantry[f] || 0) + 2;
+    for (const f of pick) state.pantry[f] = (state.pantry[f] || 0) + g.n;
     r.fillings = pick;
   }
   if (g.kind === 'dumplings') {

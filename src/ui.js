@@ -2427,7 +2427,7 @@ function giftCalendar() {
     const r = opened;
     const items = r.kind === 'coins' ? [`${Art.coinIcon()} +${r.n}`]
       : r.kind === 'compost' ? [`${Art.compostIcon()} +${r.n}`]
-      : r.kind === 'veggies' ? r.fillings.map(f => `${Art.veggie(f, 40)} +2`)
+      : r.kind === 'veggies' ? r.fillings.map(f => `${Art.veggie(f, 40)} +${r.n}`)
       : r.kind === 'dumplings' ? [`${Art.dumpling(r.key, 48)} +${r.n}`]
       : [`${Art.hatIcon(r.hat)}`];
     $('.gift-days', box).innerHTML = days();
