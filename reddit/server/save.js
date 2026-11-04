@@ -18,7 +18,20 @@ export const readSave = async (userId) => {
   return raw ? JSON.parse(raw) : null;
 };
 
+// Once an hour the save being replaced is kept as a backup, so a save that went wrong
+// (or a game that started fresh over an unreadable save) can be put back by hand.
+export const backupKey = (userId) => `backup:${userId}`;
+const backupAtKey = (userId) => `backupAt:${userId}`;
+const BACKUP_EVERY = 3600_000;
+
 export const writeSave = async (userId, state) => {
+  const now = Date.now();
+  const last = Number((await redis.get(backupAtKey(userId))) ?? 0);
+  if (now - last > BACKUP_EVERY) {
+    const old = await redis.get(saveKey(userId));
+    if (old) await redis.set(backupKey(userId), old);
+    await redis.set(backupAtKey(userId), String(now));
+  }
   await redis.set(saveKey(userId), JSON.stringify(state));
 };
 
@@ -39,6 +52,6 @@ export const notePlayer = (userId, username) => redis.hSet(PLAYERS_KEY, { [userI
 
 // Reddit's rules: when an account is deleted, its data must leave every store.
 export const forgetPlayer = async (userId) => {
-  await redis.del(saveKey(userId), entKey(userId), sessionKey(userId));
+  await redis.del(saveKey(userId), entKey(userId), sessionKey(userId), backupKey(userId), backupAtKey(userId));
   await redis.hDel(PLAYERS_KEY, [userId]);
 };

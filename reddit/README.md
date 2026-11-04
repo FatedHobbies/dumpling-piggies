@@ -13,7 +13,7 @@ Nothing in this folder changes the web version.
 | `client/reddit-boot.js` | Fetches the player's save, then starts the game. If the save can't be read it shows "Try again" and never starts a fresh game over it. If the game is opened on a second device, the older copy stops saving and says "open somewhere else". Bundled; import game files as `./src/<file>.js`. |
 | `client/splash.*` | The post in the feed: title, three Piggies, a dumpling and a Play button that opens the game full size. Returning players see their own Piggies and "Pudding is waiting for you!". |
 | `client/reddit.css` | On a wide screen (Reddit on a computer) the game stays a phone-shaped column. |
-| `server/` | Hono server: `GET /api/load`, `POST /api/save`, `POST /api/wipe`, `GET /api/peek` (feed post). Redis keys: `save:{userId}`, `ent:{userId}` (Reddit coin packs), `session:{userId}`, hash `players`. |
+| `server/` | Hono server: `GET /api/load`, `POST /api/save`, `POST /api/wipe`, `GET /api/peek` (feed post). Redis keys: `save:{userId}`, `backup:{userId}` (the save as it was up to an hour ago), `ent:{userId}` (Reddit coin packs), `session:{userId}`, hash `players`. |
 | `assets/icon-1024.png` | App icon for the Reddit app directory (1024 x 1024). |
 | `local/server.mjs` | Plays the Reddit build on your computer without Reddit (fake server, one save in `local/.save.json`). |
 
