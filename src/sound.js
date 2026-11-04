@@ -6,7 +6,9 @@ function ac() {
   if (!ctx) {
     try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  // iPhones leave the sound 'interrupted' after a call or a trip to the
+  // home screen; a tap wakes it up again.
+  if (ctx.state !== 'running' && ctx.state !== 'closed') Promise.resolve(ctx.resume()).catch(() => {});
   return ctx;
 }
 

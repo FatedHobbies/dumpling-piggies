@@ -5,7 +5,7 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 
-const VERSION = 157;
+const VERSION = 158;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -33,8 +33,17 @@ export function start() {
     state = G.newState();
     welcome = 'new';
   } else {
-    G.migrate(state);
-    welcome = G.applyAway(state);
+    try {
+      G.migrate(state);
+      if (!state.piggies.length) throw new Error('no piggies');
+      welcome = G.applyAway(state);
+    } catch (e) {
+      // A save that can't be read should never leave a blank screen.
+      // Keep a copy of it so it can be looked at, and start fresh.
+      try { localStorage.setItem('dumpling-piggies-broken', JSON.stringify(load())); } catch (e2) { /* ignore */ }
+      state = G.newState();
+      welcome = 'new';
+    }
   }
   if (!state.maze) state.maze = M.newMaze();
   selectedPig = state.piggies[0].id;
@@ -45,13 +54,7 @@ export function start() {
     const p = state.piggies[0];
     popup('A new friend!', `<div class="pig-card big">${Art.piggySide({ coat: p.coat })}</div>
       <p>This is <b>${esc(p.name)}</b>. Feed them dumplings, pet them, and scoop their poop!</p>`, 'Hello!');
-  } else if (welcome.away > 120) {
-    const mins = Math.round(welcome.away / 60);
-    const when = mins >= 120 ? `${Math.round(mins / 60)} hours` : `${mins} minutes`;
-    popup('Welcome back!', `<p class="reward-time">You were away <b>${when}</b></p>
-      <div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${welcome.coins}</span>
-      ${welcome.scooped ? `<span class="reward-item">${Art.compostIcon()} +${welcome.scooped}</span>` : ''}</div>`, 'Claim');
-  }
+  } else welcomeBack(welcome);
   if (state.penNews) {
     const n = state.penNews, names = n.away.map(esc);
     const who = names.length ? `<b>${names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]}</b>` : '';
@@ -65,11 +68,38 @@ export function start() {
   setInterval(wanderTick, 100);
   setInterval(positionArrow, 100);
   setInterval(persist, 5000);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); else resume(); });
+  window.addEventListener('pageshow', resume);
   window.addEventListener('pagehide', persist);
 }
 
+// The coins and compost earned while she was away.
+function welcomeBack(w) {
+  if (w.away <= 120) return;
+  const mins = Math.round(w.away / 60);
+  const when = mins >= 120 ? `${Math.round(mins / 60)} hours` : `${mins} minutes`;
+  popup('Welcome back!', `<p class="reward-time">You were away <b>${when}</b></p>
+    <div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${w.coins}</span>
+    ${w.scooped ? `<span class="reward-item">${Art.compostIcon()} +${w.scooped}</span>` : ''}</div>`, 'Claim');
+}
+
+// A phone can keep the game asleep in the background for hours without
+// closing it. When it wakes up, count that time like a fresh visit would.
+function resume() {
+  if (wiped || Date.now() - state.lastSeen < 120 * 1000) return false;
+  if (run) stopRun();
+  const w = G.applyAway(state);
+  lastTick = Date.now();
+  persist();
+  welcomeBack(w);
+  render(true);
+  return true;
+}
+
 function loop() {
+  if (resume()) return;
+  // A popup that had to wait behind a picker or the settings shows now.
+  if (popupQueue.length && !$('.modal')) popup(...popupQueue.shift());
   const now = Date.now();
   const dt = Math.min((now - lastTick) / 1000, 60);
   lastTick = now;

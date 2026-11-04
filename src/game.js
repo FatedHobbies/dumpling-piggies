@@ -637,7 +637,8 @@ export function tick(state, dt, now = Date.now()) {
 // Called once on load. Simulates the time away in coarse steps so the piggies
 // don't drain to zero while she sleeps, then summarises what happened.
 export function applyAway(state, now = Date.now()) {
-  const away = Math.max(0, (now - state.lastSeen) / 1000);
+  const from = state.lastSeen;   // tick() moves lastSeen along, so keep where the time away began
+  const away = Math.max(0, (now - from) / 1000);
   const simulated = Math.min(away, MAX_AWAY);
   const before = state.coins;
   const poopsBefore = state.poops.length;
@@ -645,7 +646,7 @@ export function applyAway(state, now = Date.now()) {
   let t = 0;
   while (t < simulated) {
     const step = Math.min(30, simulated - t);
-    tick(state, step, state.lastSeen + (t + step) * 1000);
+    tick(state, step, from + (t + step) * 1000);
     if (state.upgrades.autoscoop) robotScoop(state, robot);   // keeps room in the pen for rare ones
     t += step;
   }

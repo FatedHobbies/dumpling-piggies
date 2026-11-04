@@ -2,11 +2,11 @@
 // Offline support: cache the app shell on install, serve from cache first,
 // and refresh the cache in the background. Bump CACHE when files change.
 // Install skips the browser's HTTP cache so a new version never caches old files.
-const CACHE = 'dumpling-piggies-v157';
+const CACHE = 'dumpling-piggies-v158';
 const SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './src/ui.js', './src/game.js', './src/art.js', './src/save.js', './src/sound.js', './src/maze.js', './src/names.js',
-  './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png',
+  './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-512-maskable.png', './icons/icon-180.png',
 ];
 
 self.addEventListener('install', (e) => {
