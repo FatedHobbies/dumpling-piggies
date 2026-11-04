@@ -1896,7 +1896,7 @@ function syncPacks() {
   P.getStore().owned().then(skus => { P.applyPacks(state, skus); persist(); render(true); }).catch(() => {});
 }
 
-const PACK_ICON = { 'roomy-pen': 'pen', 'super-sprouts': 'sun', 'helper-bundle': 'robot' };
+const PACK_ICON = { 'roomy-pen': 'pen', 'super-sprouts': 'sun', 'helper-bundle': 'robot', 'bundle-rest-sprouts': 'robot', 'bundle-rest-pen': 'robot' };
 const packArt = (sku) => P.PACKS[sku].hats ? Art.hatIcon(P.PACKS[sku].hats[0]) : Art.upgradeIcon(PACK_ICON[sku] || 'sun');
 // Gold-only hats show only where Gold packs are sold, or once owned.
 const shownHats = () => Object.entries(G.HATS).filter(([id, h]) => !h.pack || state.hats[id] || P.packsEnabled());
@@ -1950,17 +1950,19 @@ const SUGGEST = {
 };
 function suggestPack(sku) {
   if (!P.packsEnabled() || !(state.tutorial && state.tutorial.done) || $('.modal')) return;
-  if (!P.packsForSale(state).some(p => p.sku === sku)) return;
+  // A finish-the-bundle pack can stand in for the pack it replaces.
+  const offer = P.packsForSale(state).find(p => p.sku === sku || (p.rest && p.rest.replaces === sku));
+  if (!offer) return;
   const t = state.packTips = state.packTips || { day: '', seen: {} };
   const day = new Date().toDateString();
   if (t.day === day || (t.seen[sku] || 0) >= SUGGEST_MAX) return;
   t.day = day; t.seen[sku] = (t.seen[sku] || 0) + 1; persist();
-  const s = SUGGEST[sku], pk = P.PACKS[sku];
+  const s = SUGGEST[sku], pk = P.PACKS[offer.sku];
   const box = el(`<div class="modal"><div class="card panel suggest"><div class="ribbon"><span>${s.title}</span></div>
     ${s.art()}<p>${s.text()}</p>
     <div class="row center"><button class="btn btn-grey">Not now</button><button class="btn big gold-btn">${pk.gold} Gold</button></div></div></div>`);
   $('.btn-grey', box).onclick = () => { box.remove(); sfx.pop(); updateCoach(); };
-  $('.gold-btn', box).onclick = () => { box.remove(); updateCoach(); buyPack(sku); };
+  $('.gold-btn', box).onclick = () => { box.remove(); updateCoach(); buyPack(offer.sku); };
   sfx.pop();
   document.body.appendChild(box);
 }

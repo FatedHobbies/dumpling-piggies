@@ -29,10 +29,10 @@ export const PACKS = {
   'helper-bundle': {
     name: 'Big Helper Bundle',
     desc: 'Roomy Pen, Super Sprouts, Robo-scooper, Big bowl and a fourth garden plot.',
-    gold: 400,
+    gold: 500,
     upgrades: ['pen2', 'sunlamp', 'autoscoop', 'bigbowl', 'plot4'],
     perks: ['supersprout'],
-    // Only offered while it is cheaper than the Gold packs the player would still need.
+    // Only offered while it costs no more than the Gold packs the player would still need.
     bundles: ['roomy-pen', 'super-sprouts'],
   },
   'golden-crown': {
@@ -42,6 +42,25 @@ export const PACKS = {
     upgrades: [],
     perks: [],
     hats: ['goldcrown'],
+  },
+  // "Finish the bundle": if you bought one of the bundle's packs with Gold, the
+  // rest costs the bundle price minus what you paid, so you never pay more than
+  // the bundle. Each one replaces the single pack you're still missing.
+  'bundle-rest-sprouts': {
+    name: 'Finish the Helper Bundle',
+    desc: 'You have the Roomy Pen! Add Super Sprouts, Robo-scooper, Big bowl and a fourth garden plot.',
+    gold: 300,
+    upgrades: ['sunlamp', 'autoscoop', 'bigbowl', 'plot4'],
+    perks: ['supersprout'],
+    rest: { owns: 'roomy-pen', replaces: 'super-sprouts' },
+  },
+  'bundle-rest-pen': {
+    name: 'Finish the Helper Bundle',
+    desc: 'You have Super Sprouts! Add the Roomy Pen, Robo-scooper, Big bowl and a fourth garden plot.',
+    gold: 200,
+    upgrades: ['pen2', 'autoscoop', 'bigbowl', 'plot4'],
+    perks: [],
+    rest: { owns: 'super-sprouts', replaces: 'roomy-pen' },
   },
 };
 
@@ -115,11 +134,15 @@ export function packsForSale(state) {
   const own = new Set(state.packs || []);
   const gives = (p) => p.perks.some(k => !hasPerk(state, k)) || p.upgrades.some(u => !state.upgrades[u]) || (p.hats || []).some(h => !state.hats[h]);
   const open = (sku) => !own.has(sku) && gives(PACKS[sku]);
-  // A bundle must stay a deal: once a piece is owned (by pack or by gems),
-  // buying the rest on its own is cheaper, so the bundle steps aside.
-  const deal = (p) => !p.bundles || p.bundles.filter(open).reduce((n, sku) => n + PACKS[sku].gold, 0) > p.gold;
+  // A bundle must stay a deal (the helpers come free): once a piece is owned
+  // (by pack or by gems), buying the rest on its own is cheaper, so it steps aside.
+  const deal = (p) => !p.bundles || p.bundles.filter(open).reduce((n, sku) => n + PACKS[sku].gold, 0) >= p.gold;
+  // A finish-the-bundle pack shows only for players who bought the other half
+  // with Gold, while the half it replaces is still missing.
+  const restFor = (p) => !p.rest || (own.has(p.rest.owns) && !own.has('helper-bundle') && open(p.rest.replaces));
+  const replaced = new Set(Object.values(PACKS).filter(p => p.rest && restFor(p) && gives(p)).map(p => p.rest.replaces));
   return Object.entries(PACKS)
-    .filter(([sku, p]) => open(sku) && deal(p))
+    .filter(([sku, p]) => open(sku) && deal(p) && restFor(p) && !replaced.has(sku))
     .map(([sku, p]) => ({ sku, ...p }));
 }
 

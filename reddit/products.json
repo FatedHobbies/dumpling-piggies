@@ -19,7 +19,7 @@
       "sku": "helper-bundle",
       "displayName": "Big Helper Bundle",
       "description": "Roomy Pen, Super Sprouts, Robo-scooper, Big bowl and a fourth garden plot.",
-      "price": 400,
+      "price": 500,
       "accountingType": "DURABLE"
     },
     {
@@ -27,6 +27,20 @@
       "displayName": "Golden Crown",
       "description": "A shiny golden dumpling crown that any Piggy can wear. Only in this pack!",
       "price": 100,
+      "accountingType": "DURABLE"
+    },
+    {
+      "sku": "bundle-rest-sprouts",
+      "displayName": "Finish the Helper Bundle",
+      "description": "You have the Roomy Pen! Add Super Sprouts, Robo-scooper, Big bowl and a fourth garden plot.",
+      "price": 300,
+      "accountingType": "DURABLE"
+    },
+    {
+      "sku": "bundle-rest-pen",
+      "displayName": "Finish the Helper Bundle",
+      "description": "You have Super Sprouts! Add the Roomy Pen, Robo-scooper, Big bowl and a fourth garden plot.",
+      "price": 200,
       "accountingType": "DURABLE"
     }
   ]
