@@ -1371,6 +1371,7 @@ function onScoop(id, btn) {
   floatCoin(r.coins);
   const c = r.poop.color;
   const sp = G.isSpecialPoop(r.poop) && G.parseSpecial(c).def;
+  lastScooped = r.poop;
   if (r.daily) {
     sfx.fanfare();
     popup('Lucky Poop!', `<div class="pig-card poop-card lucky-day">${Art.poop(r.poop)}</div><p>Everyone's Piggies made a <b>${G.poopName(r.poop)}</b> poop today! ${r.isNew ? 'It goes in the Poop Book! ' : ''}That's worth <b>${r.coins} gems</b>.</p>`, 'Lucky!');
@@ -1539,6 +1540,8 @@ function onCook() {
   const r = G.cook(state, selected[0], selected[1]);
   selected = [];
   if (!r.ok) { sfx.nope(); toast('Not enough fillings'); render(); return; }
+  // The tutorial waits while it steams, so the arrow doesn't jump back to the veggies.
+  if (tutStep()) tutWait = Date.now() + 1600;
   const stage = $('#kstage');
   stage.classList.remove('cooking'); void stage.offsetWidth; stage.classList.add('cooking');
   sfx.pop();
@@ -1722,7 +1725,7 @@ function checkMazeThemes() {
 function buyTheme(id) {
   const u = MAZE_UNLOCKS[id];
   if (ownsTheme(id) || !u.cost) return;
-  if (state.coins < u.cost) { sfx.nope(); toast(`Need ${u.cost - state.coins} more coins`); return; }
+  if (state.coins < u.cost) { sfx.nope(); toast(`Need ${u.cost - state.coins} more gems`); return; }
   state.coins -= u.cost;
   state.mazeThemes = { ...(state.mazeThemes || {}), [id]: true };
   state.mazeStyle = id;
@@ -1996,7 +1999,7 @@ function updateShop() {
   const stab = SHOP_TABS.some(t => t.id === state.shopTab) ? state.shopTab : 'piggies';
   document.querySelectorAll('.stab').forEach(b => {
     b.classList.toggle('active', b.dataset.stab === stab);
-    b.onclick = () => { if (state.shopTab !== b.dataset.stab) { state.shopTab = b.dataset.stab; sfx.pop(); persist(); render(); } };
+    b.onclick = () => { if (state.shopTab !== b.dataset.stab) { state.shopTab = b.dataset.stab; sfx.pop(); persist(); render(); $('#view').scrollTop = 0; } };  // a new section starts at its top
   });
   document.querySelectorAll('.shop-sec').forEach(sec => { sec.hidden = sec.dataset.sec !== stab; });
   const mt = $('#mthemes');
@@ -2036,7 +2039,7 @@ function updateShop() {
           sfx.pop(); toast(r.where === 'pen' ? `${t.name} is in the pen!` : `${t.name} went in the toy box`); render(); return;
         }
         const r = G.buyToy(state, id);
-        if (!r.ok) { sfx.nope(); toast(`Need ${t.cost - state.coins} more coins`); return; }
+        if (!r.ok) { sfx.nope(); toast(`Need ${t.cost - state.coins} more gems`); return; }
         sfx.fanfare();
         if (r.where === 'pen') popup('New toy!', `<div class="toy-card">${Art.toyArt(id)}</div><p>The <b>${t.name}</b> is in the pen. Go see your piggies play!</p>`, 'Go see!', () => { tab = 'steamer'; render(); });
         else popup('New toy!', `<div class="toy-card">${Art.toyArt(id)}</div><p>The pen is full of toys, so the <b>${t.name}</b> went in the toy box. Take a toy out to make room!</p>`, 'OK');
@@ -2061,7 +2064,7 @@ function updateShop() {
       const b = el(`<button class="offer"><div class="pig-card">${Art.piggySide({ coat: o.coat })}</div><b>${esc(o.name)}</b><small>${G.BREEDS[o.coat.breed].name}</small><em>${G.BREEDS[o.coat.breed].blurb}</em>
         ${cost === 0 ? '<span class="price can">Free!</span>' : price(cost)}</button>`);
       b.addEventListener('click', () => {
-        if (state.coins < cost) { sfx.nope(); toast(`Need ${cost - state.coins} more coins`); return; }
+        if (state.coins < cost) { sfx.nope(); toast(`Need ${cost - state.coins} more gems`); return; }
         const welcome = () => {
           const r = G.adopt(state, i);
           if (!r.ok) { sfx.nope(); toast('No room in the pen'); return; }
@@ -2107,7 +2110,7 @@ function updateShop() {
           if (!trying) { tryHat = { id, pig: p.id }; sfx.pop(); render(); return; }
           if (h.pack) { buyPack(h.pack, () => { tryHat = null; G.wearHat(state, p.id, id); }); return; }
           const r = G.buyHat(state, id);
-          if (!r.ok) { sfx.nope(); toast(`Need ${h.cost - state.coins} more coins`); return; }
+          if (!r.ok) { sfx.nope(); toast(`Need ${h.cost - state.coins} more gems`); return; }
           tryHat = null;
           sfx.fanfare(); G.wearHat(state, p.id, id);
           popup('New hat!', `<div class="pig-card big">${Art.piggySide({ coat: p.coat, hat: id })}</div><p><b>${esc(p.name)}</b> is wearing the ${h.name}!</p>`, 'Cute!',
@@ -2139,7 +2142,7 @@ function updateShop() {
       ${owned ? '<span class="price can">Got it!</span>' : price(u.cost)}</button>`);
     b.addEventListener('click', () => {
       const r = G.buy(state, id);
-      if (!r.ok) { sfx.nope(); toast(`Need ${u.cost - state.coins} more coins`); return; }
+      if (!r.ok) { sfx.nope(); toast(`Need ${u.cost - state.coins} more gems`); return; }
       sfx.fanfare(); toast(`Bought ${u.name}!`, 'big'); render(true);
     });
     items.appendChild(b);
@@ -2163,6 +2166,12 @@ function poopBook() {
   };
   // One page per rarity group, flipped with the arrows.
   const n = G.POOP_TIERS.length;
+  // In the tutorial ("There's your poop!") open the page the new poop is on.
+  if (tutStep() && lastScooped) {
+    const slot = G.bookSlot({ ...lastScooped, key: G.poopKey(lastScooped) });
+    const at = G.POOP_TIERS.findIndex(t => kinds.some(k => t.colors.includes(k.color) && G.bookSlot(k) === slot));
+    if (at >= 0) bookPageIdx = at;
+  }
   const tiers = G.POOP_TIERS.map((t, i) => {
     const ks = kinds.filter(k => t.colors.includes(k.color));
     const have = ks.filter(k => page[k.key]).length;
@@ -2190,6 +2199,7 @@ function poopBook() {
 
 // Poop Book tabs (Poops / Badges) and page arrows. Delegated, since popups can be queued.
 let bookPageIdx = 0;
+let lastScooped = null;      // the poop scooped last, for the tutorial's book step
 let dbookIdx = 0;           // the Dumpling Book's open page, remembered between visits
 let swipedAt = 0;
 // Flip a book a page forward (1) or back (-1), sliding in from that side.

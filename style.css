@@ -659,7 +659,7 @@ button.pk:active { transform: scale(.95); }
 .stab.active svg { transform: scale(1.12); filter: drop-shadow(0 2px 0 rgba(0,0,0,.2)); }
 .shop-sec[hidden] { display: none; }
 .toys { padding: 10px; }
-.toy-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+.toy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
 .toy-tile > svg { width: 84px; height: 70px; }
 .toy-tile > span:first-of-type { font-family: var(--display); font-weight: 600; font-size: .9rem; }
 .toy-tile small { font-size: .7rem; color: var(--soft); text-align: center; line-height: 1.2; }
@@ -680,6 +680,7 @@ button.pk:active { transform: scale(.95); }
 .toy-tile.box { border-color: var(--line); background: linear-gradient(#FFFFFF, #F1EBDF); }
 .toy-tile.box > svg { opacity: .75; }
 .price.box { color: var(--blue-dark); }
+.theme-tile .price.box { white-space: normal; text-align: center; justify-content: center; }
 .chew-meter { width: 70%; height: 10px; border-radius: 5px; background: rgba(0,0,0,.15); overflow: hidden; margin-top: 2px; }
 .chew-meter i { display: block; height: 100%; background: #FF9A3C; border-radius: 5px; }
 
