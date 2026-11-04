@@ -1,0 +1,26 @@
+{
+  "private": true,
+  "name": "dumpling-piggies-reddit",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "local": "node build.mjs && node local/server.mjs",
+    "login": "devvit login",
+    "dev": "devvit playtest",
+    "deploy": "devvit upload",
+    "launch": "devvit upload && devvit publish"
+  },
+  "engines": { "node": ">=22.0.0" },
+  "dependencies": {
+    "@devvit/web": "0.14.8",
+    "@hono/node-server": "2.1.5",
+    "devvit": "0.14.8",
+    "hono": "4.13.14"
+  },
+  "devDependencies": {
+    "@fontsource/fredoka": "^5.2.8",
+    "@fontsource/nunito": "^5.2.7",
+    "esbuild": "0.28.2"
+  }
+}

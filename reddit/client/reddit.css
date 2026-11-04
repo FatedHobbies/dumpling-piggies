@@ -1,0 +1,6 @@
+/* Reddit only. On a wide screen (Reddit on a computer) the game stays a phone-shaped column
+   instead of stretching the pen across the whole window. */
+@media (min-width: 600px) {
+  html { background: #E8CFA4 radial-gradient(circle at 50% 40%, #F3E1C2, #E2C392); }
+  body { max-width: 480px; margin: 0 auto; box-shadow: 0 0 24px rgba(91, 58, 36, .25); }
+}

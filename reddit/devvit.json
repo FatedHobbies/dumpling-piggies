@@ -1,0 +1,48 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "dumpling-piggies",
+  "post": {
+    "dir": "dist/client",
+    "entrypoints": {
+      "default": {
+        "entry": "splash.html",
+        "height": "tall"
+      },
+      "game": {
+        "entry": "game.html"
+      }
+    }
+  },
+  "server": {
+    "dir": "dist/server",
+    "entry": "index.cjs"
+  },
+  "menu": {
+    "items": [
+      {
+        "label": "Make a Dumpling Piggies post",
+        "description": "Posts a new Dumpling Piggies game in this subreddit",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/post-create"
+      }
+    ]
+  },
+  "triggers": {
+    "onAppInstall": "/internal/triggers/on-app-install"
+  },
+  "scheduler": {
+    "tasks": {
+      "forget-deleted-players": {
+        "endpoint": "/internal/scheduler/forget-deleted-players",
+        "cron": "17 * * * *"
+      }
+    }
+  },
+  "marketingAssets": {
+    "icon": "assets/icon-1024.png"
+  },
+  "scripts": {
+    "build": "node build.mjs"
+  }
+}
