@@ -886,3 +886,19 @@ button.pk:active { transform: scale(.95); }
 .pages > .tier { display: flex; flex-direction: column; }
 .pages > .tier > .dots { margin-top: auto; padding-top: 10px; }
 .pages > .book-pane > .pages { flex: 1; }
+
+/* Smallest phones (320 wide, or a short window like Reddit's): a shorter pen
+   so the dumpling tray always shows, and a slimmer top bar so the name fits. */
+@media (max-height: 620px) {
+  .stage { min-height: 250px; }
+}
+@media (max-width: 340px) {
+  .hud { gap: 3px; padding-left: 4px; padding-right: 4px; }
+  .hud-books { min-width: 96px; gap: 2px; }
+  .hud-books .hud-book svg { width: 26px; height: 26px; }
+  .hud-coins { font-size: .92rem; padding: 3px 6px 3px 3px; gap: 2px; }
+  .hud-coins .coin-ico svg { width: 18px; height: 18px; }
+  .hud-gear { width: 32px; height: 32px; }
+  .hud-gear svg { width: 24px; height: 24px; }
+  .hud-name { font-size: .85rem; }
+}
