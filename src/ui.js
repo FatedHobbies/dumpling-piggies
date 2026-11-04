@@ -1449,12 +1449,17 @@ function lockedCrop(f) {
   return b;
 }
 
+let waitTaps = 0;   // taps on still-growing plots this visit
 function onPlot(i) {
   const plot = $(`.plot[data-plot="${i}"]`);
   if (plot && plot.classList.contains('busy')) return;
   const g = state.garden[i];
   if (g) {
-    if (G.plantProgress(state, i) < 1) { sfx.pop(); toast('Still growing...'); tut('plant'); return; }
+    if (G.plantProgress(state, i) < 1) {
+      sfx.pop(); toast('Still growing...'); tut('plant');
+      if (++waitTaps === 3) setTimeout(() => suggestPack('super-sprouts'), 1200);
+      return;
+    }
     gardenerRun(i, () => {
       const r = G.harvest(state, i);
       if (r.ok) { sfx.pop(); toast(`+2 ${G.FILLINGS[r.filling].name}`); tut('harvest'); render(); }
@@ -1931,6 +1936,35 @@ function packsPanel(box) {
   }
 }
 
+// Now and then, at a moment where a pack would help, gently suggest it.
+// Reddit only, never in the tutorial, never on top of another popup, at most
+// one suggestion a day and each pack at most SUGGEST_MAX times ever.
+const SUGGEST_MAX = 3;
+const SUGGEST = {
+  'roomy-pen': { title: 'Room for one more?', art: () => `<div class="tile-gold pack-art">${packArt('roomy-pen')}</div>`,
+    text: () => 'Your pen is full! The <b>Roomy Pen</b> pack makes room for 4 Piggies and 4 toys right now. You can also save up 600 gems for the Bigger pen in Upgrades.' },
+  'super-sprouts': { title: 'Waiting on veggies?', art: () => `<div class="tile-gold pack-art">${packArt('super-sprouts')}</div>`,
+    text: () => '<b>Super Sprouts</b> makes every veggie grow 4 times as fast, forever.' },
+  'golden-crown': { title: 'Fit for a Piggy king', art: () => `<div class="pig-card big">${Art.piggySide({ coat: current().coat, hat: 'goldcrown' })}</div>`,
+    text: () => `Love hats? The <b>golden dumpling crown</b> is only in the Golden Crown pack. ${esc(current().name)} would look so fancy!` },
+};
+function suggestPack(sku) {
+  if (!P.packsEnabled() || !(state.tutorial && state.tutorial.done) || $('.modal')) return;
+  if (!P.packsForSale(state).some(p => p.sku === sku)) return;
+  const t = state.packTips = state.packTips || { day: '', seen: {} };
+  const day = new Date().toDateString();
+  if (t.day === day || (t.seen[sku] || 0) >= SUGGEST_MAX) return;
+  t.day = day; t.seen[sku] = (t.seen[sku] || 0) + 1; persist();
+  const s = SUGGEST[sku], pk = P.PACKS[sku];
+  const box = el(`<div class="modal"><div class="card panel suggest"><div class="ribbon"><span>${s.title}</span></div>
+    ${s.art()}<p>${s.text()}</p>
+    <div class="row center"><button class="btn btn-grey">Not now</button><button class="btn big gold-btn">${pk.gold} Gold</button></div></div></div>`);
+  $('.btn-grey', box).onclick = () => { box.remove(); sfx.pop(); updateCoach(); };
+  $('.gold-btn', box).onclick = () => { box.remove(); updateCoach(); buyPack(sku); };
+  sfx.pop();
+  document.body.appendChild(box);
+}
+
 // ---------- Shop ----------
 let tryHat = null;   // { id, pig }: a hat being tried on before buying
 // The shop is split into tabs; the last one picked is kept in the save.
@@ -1946,7 +1980,7 @@ function shopView() {
     <div class="shop-head"><div class="awning">${Art.shopScene()}</div>
       <div class="shop-tabs">${SHOP_TABS.map(t => `<button class="stab" data-stab="${t.id}">${t.icon()}<span>${t.name}</span></button>`).join('')}</div></div>
     <div class="shop-sec" data-sec="piggies"><div class="adopt panel" id="adopt"></div></div>
-    <div class="shop-sec" data-sec="upgrades"><div id="packs"></div><div id="items"></div></div>
+    <div class="shop-sec" data-sec="upgrades"><div id="items"></div><div id="packs"></div></div>
     <div class="shop-sec" data-sec="hats"><div class="hats panel" id="hats"></div></div>
     <div class="shop-sec" data-sec="toys"><div class="toys panel" id="toys"></div></div>
     <div class="shop-sec" data-sec="mazes"><div class="toys panel" id="mthemes"></div></div>
@@ -2030,7 +2064,7 @@ function updateShop() {
           const r = G.adopt(state, i);
           if (!r.ok) { sfx.nope(); toast('No room in the pen'); return; }
           sfx.fanfare(); selectedPig = r.piggy.id;
-          popup('Welcome home!', `<div class="pig-card big">${Art.piggySide({ coat: r.piggy.coat })}</div><p><b>${esc(r.piggy.name)}</b> the ${G.BREEDS[r.piggy.coat.breed].name} moved into the pen.</p>`, 'Yay!', () => { tab = 'steamer'; render(true); });
+          popup('Welcome home!', `<div class="pig-card big">${Art.piggySide({ coat: r.piggy.coat })}</div><p><b>${esc(r.piggy.name)}</b> the ${G.BREEDS[r.piggy.coat.breed].name} moved into the pen.</p>`, 'Yay!', () => { tab = 'steamer'; render(true); if (!G.hasRoom(state)) suggestPack('roomy-pen'); });
           render(true);
         };
         if (G.hasRoom(state)) welcome();
@@ -2074,7 +2108,8 @@ function updateShop() {
           if (!r.ok) { sfx.nope(); toast(`Need ${h.cost - state.coins} more coins`); return; }
           tryHat = null;
           sfx.fanfare(); G.wearHat(state, p.id, id);
-          popup('New hat!', `<div class="pig-card big">${Art.piggySide({ coat: p.coat, hat: id })}</div><p><b>${esc(p.name)}</b> is wearing the ${h.name}!</p>`, 'Cute!');
+          popup('New hat!', `<div class="pig-card big">${Art.piggySide({ coat: p.coat, hat: id })}</div><p><b>${esc(p.name)}</b> is wearing the ${h.name}!</p>`, 'Cute!',
+            () => { if (Object.keys(state.hats).length >= 3) suggestPack('golden-crown'); });
         } else {
           tryHat = null;
           sfx.pop(); G.wearHat(state, p.id, wearing ? null : id);
