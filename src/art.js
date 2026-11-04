@@ -1025,6 +1025,18 @@ export function treasure(t) {
     <text x="45" y="50" font-size="16" font-weight="900" fill="#fff" font-family="system-ui,sans-serif" text-anchor="middle">?</text></svg>`;
 }
 
+// The gift calendar's present: pink box, yellow ribbon and a big floppy bow.
+export function giftBox(small = false) {
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${small ? '' : '<ellipse cx="32" cy="58" rx="24" ry="5" fill="rgba(58,42,34,.18)"/>'}
+    <rect x="10" y="27" width="44" height="30" rx="6" fill="#FF8FB1" stroke="#C2456E" stroke-width="3"/>
+    <path d="M14 33 H50" stroke="#FFB3CA" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+    <rect x="7" y="19" width="50" height="11" rx="4" fill="#FFB3CA" stroke="#C2456E" stroke-width="3"/>
+    <rect x="28" y="19" width="8" height="38" fill="#FFD34D" stroke="#E0941C" stroke-width="2"/>
+    <path d="M32 19 Q18 2 12 10 Q9 18 32 19 Q55 18 52 10 Q46 2 32 19Z" fill="#FFD34D" stroke="#E0941C" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M32 19 Q24 12 19 12 M32 19 Q40 12 45 12" stroke="#E0941C" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <circle cx="32" cy="18" r="4.5" fill="#FFE27A" stroke="#E0941C" stroke-width="2.5"/></svg>`;
+}
+
 export function upgradeIcon(kind) {
   const inner = {
     plot: `<rect x="10" y="30" width="44" height="22" rx="6" fill="#B9824A"/><path d="M32 30 V14 M24 22 Q32 14 40 22" stroke="#5FAE4E" stroke-width="5" fill="none" stroke-linecap="round"/>`,
