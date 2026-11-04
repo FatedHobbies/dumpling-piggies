@@ -791,7 +791,7 @@ export function mazeIcon() {
   </svg>`;
 }
 
-// The game's money is gems (v166; was gold coins, which looked too much like
+// The game's money is gems (was gold coins, which looked too much like
 // Reddit Gold next to the Gold packs). The code still calls them coins.
 const GEM = { light: '#FFB3D1', mid: '#FF6FA8', dark: '#E0478A', line: '#A8255E' };
 const gemShape = (g = GEM) => `<path d="M20 12 H44 L58 26 L32 57 L6 26Z" fill="${g.mid}"/>
