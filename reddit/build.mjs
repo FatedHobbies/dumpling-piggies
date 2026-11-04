@@ -23,7 +23,7 @@ cpSync(join(root, 'style.css'), join(client, 'style.css'));
 cpSync(join(root, 'icons'), join(client, 'icons'), { recursive: true });
 
 // 2. Fonts from local files: Reddit's webview blocks Google Fonts and every other outside server.
-const FONTS = [['fredoka', 'Fredoka', [500, 600, 700]], ['nunito', 'Nunito', [400, 700]]];
+const FONTS = [['fredoka', 'Fredoka', [300, 500, 600, 700]], ['nunito', 'Nunito', [400, 700]]];
 let fontCss = '';
 for (const [pkg, family, weights] of FONTS) {
   for (const w of weights) {
