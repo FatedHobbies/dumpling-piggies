@@ -297,7 +297,7 @@ export const GIFTS = [
   { kind: 'veggies', n: 4 },
   { kind: 'coins', n: 50 },
   { kind: 'dumplings', n: 8 },
-  { kind: 'dumplings', n: 2 },
+  { kind: 'coins', n: 15 },
   { kind: 'hat' },
 ];
 export const GIFT_HAT_COINS = 100;   // the day 7 gift once every coin hat is owned
