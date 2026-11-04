@@ -1541,7 +1541,7 @@ function onCook() {
   selected = [];
   if (!r.ok) { sfx.nope(); toast('Not enough fillings'); render(); return; }
   // The tutorial waits while it steams, so the arrow doesn't jump back to the veggies.
-  if (tutStep()) tutWait = Date.now() + 1600;
+  if (tutStep()) { tutWait = Date.now() + 1600; render(); }
   const stage = $('#kstage');
   stage.classList.remove('cooking'); void stage.offsetWidth; stage.classList.add('cooking');
   sfx.pop();
