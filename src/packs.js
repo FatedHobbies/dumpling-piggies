@@ -32,6 +32,8 @@ export const PACKS = {
     gold: 400,
     upgrades: ['pen2', 'sunlamp', 'autoscoop', 'bigbowl', 'plot4'],
     perks: ['supersprout'],
+    // Only offered while it is cheaper than the Gold packs the player would still need.
+    bundles: ['roomy-pen', 'super-sprouts'],
   },
   'golden-crown': {
     name: 'Golden Crown',
@@ -111,8 +113,13 @@ export function hasPerk(state, perk) {
 // Packs the Shop can still offer: not owned, and not everything already unlocked.
 export function packsForSale(state) {
   const own = new Set(state.packs || []);
+  const gives = (p) => p.perks.some(k => !hasPerk(state, k)) || p.upgrades.some(u => !state.upgrades[u]) || (p.hats || []).some(h => !state.hats[h]);
+  const open = (sku) => !own.has(sku) && gives(PACKS[sku]);
+  // A bundle must stay a deal: once a piece is owned (by pack or by gems),
+  // buying the rest on its own is cheaper, so the bundle steps aside.
+  const deal = (p) => !p.bundles || p.bundles.filter(open).reduce((n, sku) => n + PACKS[sku].gold, 0) > p.gold;
   return Object.entries(PACKS)
-    .filter(([sku, p]) => !own.has(sku) && (p.perks.some(k => !hasPerk(state, k)) || p.upgrades.some(u => !state.upgrades[u]) || (p.hats || []).some(h => !state.hats[h])))
+    .filter(([sku, p]) => open(sku) && deal(p))
     .map(([sku, p]) => ({ sku, ...p }));
 }
 

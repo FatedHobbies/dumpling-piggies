@@ -1913,7 +1913,8 @@ function packsPanel(box) {
   const list = P.packsForSale(state);
   const own = (state.packs || []).map(sku => P.PACKS[sku]).filter(Boolean);
   if (!list.length && !own.length) return;
-  box.appendChild(el(`<p class="hint">Bonus packs, bought once with Reddit Gold. Thank you for helping the Piggies!</p>`));
+  box.appendChild(el(`<h4 class="buy-head gold"><i class="gold-dot">G</i>Reddit Gold packs</h4>`));
+  box.appendChild(el(`<p class="hint">Bought once, kept forever. Thank you for helping the Piggies!</p>`));
   for (const pk of list) {
     const b = el(`<button class="item panel pack">
       <span class="tile-gold">${packArt(pk.sku)}</span>
@@ -2090,6 +2091,8 @@ function updateShop() {
   items.dataset.sig = ssig;
   packsPanel($('#packs'));
   items.innerHTML = '';
+  // With Gold packs above, label the gem shop so both ways to buy are clear.
+  if (P.packsEnabled()) items.appendChild(el(`<h4 class="buy-head"><i class="coin-sm">${Art.coinIcon()}</i>Buy with gems</h4>`));
   for (const [id, u] of Object.entries(G.UPGRADES)) {
     const owned = !!state.upgrades[id];
     if (!owned && !G.canBuy(state, id)) continue;
