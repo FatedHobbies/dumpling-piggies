@@ -1,4 +1,4 @@
-# Dumpling Piggies
+# Guinea Pigs and Dumplings
 
 A bright, silly pet game: feed, play with, and clean up after guinea piggies who live in a bamboo steamer and love dumplings. Built as an installable web app for phones.
 

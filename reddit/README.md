@@ -1,4 +1,4 @@
-# Dumpling Piggies on Reddit
+# Guinea Pigs and Dumplings on Reddit
 
 The Reddit version (a Devvit Web app) is built from the **same game files** GitHub Pages serves.
 Nothing in this folder changes the web version.
@@ -31,13 +31,13 @@ Steps marked **(Ryan)** need your Reddit account. Everything else is done.
 
 1. **(Ryan)** Install Node 22 or newer. Then in this folder: `npm install`.
 2. **(Ryan)** `npm run login` (runs `devvit login`, opens Reddit in the browser to sign in). Use the Reddit account that will own the app.
-3. **(Ryan)** Pick the app's name on Reddit. It is the `name` in `devvit.json` (now `dumpling-piggies`): lowercase letters, numbers and dashes, at most 16 characters, and it must not be taken. If it is taken, `devvit upload` says so: change `name` and try again.
-4. **(Ryan)** Make a private test subreddit, e.g. `r/DumplingPiggies_test`, on reddit.com (Create a community, set it to Private).
-5. **(Ryan)** `npx devvit playtest DumplingPiggies_test` (or `npm run dev`). It uploads a test build, installs it in the test subreddit and makes a post. Open it on your phone and on a computer and check: the feed post, Play, a full tutorial, closing and reopening (the save comes back), opening on a second device (the first one says "open somewhere else").
+3. **(Ryan)** Pick the app's name on Reddit. It is the `name` in `devvit.json` (now `guinea-dumplings`): lowercase letters, numbers and dashes, at most 16 characters, and it must not be taken. If it is taken, `devvit upload` says so: change `name` and try again.
+4. **(Ryan)** Make a private test subreddit, e.g. `r/GuineaDumplings_test`, on reddit.com (Create a community, set it to Private).
+5. **(Ryan)** `npx devvit playtest GuineaDumplings_test` (or `npm run dev`). It uploads a test build, installs it in the test subreddit and makes a post. Open it on your phone and on a computer and check: the feed post, Play, a full tutorial, closing and reopening (the save comes back), opening on a second device (the first one says "open somewhere else").
 6. **(Ryan)** `npm run deploy` (runs `devvit upload`) to upload a real version. It installs nothing on its own.
-7. **(Ryan)** On https://developers.reddit.com/apps/dumpling-piggies fill in the app listing (text is ready in the to-do list), and the icon (`assets/icon-1024.png`).
+7. **(Ryan)** On https://developers.reddit.com/apps/guinea-dumplings fill in the app listing (text is ready in the to-do list), and the icon (`assets/icon-1024.png`).
 8. **(Ryan)** `npx devvit publish` to send the app to Reddit for review. Reddit reviews every public app; Reddit coin packs (payments) need their own approval too. Until it is approved, it can still be installed in subreddits you moderate.
-9. **(Ryan)** When it is approved: make the public subreddit (e.g. `r/DumplingPiggies`), `npx devvit install DumplingPiggies`, and use the subreddit's ⋯ menu > "Make a Dumpling Piggies post". Installing also makes the first post by itself.
+9. **(Ryan)** When it is approved: make the public subreddit (e.g. `r/GuineaPigDumplings`), `npx devvit install GuineaPigDumplings`, and use the subreddit's ⋯ menu > "Make a Guinea Pigs and Dumplings post". Installing also makes the first post by itself.
 10. Optional: join Reddit's Developer Platform Discord / r/Devvit and enter the game in r/GamesOnReddit.
 
 ## Rules this build follows (from Reddit's Devvit rules)
