@@ -288,6 +288,55 @@ export function wearHat(state, piggyId, id) {
   return { ok: true };
 }
 
+// The gift calendar: one gift for each day she plays, seven in a row and then
+// round again. Missing a day never costs anything; the next gift just waits.
+// `state.gifts` is { got: gifts opened ever, day: dayKey() of the last one }.
+export const GIFTS = [
+  { kind: 'coins', n: 10 },
+  { kind: 'dumplings', n: 5 },
+  { kind: 'veggies', n: 5 },
+  { kind: 'coins', n: 15 },
+  { kind: 'dumplings', n: 8 },
+  { kind: 'coins', n: 15 },
+  { kind: 'hat' },
+];
+export const GIFT_HAT_COINS = 100;   // the day 7 gift once every coin hat is owned
+export function giftReady(state, now = Date.now()) {
+  return !!(state.tutorial && state.tutorial.done) && (state.gifts || {}).day !== dayKey(now);
+}
+export const giftSlot = (state) => ((state.gifts || {}).got || 0) % GIFTS.length;
+// The cheapest coin hat she doesn't own yet. Goal hats and Gold-pack hats are never gifts.
+export function giftHat(state) {
+  const free = Object.keys(HATS).filter(id => HATS[id].cost && !HATS[id].pack && !state.hats[id]);
+  return free.sort((a, b) => HATS[a].cost - HATS[b].cost)[0] || null;
+}
+export function openGift(state, now = Date.now(), rng = Math.random) {
+  if (!giftReady(state, now)) return null;
+  const g = GIFTS[giftSlot(state)];
+  const r = { kind: g.kind, n: g.n };
+  if (g.kind === 'coins') state.coins += g.n;
+  if (g.kind === 'compost') state.compost += g.n;
+  if (g.kind === 'veggies') {
+    // n of each of the two veggies she has fewest of.
+    const pick = unlockedFillings(state).filter(f => f !== 'hay')
+      .sort((a, b) => (state.pantry[a] || 0) - (state.pantry[b] || 0)).slice(0, 2);
+    for (const f of pick) state.pantry[f] = (state.pantry[f] || 0) + g.n;
+    r.fillings = pick;
+  }
+  if (g.kind === 'dumplings') {
+    const found = (state.discovered || []).filter(k => RECIPES[k]);
+    r.key = found.length ? found[Math.floor(rng() * found.length)] : 'carrot+carrot';
+    state.dumplings[r.key] = (state.dumplings[r.key] || 0) + g.n;
+  }
+  if (g.kind === 'hat') {
+    r.hat = giftHat(state);
+    if (r.hat) state.hats[r.hat] = true;
+    else { r.kind = 'coins'; r.n = GIFT_HAT_COINS; state.coins += GIFT_HAT_COINS; }
+  }
+  state.gifts = { got: ((state.gifts || {}).got || 0) + 1, day: dayKey(now) };
+  return r;
+}
+
 // Pen toys sit on the pen floor (see toySpot) and piggies wander over to play. `state.toys[id]` is 'pen' or 'box'
 // (owned but put away); only TOY_LIMIT fit in the pen at once. Chews get
 // nibbled away (`state.toyWear`, 0 to 100) and must be bought again.

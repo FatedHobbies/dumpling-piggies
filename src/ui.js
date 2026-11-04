@@ -7,7 +7,7 @@ import * as M from './maze.js';
 import * as P from './packs.js';
 import { penPicture, nameList, canShareFile, shareFile, saveFile } from './share.js';
 
-const VERSION = 167;
+const VERSION = 168;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -103,6 +103,7 @@ function loop() {
   if (resume()) return;
   // A popup that had to wait behind a picker or the settings shows now.
   if (popupQueue.length && !$('.modal')) popup(...popupQueue.shift());
+  else if (!$('.modal') && !run && G.giftReady(state)) giftCalendar();
   const now = Date.now();
   const dt = Math.min((now - lastTick) / 1000, 60);
   lastTick = now;
@@ -2388,6 +2389,57 @@ function bookCheck(delay = 0) {
       <div class="book-prize"><span class="books-filled">${Art.poopBookArt(true)}<span>Filled <b>${r.filled}</b> ${r.filled === 1 ? 'time' : 'times'}</span></span></div>
       <p>The book gets a fresh page. Fill it again for <b>${G.bookReward(r.filled)}</b> gems!</p>`, 'Fill it again!');
   }, delay);
+}
+
+// ---------- Gift calendar ----------
+// Seven gifts in a row, one for each day she plays. The next one always waits
+// for her, however long she is away.
+function giftIcon(g) {
+  if (g.kind === 'coins') return Art.treasure({ kind: 'coins' });
+  if (g.kind === 'compost') return Art.compostIcon();
+  if (g.kind === 'veggies') return Art.treasure({ kind: 'veggie', filling: 'carrot' });
+  if (g.kind === 'dumplings') return Art.dumpling('carrot+carrot', 64);
+  const hat = G.giftHat(state);
+  return hat ? Art.hatIcon(hat) : Art.treasure({ kind: 'coins' });
+}
+function giftCalendar() {
+  const slot = G.giftSlot(state);
+  const tick = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#5FAE4E" stroke="#fff" stroke-width="2"/><path d="M7 12.5 L10.5 16 L17 8.5" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const days = () => G.GIFTS.map((g, i) => {
+    const got = i < slot || (i === slot && opened);
+    const ico = i !== slot ? giftIcon(g) : !opened ? Art.giftBox(true) : opened.hat ? Art.hatIcon(opened.hat) : giftIcon(opened);
+    return `<div class="gift-day${got ? ' got' : i === slot ? ' today' : ''}"><b>${i + 1}</b><span class="gift-ico">${ico}</span>${got ? `<i class="gift-tick">${tick}</i>` : ''}</div>`;
+  }).join('');
+  let opened = null;
+  const box = el(`<div class="modal"><div class="card panel gift-card">
+    <div class="ribbon"><span>Daily gift!</span></div>
+    <div class="gift-days">${days()}</div>
+    <button class="gift-big" aria-label="Open the gift">${Art.giftBox()}</button>
+    <p class="gift-note">A new gift every day you play!</p>
+    <div class="row center"><button class="btn big">Open!</button></div></div></div>`);
+  const open = () => {
+    if (opened) { box.remove(); sfx.pop(); render(true); updateCoach(); return; }
+    // The gift may have been opened in another tab already.
+    if (G.giftSlot(state) !== slot || !G.giftReady(state)) { box.remove(); return; }
+    opened = G.openGift(state);
+    persist();
+    sfx.fanfare();
+    const r = opened;
+    const items = r.kind === 'coins' ? [`${Art.coinIcon()} +${r.n}`]
+      : r.kind === 'compost' ? [`${Art.compostIcon()} +${r.n}`]
+      : r.kind === 'veggies' ? r.fillings.map(f => `${Art.veggie(f, 40)} +${r.n}`)
+      : r.kind === 'dumplings' ? [`${Art.dumpling(r.key, 48)} +${r.n}`]
+      : [`${Art.hatIcon(r.hat)}`];
+    $('.gift-days', box).innerHTML = days();
+    $('.gift-big', box).outerHTML = `<div class="gift-open"><div class="reward-row">${items.map(i => `<span class="reward-item">${i}</span>`).join('')}</div>
+      ${r.kind === 'hat' ? `<p class="gift-what"><b>${esc(G.HATS[r.hat].name)}</b></p>` : ''}</div>`;
+    $('.gift-note', box).textContent = 'See you tomorrow!';
+    $('.row .btn', box).textContent = 'Yay!';
+    if (r.kind === 'coins') floatCoin(r.n);
+  };
+  $('.gift-big', box).onclick = open;
+  $('.row .btn', box).onclick = open;
+  document.body.appendChild(box);
 }
 
 // ---------- Dialogs & effects ----------
