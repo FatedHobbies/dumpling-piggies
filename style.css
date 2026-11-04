@@ -375,6 +375,12 @@ button.pk:active { transform: scale(.95); }
 .poop.gone { transform: translate(-50%, -200%) scale(.3); opacity: 0; }
 .poop.rainbow, .poop.gold, .poop.crystal, .poop.diamond, .poop.goldicorn, .poop.unicorn, .poop.royal, .poop.moon, .poop.champ, .poop.hay, .poop.mystery, .poop.robo { width: 54px; height: 54px; animation: glow 1s infinite alternate; }
 .poop.crystal { animation-name: glow-ice; }
+/* The Lucky Poop of the Day: bigger, a rainbow glow and a little gold star. */
+.poop.daily { width: 58px; height: 58px; animation: glow-lucky 1.6s infinite linear; }
+.poop.daily::after { content: '★'; position: absolute; right: -4px; top: -6px; font-size: 20px; line-height: 1; color: #FFC93C; -webkit-text-stroke: 2px #fff; paint-order: stroke fill; animation: lucky-star 1.2s ease-in-out infinite alternate; }
+@keyframes glow-lucky { 0%, 100% { filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 10px #FF8FC8); } 33% { filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 10px #FFD166); } 66% { filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 10px #7FD4FF); } }
+@keyframes lucky-star { from { transform: scale(.8) rotate(-12deg); } to { transform: scale(1.15) rotate(12deg); } }
+.poop-card.lucky-day svg { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 12px #FFD166); }
 @keyframes glow-ice { from { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #7FD4FF); } to { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px #9FB8FF); } }
 @keyframes glow { from { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #FFD166); } to { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px #FFD166); } }
 /* A poop dropping out of a piggy's behind: it squeezes out tucked behind
