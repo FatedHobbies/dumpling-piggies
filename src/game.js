@@ -290,7 +290,7 @@ export function wearHat(state, piggyId, id) {
 
 // The gift calendar: one gift for each day she plays, seven in a row and then
 // round again. Missing a day never costs anything; the next gift just waits.
-// `state.gifts` is { got: gifts opened ever, day: the local day of the last one }.
+// `state.gifts` is { got: gifts opened ever, day: dayKey() of the last one }.
 export const GIFTS = [
   { kind: 'coins', n: 25 },
   { kind: 'compost', n: 3 },
@@ -301,10 +301,6 @@ export const GIFTS = [
   { kind: 'hat' },
 ];
 export const GIFT_HAT_COINS = 100;   // the day 7 gift once every coin hat is owned
-export function dayKey(now = Date.now()) {
-  const d = new Date(now);
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-}
 export function giftReady(state, now = Date.now()) {
   return !!(state.tutorial && state.tutorial.done) && (state.gifts || {}).day !== dayKey(now);
 }
