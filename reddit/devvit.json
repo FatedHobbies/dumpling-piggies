@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "dumpling-piggies",
+  "name": "guinea-dumplings",
   "post": {
     "dir": "dist/client",
     "entrypoints": {
@@ -20,8 +20,8 @@
   "menu": {
     "items": [
       {
-        "label": "Make a Dumpling Piggies post",
-        "description": "Posts a new Dumpling Piggies game in this subreddit",
+        "label": "Make a Guinea Pigs and Dumplings post",
+        "description": "Posts a new Guinea Pigs and Dumplings game in this subreddit",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/post-create"
