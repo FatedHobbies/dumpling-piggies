@@ -934,6 +934,8 @@ export function poopKind(state, rng = Math.random) {
   const pooper = fed[Math.floor(rng() * fed.length)] || state.piggies[0];
   const by = pooper ? pooper.id : undefined;   // the Pen drops it from this piggy
   const food = pooper && pooper.lastFood ? pooper.lastFood : '';
+  // The tutorial's poops are always a plain brown one, so the first poop is a simple one.
+  if (state.tutorial && !state.tutorial.done) return { shape: 'beans', color: 'brown', by };
   const sp = (color) => ({ shape: 'sp', color, by });
   const ev = eventPoop(state, pooper, rng);
   if (ev) return sp(ev);
