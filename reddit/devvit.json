@@ -46,7 +46,15 @@
     "build": "node build.mjs"
   },
   "permissions": {
-    "payments": true
+    "payments": true,
+    "media": true,
+    "reddit": {
+      "enable": true,
+      "scope": "user",
+      "asUser": [
+        "SUBMIT_COMMENT"
+      ]
+    }
   },
   "payments": {
     "productsFile": "products.json",

@@ -3,6 +3,7 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { context, createServer, getServerPort, reddit, redis } from '@devvit/web/server';
+import { sharePen } from './share.js';
 import { createPost } from './post.js';
 import { packsApi, paymentsRoutes } from './payments.js';
 import { MAX_SAVE, PLAYERS_KEY, claimSession, forgetPlayer, isStale, notePlayer, readEnt, readSave, saveKey, writeSave } from './save.js';
@@ -68,6 +69,15 @@ api.post('/wipe', async (c) => {
   }
   await redis.del(saveKey(p.userId));
   return c.json({ type: 'wiped' });
+});
+
+// "Share my pen": posts the player's pen picture as their own comment on this post.
+api.post('/share', async (c) => {
+  const p = await player();
+  if (!p) return loggedOut(c);
+  const body = await c.req.json().catch(() => null);
+  const res = await sharePen(p, body?.image);
+  return c.json(res.body, res.status);
 });
 
 internal.post('/menu/post-create', async (c) => {

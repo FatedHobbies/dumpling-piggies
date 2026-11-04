@@ -317,6 +317,14 @@ button.pk:active { transform: scale(.95); }
 .feed-badge i { font-style: normal; color: #FF5C7A; font-family: var(--display); font-size: 1rem; line-height: 1; margin-top: 4px; }
 .feed-badge b { border: 0; background: none; padding: 0; font-size: .8rem; line-height: 1.1; color: #6A4524; }
 .pen-count { position: absolute; top: 8px; right: 10px; background: rgba(58,42,34,.5); color: #fff; font-family: var(--display); font-size: .8rem; padding: 2px 10px; border-radius: 999px; }
+/* Share my pen: the camera button and its picture */
+.snap-btn { position: absolute; right: 8px; bottom: 8px; width: 52px; height: 52px; padding: 6px; border-radius: 50%; z-index: 200;
+  background: linear-gradient(#FFFDF6, #F3E6CC); border: 3px solid var(--wood-dark); box-shadow: 0 4px 0 #6A4524; }
+.snap-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #6A4524; }
+.snap-btn svg { width: 100%; height: 100%; }
+.stage.flash::after { content: ""; position: absolute; inset: 0; background: #fff; z-index: 300; pointer-events: none; animation: snap-flash .45s ease-out both; }
+@keyframes snap-flash { from { opacity: .95; } to { opacity: 0; } }
+.snap-pic { display: block; width: 100%; max-height: 52vh; object-fit: contain; border-radius: 12px; margin: 4px auto 8px; box-shadow: 0 3px 0 rgba(0,0,0,.15); }
 .steam { position: absolute; top: 4%; width: 18px; height: 40px; border-radius: 50%; background: #fff; opacity: 0; filter: blur(6px); animation: steam 3s infinite; }
 .steam.s1 { left: 20%; } .steam.s2 { left: 48%; animation-delay: 1s; } .steam.s3 { left: 74%; animation-delay: 2s; }
 @keyframes steam { 0% { transform: translateY(20px) scale(.8); opacity: 0; } 30% { opacity: .5; } 100% { transform: translateY(-40px) scale(1.4); opacity: 0; } }
@@ -905,6 +913,7 @@ button.pk:active { transform: scale(.95); }
   .stage { min-height: 250px; }
 }
 @media (max-width: 340px) {
+  .snap-btn { width: 44px; height: 44px; padding: 5px; right: 6px; bottom: 6px; }
   .hud { gap: 3px; padding-left: 4px; padding-right: 4px; }
   .hud-books { min-width: 96px; gap: 2px; }
   .hud-books .hud-book svg { width: 26px; height: 26px; }

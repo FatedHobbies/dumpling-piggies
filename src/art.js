@@ -1386,6 +1386,8 @@ const ICONS = {
   speaker: `<path d="M10 25 H20 L33 13 V51 L20 39 H10Z" fill="#FFD34D" stroke="#E0941C" stroke-width="3.5" stroke-linejoin="round"/><path d="M41 24 Q46 32 41 40 M47 18 Q56 32 47 46" fill="none" stroke="#E0941C" stroke-width="4.5" stroke-linecap="round"/>`,
   // A sparkly star, for sound effects
   sfx: `<path d="M32 6 L39 24 L58 25 L43 37 L48 56 L32 45 L16 56 L21 37 L6 25 L25 24Z" fill="#FF8FA8" stroke="#C93A5B" stroke-width="3.5" stroke-linejoin="round"/><circle cx="27" cy="30" r="3" fill="#fff"/>`,
+  // A chunky pink camera, for taking a picture of the Pen
+  camera: `<path d="M22 18 L26 11 H38 L42 18Z" fill="#FFB3C6" stroke="#C93A5B" stroke-width="3.5" stroke-linejoin="round"/><rect x="6" y="17" width="52" height="36" rx="9" fill="#FF8FA8" stroke="#C93A5B" stroke-width="4"/><circle cx="32" cy="35" r="13" fill="#FFF6E8" stroke="#C93A5B" stroke-width="4"/><circle cx="32" cy="35" r="7" fill="#8FD3F7" stroke="#3D7FB8" stroke-width="3"/><circle cx="29.5" cy="32.5" r="2.2" fill="#fff"/><rect x="45" y="22" width="8" height="5" rx="2" fill="#FFD34D"/>`,
   shop: `<path d="M22 22 Q22 8 32 8 Q42 8 42 22" fill="none" stroke="#C93A5B" stroke-width="4" stroke-linecap="round"/><path d="M10 22 H54 L50 56 H14Z" fill="#FF8FA8" stroke="#C93A5B" stroke-width="4" stroke-linejoin="round"/><path d="M14 34 H50" stroke="#FFD34D" stroke-width="6"/><circle cx="32" cy="44" r="4" fill="#fff"/>`,
 };
 // Eight chunky rounded teeth around a wheel.

@@ -5,8 +5,9 @@ import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
 import * as P from './packs.js';
+import { penPicture, nameList, canShareFile, shareFile, saveFile } from './share.js';
 
-const VERSION = 162;
+const VERSION = 165;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -391,6 +392,54 @@ function render(force = false) {
   updateCoach();
 }
 
+// ---------- Share my pen ----------
+// The camera button in the Pen takes a picture of it. On Reddit the player can
+// post it in the post's comments; on the web it goes to the phone's share
+// sheet, or is saved when the phone can't share pictures.
+let snapping = false;
+async function snapPen() {
+  const stage = $('#stage');
+  if (snapping || !stage || $('.modal') || tutStep()) return;
+  snapping = true;
+  sfx.snap();
+  stage.classList.add('flash');
+  setTimeout(() => stage.classList.remove('flash'), 450);
+  const names = state.piggies.map(p => p.name);
+  let pic;
+  try { pic = await penPicture(stage, { names, title: document.title }); }
+  catch (e) { console.error('Pen picture failed', e); }
+  snapping = false;
+  if (!pic) { popup('Oops!', '<p>The camera wobbled. Try again!</p>'); return; }
+  const reddit = window.__PIGGIES_REDDIT__?.sharePen;
+  const go = reddit ? 'Post it' : canShareFile() ? 'Share' : 'Save';
+  const box = el(`<div class="modal"><div class="card panel"><div class="ribbon"><span>Say cheese!</span></div>
+    <img class="snap-pic" alt="A picture of your pen">
+    ${reddit ? '<p>Show your Piggies in the comments?</p>' : ''}
+    <div class="row center"><button class="btn btn-grey" data-act="close">${reddit ? 'Not now' : 'Close'}</button><button class="btn btn-green" data-act="go">${go}</button></div></div></div>`);
+  $('.snap-pic', box).src = pic;
+  const close = () => {
+    box.remove();
+    if (popupQueue.length) popup(...popupQueue.shift()); else updateCoach();
+  };
+  $('[data-act="close"]', box).onclick = () => { sfx.pop(); close(); };
+  $('[data-act="go"]', box).onclick = async (e) => {
+    const b = e.currentTarget;
+    sfx.pop();
+    if (!reddit) {
+      const text = `Meet my Piggies ${nameList(names)}!`;
+      if (go === 'Share') await shareFile(pic, text); else saveFile(pic);
+      close();
+      return;
+    }
+    b.disabled = true; b.textContent = 'Posting…';
+    const res = await reddit(e, pic).catch(() => ({ ok: false }));
+    close();
+    if (res.ok) { sfx.fanfare(); popup('Posted!', '<p>Your Piggies are in the comments for everyone to see!</p>', 'Yay!'); }
+    else popup('Oops!', `<p>${esc(res.message || 'That picture did not post. Try again in a little while.')}</p>`);
+  };
+  document.body.appendChild(box);
+}
+
 // ---------- Pen ----------
 function steamerView() {
   const v = el(`<section class="pen">
@@ -409,12 +458,14 @@ function steamerView() {
       </div>
       <div class="faces" id="faces"></div>
       <span class="pen-count" id="pencount"></span>
+      <button class="snap-btn" id="snapbtn" aria-label="Take a picture of your pen">${Art.icon('camera')}</button>
     </div>
     <div class="feed-anchor"><div class="feed-badge"><span class="wf"></span><i>Feed</i><b></b></div></div>
     <div class="tray panel" id="tray"></div>
   </section>`);
   for (const b of v.querySelectorAll('.spot-hit')) b.addEventListener('click', () => goToSpot(current(), b.dataset.spot));
   $('.fixture[data-fix="house"]', v).addEventListener('click', () => goToToy(current(), 'house'));
+  $('#snapbtn', v).addEventListener('click', snapPen);
   // Poops stack by depth like everything else, so a piggy can walk in front
   // of one, but a tap anywhere over a poop still scoops it, even through a
   // piggy, toy or house. Taps with no poop underneath go through as normal.
@@ -448,6 +499,7 @@ function updateSteamer() {
     $('.wf', w).innerHTML = Art.piggyFace({ coat: p.coat, hat: p.hat });
     $('b', w).textContent = p.name;
   }
+  $('#snapbtn').hidden = !!tutStep();   // the camera waits until the tutorial is done
   $('#pencount').textContent = `${state.piggies.length} / ${G.capacity(state)} piggies`;
   // Portrait row across the top of the window; tapping one picks that piggy.
   const faces = $('#faces');

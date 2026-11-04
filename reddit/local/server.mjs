@@ -22,6 +22,13 @@ createServer(async (req, res) => {
   if (url.pathname === '/api/load') { if (sid) session = sid; return json(res, 200, { type: 'load', state: readSave(), ent: { skus: {} }, username: 'local_player' }); }
   if (url.pathname === '/api/packs') return json(res, 200, { skus: (process.env.PACKS || '').split(',').filter(Boolean) });
   if (url.pathname === '/api/peek') { const s = readSave(); return json(res, 200, { type: 'peek', piggies: (s?.piggies || []).slice(0, 3).map((g) => ({ name: g.name, coat: g.coat, hat: g.hat || null })) }); }
+  // "Share my pen": keep the last picture in local/.share.jpg instead of posting it.
+  if (url.pathname === '/api/share') {
+    const { image } = JSON.parse((await body(req)) || '{}');
+    if (typeof image !== 'string' || !image.startsWith('data:image/jpeg;base64,')) return json(res, 400, { type: 'error', message: 'That picture did not work.' });
+    writeFileSync(join(here, '.share.jpg'), Buffer.from(image.split(',')[1], 'base64'));
+    return json(res, 200, { type: 'shared' });
+  }
   if (url.pathname === '/api/save' || url.pathname === '/api/wipe') {
     const text = await body(req);
     if (sid && session && sid !== session) return json(res, 409, { type: 'error', stale: true });

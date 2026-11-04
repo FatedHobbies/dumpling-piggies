@@ -58,6 +58,7 @@ export const sfx = {
   wheek() { duck(); tone(900, 1500, 0.18, 'triangle', 0.1); tone(1400, 1000, 0.14, 'triangle', 0.08, 0.2); },
   munch() { tone(220, 140, 0.08, 'square', 0.05); tone(220, 140, 0.08, 'square', 0.05, 0.12); },
   coin() { tone(880, 1320, 0.12, 'sine', 0.08); tone(1320, 1760, 0.12, 'sine', 0.06, 0.1); },
+  snap() { tone(2400, 900, 0.05, 'square', 0.05); tone(1200, 500, 0.08, 'triangle', 0.06, 0.06); },
   pop() { tone(300, 600, 0.08, 'sine', 0.1); },
   plop() { tone(200, 90, 0.15, 'sine', 0.1); },
   ding() { tone(1200, 1800, 0.25, 'sine', 0.08); tone(1800, 2400, 0.3, 'sine', 0.05, 0.15); },
