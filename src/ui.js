@@ -63,7 +63,7 @@ export function start() {
     const who = names.length ? `<b>${names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]}</b>` : '';
     popup('Cozy pen!', `<div class="toy-card">${Art.toyArt('hut')}</div>
       <p>The pen now fits <b>4 piggies</b>, so it's easier to see everyone.${who ? ` ${who} went on a sleepover. Tap the <b>Sleepover House</b> in the Shop to swap piggies any time!` : ''}</p>
-      ${n.refund ? `<div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${n.refund}</span></div><p class="hint small">Coins back for the Huge pen.</p>` : ''}`, 'OK!');
+      ${n.refund ? `<div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${n.refund}</span></div><p class="hint small">Gems back for the Huge pen.</p>` : ''}`, 'OK!');
     delete state.penNews;
   }
   render();
@@ -175,7 +175,7 @@ const TUTORIAL = [
     target: () => run ? '#mpig' : state.maze.cells.some(c => c) ? '.go' : '.surprise' },
   // The shop is only shown: the arrow rests on her coins, then moves to the
   // Pen tab, and going home ends the tutorial.
-  { tab: 'shop',    on: 'home',  text: n => `Coins buy piggies, hats and toys here! Tap Pen to go home.`,
+  { tab: 'shop',    on: 'home',  text: n => `Gems buy Piggies, hats and toys here! Tap Pen to go home.`,
     enter: () => { shopLook = 0; },
     target: () => { if (!shopLook && !$('.modal')) { shopLook = Date.now() + 2500; setTimeout(render, 2600); } return !shopLook || Date.now() < shopLook ? '.hud-coins' : '.tab[data-tab="steamer"]'; } },
 ];
@@ -1372,16 +1372,16 @@ function onScoop(id, btn) {
   const sp = G.isSpecialPoop(r.poop) && G.parseSpecial(c).def;
   if (r.daily) {
     sfx.fanfare();
-    popup('Lucky Poop!', `<div class="pig-card poop-card lucky-day">${Art.poop(r.poop)}</div><p>Everyone's Piggies made a <b>${G.poopName(r.poop)}</b> poop today! ${r.isNew ? 'It goes in the Poop Book! ' : ''}That's worth <b>${r.coins} coins</b>.</p>`, 'Lucky!');
+    popup('Lucky Poop!', `<div class="pig-card poop-card lucky-day">${Art.poop(r.poop)}</div><p>Everyone's Piggies made a <b>${G.poopName(r.poop)}</b> poop today! ${r.isNew ? 'It goes in the Poop Book! ' : ''}That's worth <b>${r.coins} gems</b>.</p>`, 'Lucky!');
   } else if (c === 'rainbow' || c === 'gold' || c === 'crystal' || (sp && (r.isNew || (sp.page !== 'shapes' && sp.page !== 'patterns')))) {
     sfx.fanfare();
     const title = !sp ? (c === 'gold' ? 'A golden poop!' : c === 'crystal' ? 'A crystal poop!' : 'A rainbow poop!')
       : `${/^[aeio]/i.test(sp.name) ? 'An' : 'A'} ${sp.name.toLowerCase()} poop!`;
-    popup(sp && r.isNew ? 'New poop!' : title, `<div class="pig-card poop-card">${Art.poop(r.poop)}</div><p>${sp && r.isNew ? `<b>${G.poopName(r.poop)}</b> goes in the Poop Book! ` : 'Wow! '}That's worth <b>${r.coins} coins</b> and <b>${r.compost} compost</b>.</p>`, 'Wow!');
-  } else if (c !== 'brown' || sp) toast(`${G.poopName(r.poop)} poop! +${r.coins} coins`);
+    popup(sp && r.isNew ? 'New poop!' : title, `<div class="pig-card poop-card">${Art.poop(r.poop)}</div><p>${sp && r.isNew ? `<b>${G.poopName(r.poop)}</b> goes in the Poop Book! ` : 'Wow! '}That's worth <b>${r.coins} gems</b> and <b>${r.compost} compost</b>.</p>`, 'Wow!');
+  } else if (c !== 'brown' || sp) toast(`${G.poopName(r.poop)} poop! +${r.coins} gems`);
   tut('scoop');
   for (const a of G.checkAchievements(state)) {
-    setTimeout(() => { sfx.fanfare(); floatCoin(a.coins); popup('Achievement!', `<div class="badge">${Art.badgeIcon()}</div><p><b>${a.name}</b><br>${a.desc}<br>+${a.coins} coins</p>`, 'Nice!'); }, 400);
+    setTimeout(() => { sfx.fanfare(); floatCoin(a.coins); popup('Achievement!', `<div class="badge">${Art.badgeIcon()}</div><p><b>${a.name}</b><br>${a.desc}<br>+${a.coins} gems</p>`, 'Nice!'); }, 400);
   }
   bookCheck(450);
   render();
@@ -1538,7 +1538,7 @@ function onCook() {
   sfx.pop();
   setTimeout(() => {
     stage.classList.remove('cooking');
-    if (r.isNew) { sfx.fanfare(); popup('New recipe!', `<div class="pig-card">${Art.dumpling(r.key, 96)}</div><p><b>${r.recipe.name}</b><br>+10 coins for finding it</p>`, 'Yum!'); floatCoin(10); }
+    if (r.isNew) { sfx.fanfare(); popup('New recipe!', `<div class="pig-card">${Art.dumpling(r.key, 96)}</div><p><b>${r.recipe.name}</b><br>+10 gems for finding it</p>`, 'Yum!'); floatCoin(10); }
     else if (r.surprise) surpriseReveal(r);
     else { sfx.ding(); toast(`Made a ${r.recipe.name}`); }
     if (r.seed) setTimeout(() => { sfx.fanfare(); popup('New seed!', `<div class="pig-card seed-card">${Art.veggie(r.seed, 110)}</div><p><b>${G.FILLINGS[r.seed].name}</b><br>Plant it in the Garden!</p>`, 'Yay!'); }, 300);
@@ -1702,7 +1702,7 @@ const MAZE_UNLOCKS = {
 const ownsTheme = (id) => id === 'hay' || !!(state.mazeThemes || {})[id];
 function themeLockText(id) {
   const u = MAZE_UNLOCKS[id];
-  return u.cost ? `Buy it in the Shop for ${u.cost} coins!` : `${u.goal} to unlock! (${Math.min(u.have(), u.need)} / ${u.need})`;
+  return u.cost ? `Buy it in the Shop for ${u.cost} gems!` : `${u.goal} to unlock! (${Math.min(u.have(), u.need)} / ${u.need})`;
 }
 // Earned themes unlock with a popup the next time she's in the maze.
 function checkMazeThemes() {
@@ -1846,7 +1846,7 @@ function scheduleStep() {
       const t = M.claim(state, run.found);
       state.stats.treasures = (state.stats.treasures || 0) + 1;
       sfx.coin(); svgBubble('ooh!');
-      if (t.coins) { floatCoin(t.coins); toast(`Found ${t.coins} coins!`); }
+      if (t.coins) { floatCoin(t.coins); toast(`Found ${t.coins} gems!`); }
       else if (t.count) toast(`<i class="toast-ico">${Art.veggie(t.filling, 32)}</i> Found +${t.count} ${G.FILLINGS[t.filling].name}!`);
       else toast(`<i class="toast-ico">${Art.dumpling(t.key, 36)}</i> Surprise! ${G.RECIPES[t.key] ? G.RECIPES[t.key].name : 'A dumpling'}!`);
       persist();
@@ -1857,7 +1857,7 @@ function scheduleStep() {
       sfx.fanfare();
       pig.classList.add('popcorn');
       if (r.coins) floatCoin(r.coins);
-      toast(!r.coins ? 'Wheee! Maze coins are back tomorrow.' : r.first ? `New maze finished! +${r.coins} coins` : `Dumpling! +${r.coins} coins`, 'big');
+      toast(!r.coins ? 'Wheee! Maze gems are back tomorrow.' : r.first ? `New maze finished! +${r.coins} gems` : `Dumpling! +${r.coins} gems`, 'big');
       setTimeout(() => { stopRun(); tut('maze'); render(); }, 2200);
       return;
     }
@@ -2386,7 +2386,7 @@ function bookCheck(delay = 0) {
       <p>You found <b>every kind</b> of poop!</p>
       <div class="reward-row"><span class="reward-item">${Art.coinIcon()} +${r.coins}</span></div>
       <div class="book-prize"><span class="books-filled">${Art.poopBookArt(true)}<span>Filled <b>${r.filled}</b> ${r.filled === 1 ? 'time' : 'times'}</span></span></div>
-      <p>The book gets a fresh page. Fill it again for <b>${G.bookReward(r.filled)}</b> coins!</p>`, 'Fill it again!');
+      <p>The book gets a fresh page. Fill it again for <b>${G.bookReward(r.filled)}</b> gems!</p>`, 'Fill it again!');
   }, delay);
 }
 
@@ -2396,7 +2396,7 @@ function renameDialog() {
   const box = el(`<div class="modal"><div class="card panel">
     <div class="ribbon"><span>Rename</span></div>
     <div class="pig-card">${Art.piggySide({ coat: p.coat, hat: p.hat })}</div>
-    <p>Costs ${G.RENAME_COST} coins. You have ${state.coins}.</p>
+    <p>Costs ${G.RENAME_COST} gems. You have ${state.coins}.</p>
     <input id="newname" maxlength="${G.NAME_MAX}" placeholder="${esc(p.name)}" autocomplete="off">
     <div class="row"><button class="btn btn-grey" id="cancel">Cancel</button><button class="btn" id="ok">Rename</button></div>
   </div></div>`);
@@ -2404,7 +2404,7 @@ function renameDialog() {
   $('#cancel', box).onclick = () => box.remove();
   $('#ok', box).onclick = () => {
     const r = G.rename(state, p.id, $('#newname', box).value);
-    if (!r.ok) { sfx.nope(); toast(r.reason === 'coins' ? 'Not enough coins yet' : r.reason === 'name' ? 'Try a different name' : 'Type a name first'); return; }
+    if (!r.ok) { sfx.nope(); toast(r.reason === 'coins' ? 'Not enough gems yet' : r.reason === 'name' ? 'Try a different name' : 'Type a name first'); return; }
     sfx.fanfare(); box.remove(); render(); toast(`Hello, ${esc(p.name)}!`, 'big');
   };
   setTimeout(() => $('#newname', box).focus(), 50);

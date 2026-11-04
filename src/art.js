@@ -791,10 +791,17 @@ export function mazeIcon() {
   </svg>`;
 }
 
-export function coinIcon() {
-  return `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="#F5B32B"/><circle cx="32" cy="32" r="22" fill="#FFD34D" stroke="#E0941C" stroke-width="3"/><path d="M32 16 l5 10 11 1.5 -8 7.5 2 11 -10 -5.5 -10 5.5 2 -11 -8 -7.5 11 -1.5z" fill="#FFF3B0" stroke="#E0941C" stroke-width="2" stroke-linejoin="round"/></svg>`;
+// The game's money is gems (v166; was gold coins, which looked too much like
+// Reddit Gold next to the Gold packs). The code still calls them coins.
+const GEM = { light: '#FFB3D1', mid: '#FF6FA8', dark: '#E0478A', line: '#A8255E' };
+const gemShape = (g = GEM) => `<path d="M20 12 H44 L58 26 L32 57 L6 26Z" fill="${g.mid}"/>
+  <path d="M20 12 H44 L32 26Z" fill="${g.light}"/><path d="M6 26 L20 12 L32 26Z M58 26 L44 12 L32 26Z" fill="${g.light}" opacity=".55"/>
+  <path d="M6 26 H20 L32 57Z M58 26 H44 L32 57Z" fill="${g.dark}"/>
+  <path d="M20 12 H44 L58 26 L32 57 L6 26Z M6 26 H58 M20 12 L32 26 L44 12 M20 26 L32 57 L44 26" fill="none" stroke="${g.line}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M14 23 L20 17" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".9"/><circle cx="25" cy="33" r="2.2" fill="#fff" opacity=".8"/>`;
+export function coinIcon(g) {
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${gemShape(g)}</svg>`;
 }
-
 
 // Maze themes: the board, floor and wall look for the whole maze. Walls and
 // floor decorations are drawn in maze cell coordinates (one cell is 48).
@@ -994,13 +1001,13 @@ export function eraserIcon(theme = 'hay') {
     <path d="M15 15 L33 33 M33 15 L15 33" stroke="#E0564F" stroke-width="5.5" stroke-linecap="round"/></svg>`;
 }
 
-// Maze treasure, drawn in a 64 box: a little pile of coins, a basket with a
+// Maze treasure, drawn in a 64 box: a little pile of gems, a basket with a
 // veggie peeking out, or a pink mystery box with a bow.
 export function treasure(t) {
   const glow = `<ellipse cx="32" cy="54" rx="24" ry="7" fill="#FFF3B0" opacity=".75"/>`;
   if (t.kind === 'coins') {
-    const coin = (x, y) => `<g transform="translate(${x} ${y}) scale(.42)"><circle cx="32" cy="32" r="28" fill="#F5B32B" stroke="#C98216" stroke-width="3"/><circle cx="32" cy="32" r="19" fill="#FFD34D" stroke="#E0941C" stroke-width="3"/><path d="M32 20 l4 8 8 1 -6 6 1.5 8 -7.5 -4 -7.5 4 1.5 -8 -6 -6 8 -1z" fill="#FFF3B0"/></g>`;
-    return `<svg viewBox="0 0 64 64" aria-hidden="true">${glow}${coin(6, 30)}${coin(32, 30)}${coin(19, 26)}${coin(12, 12)}${coin(27, 8)}</svg>`;
+    const gem = (x, y) => `<g transform="translate(${x} ${y}) scale(.42)">${gemShape()}</g>`;
+    return `<svg viewBox="0 0 64 64" aria-hidden="true">${glow}${gem(6, 30)}${gem(32, 30)}${gem(19, 24)}${gem(11, 10)}${gem(28, 8)}</svg>`;
   }
   if (t.kind === 'veggie') {
     return `<svg viewBox="0 0 64 64" aria-hidden="true">${glow}
