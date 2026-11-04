@@ -4,8 +4,9 @@ import * as Art from './art.js';
 import { load, save, wipe } from './save.js';
 import { sfx, music, volume } from './sound.js';
 import * as M from './maze.js';
+import * as P from './packs.js';
 
-const VERSION = 160;
+const VERSION = 162;
 let state = null;
 let wiped = false;          // after "Start over": never save the old state again
 const persist = () => { if (!wiped) save(state); };
@@ -46,6 +47,7 @@ export function start() {
     }
   }
   if (!state.maze) state.maze = M.newMaze();
+  syncPacks();
   selectedPig = state.piggies[0].id;
   buildShell();
   music.init();
@@ -1828,6 +1830,53 @@ function svgBubble(text) {
   setTimeout(() => t.remove(), 800);
 }
 
+// ---------- Gold packs (Reddit only) ----------
+// Asks the Reddit store which packs this player owns and applies them. On
+// GitHub Pages there is no store and this does nothing.
+function syncPacks() {
+  if (!P.packsEnabled()) return;
+  P.getStore().owned().then(skus => { P.applyPacks(state, skus); persist(); render(true); }).catch(() => {});
+}
+
+const PACK_ICON = { 'roomy-pen': 'pen', 'super-sprouts': 'sun', 'helper-bundle': 'robot' };
+const packArt = (sku) => P.PACKS[sku].hats ? Art.hatIcon(P.PACKS[sku].hats[0]) : Art.upgradeIcon(PACK_ICON[sku] || 'sun');
+// Gold-only hats show only where Gold packs are sold, or once owned.
+const shownHats = () => Object.entries(G.HATS).filter(([id, h]) => !h.pack || state.hats[id] || P.packsEnabled());
+// Opens Reddit's checkout for a pack and applies it when paid.
+function buyPack(sku, done) {
+  const pk = P.PACKS[sku];
+  sfx.pop();
+  P.getStore().buy(sku).then(r => {
+    if (!r.ok) { if (!r.cancelled) toast('That did not work. Try again later'); return; }
+    P.applyPacks(state, r.skus); persist();
+    sfx.fanfare(); toast(`Got the ${pk.name}!`, 'big');
+    if (done) done();
+    render(true);
+  }).catch(() => toast('That did not work. Try again later'));
+}
+function packsPanel(box) {
+  box.innerHTML = '';
+  if (!P.packsEnabled()) return;
+  const list = P.packsForSale(state);
+  const own = (state.packs || []).map(sku => P.PACKS[sku]).filter(Boolean);
+  if (!list.length && !own.length) return;
+  box.appendChild(el(`<p class="hint">Bonus packs, bought once with Reddit Gold. Thank you for helping the Piggies!</p>`));
+  for (const pk of list) {
+    const b = el(`<button class="item panel pack">
+      <span class="tile-gold">${packArt(pk.sku)}</span>
+      <span class="txt"><b>${pk.name}</b><small>${pk.desc}</small></span>
+      <span class="price gold">${pk.gold} Gold</span></button>`);
+    b.addEventListener('click', () => buyPack(pk.sku));
+    box.appendChild(b);
+  }
+  for (const pk of own) {
+    box.appendChild(el(`<button class="item panel pack owned" disabled>
+      <span class="tile-gold">${packArt(Object.keys(P.PACKS).find(k => P.PACKS[k] === pk))}</span>
+      <span class="txt"><b>${pk.name}</b><small>${pk.desc}</small></span>
+      <span class="price can">Got it!</span></button>`));
+  }
+}
+
 // ---------- Shop ----------
 let tryHat = null;   // { id, pig }: a hat being tried on before buying
 // The shop is split into tabs; the last one picked is kept in the save.
@@ -1843,7 +1892,7 @@ function shopView() {
     <div class="shop-head"><div class="awning">${Art.shopScene()}</div>
       <div class="shop-tabs">${SHOP_TABS.map(t => `<button class="stab" data-stab="${t.id}">${t.icon()}<span>${t.name}</span></button>`).join('')}</div></div>
     <div class="shop-sec" data-sec="piggies"><div class="adopt panel" id="adopt"></div></div>
-    <div class="shop-sec" data-sec="upgrades"><div id="items"></div></div>
+    <div class="shop-sec" data-sec="upgrades"><div id="packs"></div><div id="items"></div></div>
     <div class="shop-sec" data-sec="hats"><div class="hats panel" id="hats"></div></div>
     <div class="shop-sec" data-sec="toys"><div class="toys panel" id="toys"></div></div>
     <div class="shop-sec" data-sec="mazes"><div class="toys panel" id="mthemes"></div></div>
@@ -1950,22 +1999,23 @@ function updateShop() {
         ${others.length ? `<div class="hat-side"><div class="hat-pigs ${state.piggies.length > 2 ? 'two' : ''}">${state.piggies.map(q => `<button class="face ${q.id === p.id ? 'on' : ''}" data-id="${q.id}" aria-label="Hats for ${esc(q.name)}">${Art.piggyFace({ coat: q.coat, hat: q.hat })}</button>`).join('')}</div></div>` : ''}
         <div class="hat-model">${Art.piggySide({ coat: p.coat, hat: showing })}</div>
         <div class="hat-who"><span class="hat-title"><b>${esc(p.name)}</b></span>
-          ${tryHat ? `<em>${G.HATS[tryHat.id].goal ? `${G.HATS[tryHat.id].name}! ${G.HATS[tryHat.id].goal} to earn it!` : `Trying on the ${G.HATS[tryHat.id].name}! Like ${/s$/.test(G.HATS[tryHat.id].name) ? 'them' : 'it'}? Press Buy!`}</em>` : ''}</div>
+          ${tryHat ? `<em>${G.HATS[tryHat.id].pack ? `${G.HATS[tryHat.id].name}! Only in a Gold pack` : G.HATS[tryHat.id].goal ? `${G.HATS[tryHat.id].name}! ${G.HATS[tryHat.id].goal} to earn it!` : `Trying on the ${G.HATS[tryHat.id].name}! Like ${/s$/.test(G.HATS[tryHat.id].name) ? 'them' : 'it'}? Press Buy!`}</em>` : ''}</div>
       </div></div>
       <p class="hint small">Tap a fancy hat to try it on. Hats you own fit every piggy.</p><div class="hat-grid"></div>`;
     hats.querySelectorAll('.hat-pigs .face').forEach(f => f.addEventListener('click', () => { selectedPig = +f.dataset.id; tryHat = null; sfx.pop(); render(); }));
     const grid = $('.hat-grid', hats);
-    for (const [id, h] of Object.entries(G.HATS)) {
+    for (const [id, h] of shownHats()) {
       const owned = !!state.hats[id];
       const wearing = p.hat === id;
       const trying = tryHat && tryHat.id === id;
       const locked = h.goal && !owned;
       const b = el(`<button class="hat tile ${owned ? 'owned' : ''} ${wearing ? 'wearing' : ''} ${trying ? 'trying' : ''} ${locked ? 'earn' : ''}">${Art.hatIcon(id)}<span>${h.name}</span>
-        ${locked ? `<span class="price goal">${Math.min(h.have(state), h.need)} / ${h.need}</span>` : wearing ? '<span class="price can">Wearing</span>' : owned ? '<span class="price">Wear</span>' : trying ? `<span class="price buy">Buy ${h.cost} <i class="coin-sm">${Art.coinIcon()}</i></span>` : price(h.cost)}</button>`);
+        ${locked ? `<span class="price goal">${Math.min(h.have(state), h.need)} / ${h.need}</span>` : wearing ? '<span class="price can">Wearing</span>' : owned ? '<span class="price">Wear</span>' : h.pack ? `<span class="price gold">${P.PACKS[h.pack].gold} Gold</span>` : trying ? `<span class="price buy">Buy ${h.cost} <i class="coin-sm">${Art.coinIcon()}</i></span>` : price(h.cost)}</button>`);
       b.addEventListener('click', () => {
         if (locked && trying) { sfx.pop(); toast(`${h.goal} to earn it!`); return; }
         if (!state.hats[id]) {
           if (!trying) { tryHat = { id, pig: p.id }; sfx.pop(); render(); return; }
+          if (h.pack) { buyPack(h.pack, () => { tryHat = null; G.wearHat(state, p.id, id); }); return; }
           const r = G.buyHat(state, id);
           if (!r.ok) { sfx.nope(); toast(`Need ${h.cost - state.coins} more coins`); return; }
           tryHat = null;
@@ -1982,9 +2032,10 @@ function updateShop() {
     }
   }
   const items = $('#items');
-  const ssig = JSON.stringify([state.upgrades, state.coins]);
+  const ssig = JSON.stringify([state.upgrades, state.coins, state.packs]);
   if (items.dataset.sig === ssig) return;
   items.dataset.sig = ssig;
+  packsPanel($('#packs'));
   items.innerHTML = '';
   for (const [id, u] of Object.entries(G.UPGRADES)) {
     const owned = !!state.upgrades[id];
@@ -2193,9 +2244,9 @@ function dumplingDetail(key) {
 // lists, so anything new added to them shows up here by itself. To add a whole
 // new kind of collectible, add an entry to COLLECTIONS.
 const COLLECTIONS = [
-  { id: 'hats', label: 'Hats', items: () => Object.entries(G.HATS).map(([id, h]) => ({
+  { id: 'hats', label: 'Hats', items: () => shownHats().map(([id, h]) => ({
       id, name: h.name, art: Art.hatIcon(id), own: !!state.hats[id],
-      cost: h.cost, goal: h.goal, have: h.goal && Math.min(h.have(state), h.need), need: h.need,
+      cost: h.cost, gold: h.pack && P.PACKS[h.pack].gold, goal: h.goal, have: h.goal && Math.min(h.have(state), h.need), need: h.need,
       where: 'Hats tab in the Shop',
       note: () => { const on = state.piggies.filter(p => p.hat === id).map(p => esc(p.name)); return on.length ? `Worn by <b>${on.join(', ')}</b>` : ''; } })) },
   { id: 'toys', label: 'Toys', items: () => Object.entries(G.TOYS).map(([id, t]) => ({
@@ -2214,7 +2265,7 @@ const cbookIdx = {};
 let cbookTab = 'hats';
 const cItem = (key) => { const [c, id] = key.split(':'); return COLLECTIONS.find(x => x.id === c).items().find(x => x.id === id); };
 // How to get one she doesn't have yet: its price, or the goal and how close she is.
-const cHow = (it) => it.cost ? `${it.cost} <i class="coin-sm">${Art.coinIcon()}</i>` : `${it.have} / ${it.need}`;
+const cHow = (it) => it.gold ? `${it.gold} Gold` : it.cost ? `${it.cost} <i class="coin-sm">${Art.coinIcon()}</i>` : `${it.have} / ${it.need}`;
 
 function collectionBook() {
   const tabs = COLLECTIONS.map(c => ({ c, items: c.items() }));
@@ -2255,6 +2306,7 @@ function collectionDetail(key) {
   if (!it) return;
   const facts = [];
   if (it.own) { facts.push('<span><b>Yours!</b></span>'); const n = it.note(); if (n) facts.push(`<span>${n}</span>`); }
+  else if (it.gold) facts.push(`<span>Comes in a Gold pack: <b>${it.gold} Gold</b></span>`, `<span>${it.where}</span>`);
   else if (it.cost) facts.push(`<span>Buy it for <b>${it.cost}</b> <i class="coin-sm">${Art.coinIcon()}</i></span>`, `<span>${it.where}</span>`);
   else facts.push(`<span class="tier-pill">${it.goal}</span>`, `<span><b>${it.have}</b> / ${it.need} so far</span>`);
   const box = el(`<div class="modal over"><div class="card panel">

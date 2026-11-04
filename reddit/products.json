@@ -1,0 +1,33 @@
+{
+  "$schema": "https://developers.reddit.com/schema/products.json",
+  "products": [
+    {
+      "sku": "roomy-pen",
+      "displayName": "Roomy Pen",
+      "description": "The Bigger pen right now: room for 4 Piggies and 4 toys.",
+      "price": 100,
+      "accountingType": "DURABLE"
+    },
+    {
+      "sku": "super-sprouts",
+      "displayName": "Super Sprouts",
+      "description": "A golden sun lamp. Veggies grow 4 times as fast, forever.",
+      "price": 150,
+      "accountingType": "DURABLE"
+    },
+    {
+      "sku": "helper-bundle",
+      "displayName": "Big Helper Bundle",
+      "description": "Roomy Pen, Super Sprouts, Robo-scooper, Big bowl and a fourth garden plot.",
+      "price": 200,
+      "accountingType": "DURABLE"
+    },
+    {
+      "sku": "golden-crown",
+      "displayName": "Golden Crown",
+      "description": "A shiny golden dumpling crown that any Piggy can wear. Only in this pack!",
+      "price": 50,
+      "accountingType": "DURABLE"
+    }
+  ]
+}

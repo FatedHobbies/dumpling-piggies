@@ -44,5 +44,15 @@
   },
   "scripts": {
     "build": "node build.mjs"
+  },
+  "permissions": {
+    "payments": true
+  },
+  "payments": {
+    "productsFile": "products.json",
+    "endpoints": {
+      "fulfillOrder": "/internal/payments/fulfill",
+      "refundOrder": "/internal/payments/refund"
+    }
   }
 }

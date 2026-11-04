@@ -20,6 +20,7 @@ createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const sid = req.headers['x-piggies-session'];
   if (url.pathname === '/api/load') { if (sid) session = sid; return json(res, 200, { type: 'load', state: readSave(), ent: { skus: {} }, username: 'local_player' }); }
+  if (url.pathname === '/api/packs') return json(res, 200, { skus: (process.env.PACKS || '').split(',').filter(Boolean) });
   if (url.pathname === '/api/peek') { const s = readSave(); return json(res, 200, { type: 'peek', piggies: (s?.piggies || []).slice(0, 3).map((g) => ({ name: g.name, coat: g.coat, hat: g.hat || null })) }); }
   if (url.pathname === '/api/save' || url.pathname === '/api/wipe') {
     const text = await body(req);

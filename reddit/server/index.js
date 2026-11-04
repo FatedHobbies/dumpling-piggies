@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { context, createServer, getServerPort, reddit, redis } from '@devvit/web/server';
 import { createPost } from './post.js';
+import { packsApi, paymentsRoutes } from './payments.js';
 import { MAX_SAVE, PLAYERS_KEY, claimSession, forgetPlayer, isStale, notePlayer, readEnt, readSave, saveKey, writeSave } from './save.js';
 
 const SESSION_HEADER = 'x-piggies-session';
@@ -114,6 +115,8 @@ internal.post('/scheduler/forget-deleted-players', async (c) => {
   return c.json({}, 200);
 });
 
+api.route('/', packsApi);
+internal.route('/payments', paymentsRoutes);
 app.route('/api', api);
 app.route('/internal', internal);
 app.onError((error, c) => {

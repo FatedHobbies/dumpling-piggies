@@ -213,7 +213,7 @@ export const UPGRADES = {
   sunlamp:  { name: 'Sun lamp',           desc: 'Veggies grow twice as fast.',                    cost: 180,  icon: 'sun' },
   autoscoop:{ name: 'Robo-scooper',       desc: 'A tiny robot scoops poop while you are away.',   cost: 300, icon: 'robot' },
   bigbowl:  { name: 'Big bowl',           desc: 'Your piggies stay full for longer.',             cost: 240, icon: 'bowl' },
-  pen2:     { name: 'Bigger pen',         desc: 'Room for two more piggies and one more toy.',   cost: 600, icon: 'pen' },
+  pen2:     { name: 'Bigger pen',         desc: 'Room for one more piggy and one more toy.',     cost: 600, icon: 'pen' },
 };
 
 // Hats are bought once and any piggy can wear one. Each piggy has `hat`.
@@ -258,6 +258,8 @@ export const HATS = {
   rainbow:    { name: 'Rainbow cloud',   cost: 780 },
   // Earned, never bought: they turn up once she reaches the goal.
   laurel:     { name: 'Champ wreath',    goal: 'Finish 10 mazes',     need: 10, have: s => s.stats.mazes || 0 },
+  // Gold-only: comes with the Golden Crown pack on Reddit (see packs.js). No coin price.
+  goldcrown:  { name: 'Golden dumpling crown', pack: 'golden-crown' },
   planet:     { name: 'Planet hat',      goal: 'Find the Galaxy Bao', need: 1,  have: s => ((s.recipeBook || {})['sp:galaxy'] ? 1 : 0) },
 };
 
@@ -554,11 +556,12 @@ export function plotCount(state) {
 }
 
 export function growTime(state) {
+  if (state.perks && state.perks.supersprout) return GROW_TIME / 4;   // Super Sprouts pack (Reddit only)
   return state.upgrades.sunlamp ? GROW_TIME / 2 : GROW_TIME;
 }
 
 export function capacity(state) {
-  return state.upgrades.pen2 ? PEN_MAX : 2;
+  return state.upgrades.pen2 ? PEN_MAX : 3;
 }
 
 export function adoptCost(state) {

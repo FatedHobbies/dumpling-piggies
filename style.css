@@ -78,6 +78,12 @@ p { margin: 0; }
 }
 .tile-purple { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 14px; background: linear-gradient(#9A8DFF, #6F5FF0); border: 3px solid var(--purple-dark); box-shadow: inset 0 -4px 0 rgba(0,0,0,.15); }
 .tile-purple svg { width: 44px; height: 44px; }
+.tile-gold { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 14px; background: linear-gradient(#FFE27A, #F5B82E); border: 3px solid #B9801A; box-shadow: inset 0 -4px 0 rgba(0,0,0,.15); }
+.tile-gold svg { width: 44px; height: 44px; }
+#packs:not(:empty) { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 3px dashed rgba(0,0,0,.12); }
+#packs .hint { margin: 0 4px 8px; }
+.item.pack { background: #FFF8DC; }
+.price.gold { color: #9A6510; background: #FFE9A8; border-radius: 999px; padding: 2px 10px; }
 .coin-sm { display: inline-flex; vertical-align: middle; } .coin-sm svg { width: 20px; height: 20px; }
 .price { font-family: var(--display); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; color: var(--blue-dark); white-space: nowrap; }
 .price.can { color: var(--green-dark); }
@@ -564,7 +570,7 @@ button.pk:active { transform: scale(.95); }
 .hat.wearing { border-color: var(--blue); box-shadow: 0 3px 0 var(--blue-dark); background: #EAF4FF; }
 .hat.wearing .price { color: var(--green-dark); }
 .item.owned .price { color: var(--green-dark); }
-#items { display: flex; flex-direction: column; gap: 10px; }
+#items, #packs { display: flex; flex-direction: column; gap: 10px; }
 .item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; text-align: left; }
 .item:active { transform: translateY(2px); }
 .item .txt { flex: 1; display: flex; flex-direction: column; min-width: 0; }

@@ -1,5 +1,6 @@
 // Copyright (c) 2026 FatedHobbies. All rights reserved. No copying, modifying or redistributing without permission.
 // Starts the game inside Reddit: fetch this player's save first, then start the same game as the web version.
+import './packs-store.js'; // Gold packs: plugs Reddit's checkout into src/packs.js
 const SESSION_HEADER = 'x-piggies-session';
 const session = Math.random().toString(36).slice(2) + Date.now().toString(36);
 const BOOT = document.getElementById('boot').outerHTML; // the game replaces the page, so keep a copy
