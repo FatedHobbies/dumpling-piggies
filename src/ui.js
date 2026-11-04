@@ -1700,10 +1700,10 @@ let mazeTile = 1;
 // are sold in the Shop's Mazes tab and three are earned by playing.
 const MAZE_UNLOCKS = {
   hay: {},
-  pumpkin: { cost: 450 },
-  kitchen: { cost: 750 },
-  snow: { cost: 1050 },
-  sea: { cost: 1200 },
+  pumpkin: { cost: 600 },
+  kitchen: { cost: 1000 },
+  snow: { cost: 1500 },
+  sea: { cost: 2000 },
   galaxy: { goal: 'Find 10 treasures', have: () => state.stats.treasures || 0, need: 10 },
   unicorn: { goal: 'Finish 25 mazes', have: () => state.stats.mazes || 0, need: 25 },
   poop: { goal: 'Fill the Poop Book', have: () => state.booksFilled || 0, need: 1 },
@@ -1945,7 +1945,7 @@ function packsPanel(box) {
 const SUGGEST_MAX = 3;
 const SUGGEST = {
   'roomy-pen': { title: 'Room for one more?', art: () => `<div class="tile-gold pack-art">${packArt('roomy-pen')}</div>`,
-    text: () => 'Your pen is full! The <b>Roomy Pen</b> pack makes room for 4 Piggies and 4 toys right now. You can also save up 600 gems for the Bigger pen in Upgrades.' },
+    text: () => `Your pen is full! The <b>Roomy Pen</b> pack makes room for 4 Piggies and 4 toys right now. You can also save up ${G.UPGRADES.pen2.cost.toLocaleString()} gems for the Bigger pen in Upgrades.` },
   'super-sprouts': { title: 'Waiting on veggies?', art: () => `<div class="tile-gold pack-art">${packArt('super-sprouts')}</div>`,
     text: () => '<b>Super Sprouts</b> makes every veggie grow 4 times as fast, forever.' },
   'golden-crown': { title: 'Fit for a Piggy king', art: () => `<div class="pig-card big">${Art.piggySide({ coat: current().coat, hat: 'goldcrown' })}</div>`,

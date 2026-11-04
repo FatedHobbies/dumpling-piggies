@@ -209,11 +209,11 @@ export function checkDumplingPages(state) {
 }
 
 export const UPGRADES = {
-  plot4:    { name: 'Fourth garden plot', desc: 'One more plot to grow veggies in.',             cost: 120,  icon: 'plot' },
-  sunlamp:  { name: 'Sun lamp',           desc: 'Veggies grow twice as fast.',                    cost: 180,  icon: 'sun' },
-  autoscoop:{ name: 'Robo-scooper',       desc: 'A tiny robot scoops poop while you are away.',   cost: 300, icon: 'robot' },
-  bigbowl:  { name: 'Big bowl',           desc: 'Your piggies stay full for longer.',             cost: 240, icon: 'bowl' },
-  pen2:     { name: 'Bigger pen',         desc: 'Room for one more piggy and one more toy.',     cost: 600, icon: 'pen' },
+  plot4:    { name: 'Fourth garden plot', desc: 'One more plot to grow veggies in.',             cost: 400,  icon: 'plot' },
+  sunlamp:  { name: 'Sun lamp',           desc: 'Veggies grow twice as fast.',                    cost: 800,  icon: 'sun' },
+  autoscoop:{ name: 'Robo-scooper',       desc: 'A tiny robot scoops poop while you are away.',   cost: 2500, icon: 'robot' },
+  bigbowl:  { name: 'Big bowl',           desc: 'Your piggies stay full for longer.',             cost: 1500, icon: 'bowl' },
+  pen2:     { name: 'Bigger pen',         desc: 'Room for one more piggy and one more toy.',     cost: 3000, icon: 'pen' },
 };
 
 // Hats are bought once and any piggy can wear one. Each piggy has `hat`.
@@ -421,7 +421,7 @@ export function playToy(state, piggyId, id) {
 
 export const RENAME_COST = 30;
 export { NAME_MAX };
-export const ADOPT_COST = [0, 150, 400, 800, 1400, 2000];
+export const ADOPT_COST = [0, 150, 400, 1000, 1800, 3000];
 export const PEN_MAX = 4;          // more than this and the pen gets too busy to follow
 const HUGE_PEN_COST = 800;         // the old Huge pen upgrade, refunded in version 94
 
